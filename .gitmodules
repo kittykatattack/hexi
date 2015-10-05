@@ -1,0 +1,24 @@
+[submodule "src/modules/pixi.js"]
+	path = src/modules/pixi.js
+	url = git@github.com:pixijs/pixi.js.git
+[submodule "src/modules/dust"]
+	path = src/modules/dust
+	url = git@github.com:kittykatattack/dust.git
+[submodule "src/modules/tink"]
+	path = src/modules/tink
+	url = https://github.com/kittykatattack/tink
+[submodule "src/modules/spriteUtilities"]
+	path = src/modules/spriteUtilities
+	url = git@github.com:kittykatattack/spriteUtilities.git
+[submodule "src/modules/charm"]
+	path = src/modules/charm
+	url = git@github.com:kittykatattack/charm.git
+[submodule "src/modules/bump"]
+	path = src/modules/bump
+	url = git@github.com:kittykatattack/bump.git
+[submodule "src/modules/sound.js"]
+	path = src/modules/sound.js
+	url = git@github.com:kittykatattack/sound.js.git
+[submodule "src/modules/scaleToWindow"]
+	path = src/modules/scaleToWindow
+	url = git@github.com:kittykatattack/scaleToWindow.git
