@@ -6,7 +6,7 @@
 	url = git@github.com:kittykatattack/dust.git
 [submodule "src/modules/tink"]
 	path = src/modules/tink
-	url = https://github.com/kittykatattack/tink
+	url = git@github.com:kittykatattack/tink.git 
 [submodule "src/modules/spriteUtilities"]
 	path = src/modules/spriteUtilities
 	url = git@github.com:kittykatattack/spriteUtilities.git
@@ -22,3 +22,6 @@
 [submodule "src/modules/scaleToWindow"]
 	path = src/modules/scaleToWindow
 	url = git@github.com:kittykatattack/scaleToWindow.git
+[submodule "src/modules/smoothie"]
+	path = src/modules/smoothie
+	url = git@github.com:kittykatattack/smoothie.git
