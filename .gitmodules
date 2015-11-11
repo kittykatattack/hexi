@@ -25,3 +25,6 @@
 [submodule "src/modules/smoothie"]
 	path = src/modules/smoothie
 	url = git@github.com:kittykatattack/smoothie.git
+[submodule "src/modules/gameUtilities"]
+	path = src/modules/gameUtilities
+	url = git@github.com:kittykatattack/gameUtilities.git

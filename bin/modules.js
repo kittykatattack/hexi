@@ -1,0 +1,5947 @@
+
+/*
+Sound.js
+===============
+
+A complete micro library of useful, modular functions that help you load, play, control
+and generate sound effects and music for games and interactive applications. All the
+code targets the WebAudio API.
+*/
+
+
+/*
+Fixing the WebAudio API
+--------------------------
+
+The WebAudio API is so new that it's API is not consistently implemented properly across
+all modern browsers. Thankfully, Chris Wilson's Audio Context Monkey Patch script
+normalizes the API for maximum compatibility.
+
+https://github.com/cwilso/AudioContext-MonkeyPatch/blob/gh-pages/AudioContextMonkeyPatch.js
+
+It's included here.
+Thank you, Chris!
+
+*/
+
+(function (global, exports, perf) {
+  'use strict';
+
+  function fixSetTarget(param) {
+    if (!param)	// if NYI, just return
+      return;
+    if (!param.setTargetAtTime)
+      param.setTargetAtTime = param.setTargetValueAtTime;
+  }
+
+  if (window.hasOwnProperty('webkitAudioContext') &&
+      !window.hasOwnProperty('AudioContext')) {
+    window.AudioContext = webkitAudioContext;
+
+    if (!AudioContext.prototype.hasOwnProperty('createGain'))
+      AudioContext.prototype.createGain = AudioContext.prototype.createGainNode;
+    if (!AudioContext.prototype.hasOwnProperty('createDelay'))
+      AudioContext.prototype.createDelay = AudioContext.prototype.createDelayNode;
+    if (!AudioContext.prototype.hasOwnProperty('createScriptProcessor'))
+      AudioContext.prototype.createScriptProcessor = AudioContext.prototype.createJavaScriptNode;
+
+    AudioContext.prototype.internal_createGain = AudioContext.prototype.createGain;
+    AudioContext.prototype.createGain = function() {
+      var node = this.internal_createGain();
+      fixSetTarget(node.gain);
+      return node;
+    };
+
+    AudioContext.prototype.internal_createDelay = AudioContext.prototype.createDelay;
+    AudioContext.prototype.createDelay = function(maxDelayTime) {
+      var node = maxDelayTime ? this.internal_createDelay(maxDelayTime) : this.internal_createDelay();
+      fixSetTarget(node.delayTime);
+      return node;
+    };
+
+    AudioContext.prototype.internal_createBufferSource = AudioContext.prototype.createBufferSource;
+    AudioContext.prototype.createBufferSource = function() {
+      var node = this.internal_createBufferSource();
+      if (!node.start) {
+        node.start = function ( when, offset, duration ) {
+          if ( offset || duration )
+            this.noteGrainOn( when, offset, duration );
+          else
+            this.noteOn( when );
+        }
+      }
+      if (!node.stop)
+        node.stop = node.noteOff;
+      fixSetTarget(node.playbackRate);
+      return node;
+    };
+
+    AudioContext.prototype.internal_createDynamicsCompressor = AudioContext.prototype.createDynamicsCompressor;
+    AudioContext.prototype.createDynamicsCompressor = function() {
+      var node = this.internal_createDynamicsCompressor();
+      fixSetTarget(node.threshold);
+      fixSetTarget(node.knee);
+      fixSetTarget(node.ratio);
+      fixSetTarget(node.reduction);
+      fixSetTarget(node.attack);
+      fixSetTarget(node.release);
+      return node;
+    };
+
+    AudioContext.prototype.internal_createBiquadFilter = AudioContext.prototype.createBiquadFilter;
+    AudioContext.prototype.createBiquadFilter = function() {
+      var node = this.internal_createBiquadFilter();
+      fixSetTarget(node.frequency);
+      fixSetTarget(node.detune);
+      fixSetTarget(node.Q);
+      fixSetTarget(node.gain);
+      return node;
+    };
+
+    if (AudioContext.prototype.hasOwnProperty( 'createOscillator' )) {
+      AudioContext.prototype.internal_createOscillator = AudioContext.prototype.createOscillator;
+      AudioContext.prototype.createOscillator = function() {
+        var node = this.internal_createOscillator();
+        if (!node.start)
+          node.start = node.noteOn;
+        if (!node.stop)
+          node.stop = node.noteOff;
+        fixSetTarget(node.frequency);
+        fixSetTarget(node.detune);
+        return node;
+      };
+    }
+  }
+}(window));
+
+/*
+Define the audio context
+------------------------
+
+All this code uses a single `AudioContext` If you want to use any of these functions
+independently of this file, make sure that have an `AudioContext` called `actx`. 
+*/
+var actx = new AudioContext();
+
+/*
+sounds
+------
+
+`sounds` is an object that you can use to store all your loaded sound fles. 
+It also has a helpful `load` method that manages asset loading. You can load sounds at
+any time during the game by using the `sounds.load` method. You don't have to use
+the `sounds` object or its `load` method, but it's a really convenient way to 
+work with sound file assets.
+
+Here's how could use the `sound` object to load three sound files from a `sounds` folder and 
+call a `setup` method when all the files have finished loading:
+
+    sounds.load([
+      "sounds/shoot.wav", 
+      "sounds/music.wav",
+      "sounds/bounce.mp3"
+    ]);
+    sounds.whenLoaded = setup;
+
+You can now access these loaded sounds in you application code like this:
+
+var shoot = sounds["sounds/shoot.wav"],
+    music = sounds["sounds/music.wav"],
+    bounce = sounds["sounds/bounce.mp3"];
+
+*/
+
+var sounds = {
+  //Properties to help track the assets being loaded.
+  toLoad: 0,
+  loaded: 0,
+
+  //File extensions for different types of sounds.
+  audioExtensions: ["mp3", "ogg", "wav", "webm"],
+
+  //The callback function that should run when all assets have loaded.
+  //Assign this when you load the fonts, like this: `assets.whenLoaded = makeSprites;`.
+  whenLoaded: undefined,
+
+  //The load method creates and loads all the assets. Use it like this:
+  //`assets.load(["images/anyImage.png", "fonts/anyFont.otf"]);`.
+
+  load: function(sources) {
+    console.log("Loading sounds..");
+
+    //Get a reference to this asset object so we can
+    //refer to it in the `forEach` loop ahead.
+    var self = this;
+
+    //Find the number of files that need to be loaded.
+    self.toLoad = sources.length;
+    sources.forEach(function(source){
+
+      //Find the file extension of the asset.
+      var extension = source.split('.').pop();
+
+      //#### Sounds
+      //Load audio files that have file extensions that match
+      //the `audioExtensions` array.
+      if (self.audioExtensions.indexOf(extension) !== -1) {
+
+        //Create a sound sprite.
+        var soundSprite = makeSound(source, self.loadHandler.bind(self), true, false);
+
+        //Get the sound file name.
+        soundSprite.name = source;
+
+        //If you just want to extract the file name with the
+        //extension, you can do it like this:
+        //soundSprite.name = source.split("/").pop();
+        //Assign the sound as a property of the assets object so
+        //we can access it like this: `assets["sounds/sound.mp3"]`.
+        self[soundSprite.name] = soundSprite;
+      }
+
+      //Display a message if the file type isn't recognized.
+      else {
+        console.log("File type not recognized: " + source);
+      }
+    });
+  },
+
+  //#### loadHandler
+  //The `loadHandler` will be called each time an asset finishes loading.
+  loadHandler: function () {
+    var self = this;
+    self.loaded += 1;
+    console.log(self.loaded);
+
+    //Check whether everything has loaded.
+    if (self.toLoad === self.loaded) {
+
+      //If it has, run the callback function that was assigned to the `whenLoaded` property
+      console.log("Sounds finished loading");
+
+      //Reset `loaded` and `toLoaded` so we can load more assets
+      //later if we want to.
+      self.toLoad = 0;
+      self.loaded = 0;
+      self.whenLoaded();
+    }
+  }
+};
+
+/*
+makeSound
+---------
+
+`makeSound` is the function you want to use to load and play sound files.
+It creates and returns and WebAudio sound object with lots of useful methods you can
+use to control the sound. 
+You can use it to load a sound like this:
+
+    var anySound = makeSound("sounds/anySound.mp3", loadHandler);
+
+
+The code above will load the sound and then call the `loadHandler`
+when the sound has finished loading. 
+(However, it's more convenient to load the sound file using 
+the `sounds.load` method described above, so I don't recommend loading sounds
+like this unless you need more low-level control.)
+
+After the sound has been loaded you can access and use it like this:
+
+    function loadHandler() {
+      anySound.loop = true;
+      anySound.pan = 0.8;
+      anySound.volume = 0.5;
+      anySound.play();
+      anySound.pause();
+      anySound.playFrom(second);
+      anySound.restart();
+      anySound.setReverb(2, 2, false);
+      anySound.setEcho(0.2, 0.2, 0);
+      anySound.playbackRate = 0.5;
+    }
+   
+For advanced configurations, you can optionally supply `makeSound` with optional 3rd and 
+4th arguments:
+
+   var anySound = makeSound(source, loadHandler, loadTheSound?, xhrObject);
+
+`loadTheSound?` is a Boolean (true/false) value that, if `false` prevents the sound file
+from being loaded. You would only want to set it to `false` like this if you were
+using another file loading library to load the sound, and didn't want it to be loaded
+twice.
+
+`xhrObject`, the optional 4th argument, is the XHR object that was used to load the sound. Again, you 
+would only supply this if you were using another file loading library to load the sound,
+and that library had generated its own XHR object. If you supply the `xhr` argument, `makeSound`
+will skip the file loading step (because you've already done that), but still decode the audio buffer for you.
+(If you are loading the sound file using another file loading library, make sure that your sound
+files are loaded with the XHR `responseType = "arraybuffer"` option.)
+
+For example, here's how you could use this advanced configuration to decode a sound that you've already loaded
+using your own custom loading system:
+
+   var soundSprite = makeSound(source, decodeHandler.bind(this), false, xhr);
+
+When the file has finished being decoded, your custom `decodeHandler` will run, which tells you
+that the file has finished decoding.
+
+If you're creating more than one sound like this, use counter variables to track the number of sounds
+you need to decode, and the number of sounds that have been decoded. When both sets of counters are the
+same, you'll know that all your sound files have finished decoding and you can proceed with the rest
+of you application. (The [Hexi game engine](https://github.com/kittykatattack/hexi) uses `makeSound` in this way.)
+
+*/
+
+function makeSound(source, loadHandler, loadSound, xhr) {
+
+  //The sound object that this function returns.
+  var o = {};
+
+  //Set the default properties.
+  o.volumeNode = actx.createGain();
+
+  //Create the pan node using the efficient `createStereoPanner`
+  //method, if it's available.
+  if (!actx.createStereoPanner) {
+    o.panNode = actx.createPanner();
+  } else {
+    o.panNode = actx.createStereoPanner();
+  }
+  o.delayNode = actx.createDelay();
+  o.feedbackNode = actx.createGain();
+  o.filterNode = actx.createBiquadFilter();
+  o.convolverNode = actx.createConvolver();
+  o.soundNode = null;
+  o.buffer = null;
+  o.source = source;
+  o.loop = false;
+  o.playing = false;
+
+  //The function that should run when the sound is loaded.
+  o.loadHandler = undefined;
+
+  //Values for the `pan` and `volume` getters/setters.
+  o.panValue = 0;
+  o.volumeValue = 1;
+
+  //Values to help track and set the start and pause times.
+  o.startTime = 0;
+  o.startOffset = 0;
+
+  //Set the playback rate.
+  o.playbackRate = 1;
+
+  //Echo properties.
+  o.echo = false;
+  o.delayValue = 0.3;
+  o.feebackValue = 0.3;
+  o.filterValue = 0;
+
+  //Reverb properties
+  o.reverb = false;
+  o.reverbImpulse = null;
+  
+  //The sound object's methods.
+  o.play = function() {
+
+    //Set the start time (it will be `0` when the sound
+    //first starts.
+    o.startTime = actx.currentTime;
+
+    //Create a sound node.
+    o.soundNode = actx.createBufferSource();
+
+    //Set the sound node's buffer property to the loaded sound.
+    o.soundNode.buffer = o.buffer;
+
+    //Set the playback rate
+    o.soundNode.playbackRate.value = this.playbackRate;
+
+    //Connect the sound to the pan, connect the pan to the
+    //volume, and connect the volume to the destination.
+    o.soundNode.connect(o.volumeNode);
+
+    //If there's no reverb, bypass the convolverNode
+    if (o.reverb === false) {
+      o.volumeNode.connect(o.panNode);
+    } 
+
+    //If there is reverb, connect the `convolverNode` and apply
+    //the impulse response
+    else {
+      o.volumeNode.connect(o.convolverNode);
+      o.convolverNode.connect(o.panNode);
+      o.convolverNode.buffer = o.reverbImpulse;
+    }
+    
+    //Connect the `panNode` to the destination to complete the chain.
+    o.panNode.connect(actx.destination);
+
+    //Add optional echo.
+    if (o.echo) {
+
+      //Set the values.
+      o.feedbackNode.gain.value = o.feebackValue;
+      o.delayNode.delayTime.value = o.delayValue;
+      o.filterNode.frequency.value = o.filterValue;
+
+      //Create the delay loop, with optional filtering.
+      o.delayNode.connect(o.feedbackNode);
+      if (o.filterValue > 0) {
+        o.feedbackNode.connect(o.filterNode);
+        o.filterNode.connect(o.delayNode);
+      } else {
+        o.feedbackNode.connect(o.delayNode);
+      }
+
+      //Capture the sound from the main node chain, send it to the
+      //delay loop, and send the final echo effect to the `panNode` which
+      //will then route it to the destination.
+      o.volumeNode.connect(o.delayNode);
+      o.delayNode.connect(o.panNode);
+    }
+
+    //Will the sound loop? This can be `true` or `false`.
+    o.soundNode.loop = o.loop;
+
+    //Finally, use the `start` method to play the sound.
+    //The start time will either be `0`,
+    //or a later time if the sound was paused.
+    o.soundNode.start(
+      0, o.startOffset % o.buffer.duration
+    );
+
+    //Set `playing` to `true` to help control the
+    //`pause` and `restart` methods.
+    o.playing = true;
+  };
+
+  o.pause = function() {
+    //Pause the sound if it's playing, and calculate the
+    //`startOffset` to save the current position.
+    if (o.playing) {
+      o.soundNode.stop(0);
+      o.startOffset += actx.currentTime - o.startTime;
+      o.playing = false;
+    }
+  };
+
+  o.restart = function() {
+    //Stop the sound if it's playing, reset the start and offset times,
+    //then call the `play` method again.
+    if (o.playing) {
+      o.soundNode.stop(0);
+    }
+    o.startOffset = 0;
+    o.play();
+  };
+
+  o.playFrom = function(value) {
+    if (o.playing) {
+      o.soundNode.stop(0);
+    }
+    o.startOffset = value;
+    o.play();
+  };
+
+  o.setEcho = function(delayValue, feedbackValue, filterValue) {
+    if (delayValue === undefined) delayValue = 0.3;
+    if (feedbackValue === undefined) feedbackValue = 0.3;
+    if (filterValue === undefined) filterValue = 0;
+    o.delayValue = delayValue;
+    o.feebackValue = feedbackValue;
+    o.filterValue = filterValue;
+    o.echo = true;
+  };
+
+  o.setReverb = function(duration, decay, reverse) {
+    if (duration === undefined) duration = 2;
+    if (decay === undefined) decay = 2;
+    if (reverse === undefined) reverse = false;
+    o.reverbImpulse = impulseResponse(duration, decay, reverse, actx);
+    o.reverb = true;
+  };
+
+  //A general purpose `fade` method for fading sounds in or out.
+  //The first argument is the volume that the sound should
+  //fade to, and the second value is the duration, in seconds,
+  //that the fade should last.
+  o.fade = function(endValue, durationInSeconds) {
+    if (o.playing) {
+      o.volumeNode.gain.linearRampToValueAtTime(
+        o.volumeNode.gain.value, actx.currentTime
+      );
+      o.volumeNode.gain.linearRampToValueAtTime(
+        endValue, actx.currentTime + durationInSeconds
+      );
+    }
+  };
+
+  //Fade a sound in, from an initial volume level of zero.
+  o.fadeIn = function(durationInSeconds) {
+    
+    //Set the volume to 0 so that you can fade
+    //in from silence
+    o.volumeNode.gain.value = 0;
+    o.fade(1, durationInSeconds);
+  
+  };
+
+  //Fade a sound out, from its current volume level to zero.
+  o.fadeOut = function(durationInSeconds) {
+    o.fade(0, durationInSeconds);
+  };
+  
+  //Volume and pan getters/setters.
+  Object.defineProperties(o, {
+    volume: {
+      get: function() {
+        return o.volumeValue;
+      },
+      set: function(value) {
+        o.volumeNode.gain.value = value;
+        o.volumeValue = value;
+      },
+      enumerable: true, configurable: true
+    },
+
+    //The pan node uses the high-efficiency stereo panner, if it's
+    //available. But, because this is a new addition to the 
+    //WebAudio spec, it might not be available on all browsers.
+    //So the code checks for this and uses the older 3D panner
+    //if 2D isn't available.
+    pan: {
+      get: function() {
+        if (!actx.createStereoPanner) {
+          return o.panValue;
+        } else {
+          return o.panNode.pan.value;
+        }
+      },
+      set: function(value) {
+        if (!actx.createStereoPanner) {
+          //Panner objects accept x, y and z coordinates for 3D
+          //sound. However, because we're only doing 2D left/right
+          //panning we're only interested in the x coordinate,
+          //the first one. However, for a natural effect, the z
+          //value also has to be set proportionately.
+          var x = value,
+              y = 0,
+              z = 1 - Math.abs(x);
+          o.panNode.setPosition(x, y, z);
+          o.panValue = value;
+        } else {
+          o.panNode.pan.value = value;
+        }
+      },
+      enumerable: true, configurable: true
+    }
+  });
+
+  //Optionally Load and decode the sound.
+  if (loadSound) {
+    this.loadSound(o, source, loadHandler);
+  }
+
+  //Optionally, if you've loaded the sound using some other loader, just decode the sound
+  if (xhr) {
+    this.decodeAudio(o, xhr, loadHandler);
+  }
+
+  //Return the sound object.
+  return o;
+}
+
+//The `loadSound` function loads the sound file using XHR
+function loadSound(o, source, loadHandler) {
+  var xhr = new XMLHttpRequest();
+
+  //Use xhr to load the sound file.
+  xhr.open("GET", source, true);
+  xhr.responseType = "arraybuffer";
+
+  //When the sound has finished loading, decode it using the
+  //`decodeAudio` function (which you'll see ahead)
+  xhr.addEventListener("load", decodeAudio.bind(this, o, xhr, loadHandler)); 
+
+  //Send the request to load the file.
+  xhr.send();
+}
+
+//The `decodeAudio` function decodes the audio file for you and 
+//launches the `loadHandler` when it's done
+function decodeAudio(o, xhr, loadHandler) {
+
+  //Decode the sound and store a reference to the buffer.
+  actx.decodeAudioData(
+    xhr.response,
+    function(buffer) {
+      o.buffer = buffer;
+      o.hasLoaded = true;
+
+      //This next bit is optional, but important.
+      //If you have a load manager in your game, call it here so that
+      //the sound is registered as having loaded.
+      if (loadHandler) {
+        loadHandler();
+      }
+    },
+
+    //Throw an error if the sound can't be decoded.
+    function(error) {
+      throw new Error("Audio could not be decoded: " + error);
+    }
+  );
+}
+
+
+/*
+soundEffect
+-----------
+
+The `soundEffect` function let's you generate your sounds and musical notes from scratch
+(Reverb effect requires the `impulseResponse` function that you'll see further ahead in this file)
+
+To create a custom sound effect, define all the parameters that characterize your sound. Here's how to
+create a laser shooting sound:
+
+    soundEffect(
+      1046.5,           //frequency
+      0,                //attack
+      0.3,              //decay
+      "sawtooth",       //waveform
+      1,                //Volume
+      -0.8,             //pan
+      0,                //wait before playing
+      1200,             //pitch bend amount
+      false,            //reverse bend
+      0,                //random pitch range
+      25,               //dissonance
+      [0.2, 0.2, 2000], //echo: [delay, feedback, filter]
+      undefined         //reverb: [duration, decay, reverse?]
+    );
+
+Experiment by changing these parameters to see what kinds of effects you can create, and build
+your own library of custom sound effects for games.
+*/
+
+function soundEffect(
+  frequencyValue,      //The sound's fequency pitch in Hertz
+  attack,              //The time, in seconds, to fade the sound in
+  decay,               //The time, in seconds, to fade the sound out
+  type,                //waveform type: "sine", "triangle", "square", "sawtooth"
+  volumeValue,         //The sound's maximum volume
+  panValue,            //The speaker pan. left: -1, middle: 0, right: 1
+  wait,                //The time, in seconds, to wait before playing the sound
+  pitchBendAmount,     //The number of Hz in which to bend the sound's pitch down
+  reverse,             //If `reverse` is true the pitch will bend up
+  randomValue,         //A range, in Hz, within which to randomize the pitch
+  dissonance,          //A value in Hz. It creates 2 dissonant frequencies above and below the target pitch
+  echo,                //An array: [delayTimeInSeconds, feedbackTimeInSeconds, filterValueInHz]
+  reverb               //An array: [durationInSeconds, decayRateInSeconds, reverse]
+) {
+
+  //Set the default values
+  if (frequencyValue === undefined) frequencyValue = 200;
+  if (attack === undefined) attack = 0;
+  if (decay === undefined) decay = 1;
+  if (type === undefined) type = "sine";
+  if (volumeValue === undefined) volumeValue = 1;
+  if (panValue === undefined) panValue = 0;
+  if (wait === undefined) wait = 0;
+  if (pitchBendAmount === undefined) pitchBendAmount = 0;
+  if (reverse === undefined) reverse = false;
+  if (randomValue === undefined) randomValue = 0;
+  if (dissonance === undefined) dissonance = 0;
+  if (echo === undefined) echo = undefined;
+  if (reverb === undefined) reverb = undefined;
+
+  //Create an oscillator, gain and pan nodes, and connect them
+  //together to the destination
+  var oscillator, volume, pan;
+  oscillator = actx.createOscillator();
+  volume = actx.createGain();
+  if (!actx.createStereoPanner) {
+    pan = actx.createPanner();
+  } else {
+    pan = actx.createStereoPanner();
+  }
+  oscillator.connect(volume);
+  volume.connect(pan);
+  pan.connect(actx.destination);
+
+  //Set the supplied values
+  volume.gain.value = volumeValue;
+  if (!actx.createStereoPanner) {
+    pan.setPosition(panValue, 0, 1 - Math.abs(panValue));
+  } else {
+    pan.pan.value = panValue; 
+  }
+  oscillator.type = type;
+
+  //Optionally randomize the pitch. If the `randomValue` is greater
+  //than zero, a random pitch is selected that's within the range
+  //specified by `frequencyValue`. The random pitch will be either
+  //above or below the target frequency.
+  var frequency;
+  var randomInt = function(min, max){
+    return Math.floor(Math.random() * (max - min + 1)) + min
+  };
+  if (randomValue > 0) {
+    frequency = randomInt(
+      frequencyValue - randomValue / 2,
+      frequencyValue + randomValue / 2
+    );
+  } else {
+    frequency = frequencyValue;
+  }
+  oscillator.frequency.value = frequency;
+
+  //Apply effects
+  if (attack > 0) fadeIn(volume);
+  fadeOut(volume);
+  if (pitchBendAmount > 0) pitchBend(oscillator);
+  if (echo) addEcho(volume);
+  if (reverb) addReverb(volume);
+  if (dissonance > 0) addDissonance();
+
+  //Play the sound
+  play(oscillator);
+
+  //The helper functions:
+  
+  function addReverb(volumeNode) {
+    var convolver = actx.createConvolver();
+    convolver.buffer = impulseResponse(reverb[0], reverb[1], reverb[2], actx);
+    volumeNode.connect(convolver);
+    convolver.connect(pan);
+  }
+
+  function addEcho(volumeNode) {
+
+    //Create the nodes
+    var feedback = actx.createGain(),
+        delay = actx.createDelay(),
+        filter = actx.createBiquadFilter();
+
+    //Set their values (delay time, feedback time and filter frequency)
+    delay.delayTime.value = echo[0];
+    feedback.gain.value = echo[1];
+    if (echo[2]) filter.frequency.value = echo[2];
+
+    //Create the delay feedback loop, with
+    //optional filtering
+    delay.connect(feedback);
+    if (echo[2]) {
+      feedback.connect(filter);
+      filter.connect(delay);
+    } else {
+      feedback.connect(delay);
+    }
+
+    //Connect the delay loop to the oscillator's volume
+    //node, and then to the destination
+    volumeNode.connect(delay);
+
+    //Connect the delay loop to the main sound chain's
+    //pan node, so that the echo effect is directed to
+    //the correct speaker
+    delay.connect(pan);
+  }
+
+  //The `fadeIn` function
+  function fadeIn(volumeNode) {
+
+    //Set the volume to 0 so that you can fade
+    //in from silence
+    volumeNode.gain.value = 0;
+
+    volumeNode.gain.linearRampToValueAtTime(
+      0, actx.currentTime + wait
+    );
+    volumeNode.gain.linearRampToValueAtTime(
+      volumeValue, actx.currentTime + wait + attack
+    );
+  }
+
+  //The `fadeOut` function
+  function fadeOut(volumeNode) {
+    volumeNode.gain.linearRampToValueAtTime(
+      volumeValue, actx.currentTime + attack + wait
+    );
+    volumeNode.gain.linearRampToValueAtTime(
+      0, actx.currentTime + wait + attack + decay
+    );
+  }
+
+  //The `pitchBend` function
+  function pitchBend(oscillatorNode) {
+    //If `reverse` is true, make the note drop in frequency. Useful for
+    //shooting sounds
+
+    //Get the frequency of the current oscillator
+    var frequency = oscillatorNode.frequency.value;
+
+    //If `reverse` is true, make the sound drop in pitch
+    if (!reverse) {
+      oscillatorNode.frequency.linearRampToValueAtTime(
+        frequency, 
+        actx.currentTime + wait
+      );
+      oscillatorNode.frequency.linearRampToValueAtTime(
+        frequency - pitchBendAmount, 
+        actx.currentTime + wait + attack + decay
+      );
+    }
+
+    //If `reverse` is false, make the note rise in pitch. Useful for
+    //jumping sounds
+    else {
+      oscillatorNode.frequency.linearRampToValueAtTime(
+        frequency, 
+        actx.currentTime + wait
+      );
+      oscillatorNode.frequency.linearRampToValueAtTime(
+        frequency + pitchBendAmount, 
+        actx.currentTime + wait + attack + decay
+      );
+    }
+  }
+
+  //The `addDissonance` function
+  function addDissonance() {
+
+    //Create two more oscillators and gain nodes
+    var d1 = actx.createOscillator(),
+        d2 = actx.createOscillator(),
+        d1Volume = actx.createGain(),
+        d2Volume = actx.createGain();
+
+    //Set the volume to the `volumeValue`
+    d1Volume.gain.value = volumeValue;
+    d2Volume.gain.value = volumeValue;
+
+    //Connect the oscillators to the gain and destination nodes
+    d1.connect(d1Volume);
+    d1Volume.connect(actx.destination);
+    d2.connect(d2Volume);
+    d2Volume.connect(actx.destination);
+
+    //Set the waveform to "sawtooth" for a harsh effect
+    d1.type = "sawtooth";
+    d2.type = "sawtooth";
+
+    //Make the two oscillators play at frequencies above and
+    //below the main sound's frequency. Use whatever value was
+    //supplied by the `dissonance` argument
+    d1.frequency.value = frequency + dissonance;
+    d2.frequency.value = frequency - dissonance;
+
+    //Fade in/out, pitch bend and play the oscillators
+    //to match the main sound
+    if (attack > 0) {
+      fadeIn(d1Volume);
+      fadeIn(d2Volume);
+    }
+    if (decay > 0) {
+      fadeOut(d1Volume);
+      fadeOut(d2Volume);
+    }
+    if (pitchBendAmount > 0) {
+      pitchBend(d1);
+      pitchBend(d2);
+    }
+    if (echo) {
+      addEcho(d1Volume);
+      addEcho(d2Volume);
+    }
+    if (reverb) {
+      addReverb(d1Volume);
+      addReverb(d2Volume);
+    }
+    play(d1);
+    play(d2);
+  }
+
+  //The `play` function
+  function play(node) {
+    node.start(actx.currentTime + wait);
+  }
+}
+
+/*
+impulseResponse
+---------------
+
+The `makeSound` and `soundEffect` functions uses `impulseResponse`  to help create an optional reverb effect.  
+It simulates a model of sound reverberation in an acoustic space which 
+a convolver node can blend with the source sound. Make sure to include this function along with `makeSound`
+and `soundEffect` if you need to use the reverb feature.
+*/
+
+function impulseResponse(duration, decay, reverse, actx) {
+
+  //The length of the buffer.
+  var length = actx.sampleRate * duration;
+
+  //Create an audio buffer (an empty sound container) to store the reverb effect.
+  var impulse = actx.createBuffer(2, length, actx.sampleRate);
+
+  //Use `getChannelData` to initialize empty arrays to store sound data for
+  //the left and right channels.
+  var left = impulse.getChannelData(0),
+      right = impulse.getChannelData(1);
+
+  //Loop through each sample-frame and fill the channel
+  //data with random noise.
+  for (var i = 0; i < length; i++){
+
+    //Apply the reverse effect, if `reverse` is `true`.
+    var n;
+    if (reverse) {
+      n = length - i;
+    } else {
+      n = i;
+    }
+
+    //Fill the left and right channels with random white noise which
+    //decays exponentially.
+    left[i] = (Math.random() * 2 - 1) * Math.pow(1 - n / length, decay);
+    right[i] = (Math.random() * 2 - 1) * Math.pow(1 - n / length, decay);
+  }
+
+  //Return the `impulse`.
+  return impulse;
+}
+
+
+/*
+keyboard
+--------
+
+This isn't really necessary - I just included it for fun to help with the 
+examples in the `index.html` files.
+The `keyboard` helper function creates `key` objects
+that listen for keyboard events. Create a new key object like
+this:
+
+    var keyObject = g.keyboard(asciiKeyCodeNumber);
+
+Then assign `press` and `release` methods like this:
+
+    keyObject.press = function() {
+      //key object pressed
+    };
+    keyObject.release = function() {
+      //key object released
+    };
+
+Keyboard objects also have `isDown` and `isUp` Booleans that you can check.
+This is so much easier than having to write out tedious keyboard even capture 
+code from scratch.
+
+Like I said, the `keyboard` function has nothing to do with generating sounds,
+so just delete it if you don't want it!
+*/
+
+function keyboard(keyCode) {
+  var key = {};
+  key.code = keyCode;
+  key.isDown = false;
+  key.isUp = true;
+  key.press = undefined;
+  key.release = undefined;
+  //The `downHandler`
+  key.downHandler = function(event) {
+    if (event.keyCode === key.code) {
+      if (key.isUp && key.press) key.press();
+      key.isDown = true;
+      key.isUp = false;
+    }
+    event.preventDefault();
+  };
+
+  //The `upHandler`
+  key.upHandler = function(event) {
+    if (event.keyCode === key.code) {
+      if (key.isDown && key.release) key.release();
+      key.isDown = false;
+      key.isUp = true;
+    }
+    event.preventDefault();
+  };
+
+  //Attach event listeners
+  window.addEventListener(
+    "keydown", key.downHandler.bind(key), false
+  );
+  window.addEventListener(
+    "keyup", key.upHandler.bind(key), false
+  );
+  return key;
+}
+
+
+function scaleToWindow(canvas, backgroundColor) {
+
+  backgroundColor = backgroundColor || "#2C3539";
+  var scaleX, scaleY, scale, center;
+  
+  //1. Scale the canvas to the correct size
+  //Figure out the scale amount on each axis
+  scaleX = window.innerWidth / canvas.width;
+  scaleY = window.innerHeight / canvas.height;
+
+  //Scale the canvas based on whichever value is less: `scaleX` or `scaleY`
+  scale = Math.min(scaleX, scaleY);
+  canvas.style.transformOrigin = "0 0";
+  canvas.style.transform = "scale(" + scale + ")";
+
+  //2. Center the canvas.
+  //Decide whether to center the canvas vertically or horizontally.
+  //Wide canvases should be centered vertically, and 
+  //square or tall canvases should be centered horizontally
+  if (canvas.width > canvas.height) {
+    if (canvas.width * scale < window.innerWidth) {
+      center = "horizontally";
+    } else { 
+      center = "vertically";
+    }
+  } else {
+    if (canvas.height * scale < window.innerHeight) {
+      center = "vertically";
+    } else { 
+      center = "horizontally";
+    }
+  }
+  
+  //Center horizontally (for square or tall canvases)
+  var margin;
+  if (center === "horizontally") {
+    margin = (window.innerWidth - canvas.width * scale) / 2;
+    canvas.style.marginLeft = margin + "px";
+    canvas.style.marginRight = margin + "px";
+  }
+
+  //Center vertically (for wide canvases) 
+  if (center === "vertically") {
+    margin = (window.innerHeight - canvas.height * scale) / 2;
+    canvas.style.marginTop = margin + "px";
+    canvas.style.marginBottom = margin + "px";
+  }
+
+  //3. Remove any padding from the canvas  and body and set the canvas
+  //display style to "block"
+  canvas.style.paddingLeft = 0;
+  canvas.style.paddingRight = 0;
+  canvas.style.paddingTop = 0;
+  canvas.style.paddingBottom = 0;
+  canvas.style.display = "block";
+  
+  //4. Set the color of the HTML body background
+  document.body.style.backgroundColor = backgroundColor;
+  
+  //Fix some quirkiness in scaling for Safari
+  var ua = navigator.userAgent.toLowerCase(); 
+  if (ua.indexOf("safari") != -1) { 
+    if (ua.indexOf("chrome") > -1) {
+      // Chrome
+    } else {
+      // Safari
+      canvas.style.maxHeight = "100%";
+      canvas.style.minHeight = "100%";
+    }
+  }
+
+  //5. Return the `scale` value. This is important, because you'll nee this value 
+  //for correct hit testing between the pointer and sprites
+  return scale;
+}
+"use strict";
+
+var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var Bump = (function () {
+  function Bump() {
+    var renderingEngine = arguments[0] === undefined ? PIXI : arguments[0];
+
+    _classCallCheck(this, Bump);
+
+    if (renderingEngine === undefined) throw new Error("Please assign a rendering engine in the constructor before using bump.js");
+
+    //Find out which rendering engine is being used (the default is Pixi)
+    this.renderer = "";
+
+    //If the `renderingEngine` is Pixi, set up Pixi object aliases
+    if (renderingEngine.ParticleContainer && renderingEngine.Sprite) {
+      this.renderer = "pixi";
+    }
+  }
+
+  _createClass(Bump, [{
+    key: "addCollisionProperties",
+    value: function addCollisionProperties(sprite) {
+
+      //Add properties to Pixi sprites
+      if (this.renderer === "pixi") {
+
+        Object.defineProperties(sprite, {
+          "gx": {
+            get: function get() {
+              return sprite.getGlobalPosition().x;
+            },
+            enumerable: true, configurable: true
+          },
+          "gy": {
+            get: function get() {
+              return sprite.getGlobalPosition().y;
+            },
+            enumerable: true, configurable: true
+          },
+          "centerX": {
+            get: function get() {
+              return sprite.x + sprite.width / 2;
+            },
+            enumerable: true, configurable: true
+          },
+          "centerY": {
+            get: function get() {
+              return sprite.y + sprite.height / 2;
+            },
+            enumerable: true, configurable: true
+          },
+          "halfWidth": {
+            get: function get() {
+              return sprite.width / 2;
+            },
+            enumerable: true, configurable: true
+          },
+          "halfHeight": {
+            get: function get() {
+              return sprite.height / 2;
+            },
+            enumerable: true, configurable: true
+          }
+        });
+
+        if (sprite.circular) {
+          Object.defineProperty(sprite, "radius", {
+            get: function get() {
+              return sprite.width / 2;
+            },
+            enumerable: true, configurable: true
+          });
+        }
+      }
+
+      //Add a Boolean `_bumpPropertiesAdded` property to the sprite to flag it
+      //as having these new properties
+      sprite._bumpPropertiesAdded = true;
+    }
+  }, {
+    key: "hitTestPoint",
+
+    /*
+    hitTestPoint
+    ------------
+     Use it to find out if a point is touching a circlular or rectangular sprite.
+    Parameters: 
+    a. An object with `x` and `y` properties.
+    b. A sprite object with `x`, `y`, `centerX` and `centerY` properties.
+    If the sprite has a `radius` property, the function will interpret
+    the shape as a circle.
+    */
+
+    value: function hitTestPoint(point, sprite) {
+
+      //Add collision properties
+      if (!sprite._bumpPropertiesAdded) this.addCollisionProperties(sprite);
+
+      var shape = undefined,
+          left = undefined,
+          right = undefined,
+          top = undefined,
+          bottom = undefined,
+          vx = undefined,
+          vy = undefined,
+          magnitude = undefined,
+          hit = undefined;
+
+      //Find out if the sprite is rectangular or circular depending
+      //on whether it has a `radius` property
+      if (sprite.radius) {
+        shape = "circle";
+      } else {
+        shape = "rectangle";
+      }
+
+      //Rectangle
+      if (shape === "rectangle") {
+
+        //Get the position of the sprite's edges
+        left = sprite.x;
+        right = sprite.x + sprite.width;
+        top = sprite.y;
+        bottom = sprite.y + sprite.height;
+
+        //Find out if the point is intersecting the rectangle
+        hit = point.x > left && point.x < right && point.y > top && point.y < bottom;
+      }
+
+      //Circle
+      if (shape === "circle") {
+        //Find the distance between the point and the
+        //center of the circle
+        vx = point.x - sprite.centerX, vy = point.y - sprite.centerY, magnitude = Math.sqrt(vx * vx + vy * vy);
+
+        //The point is intersecting the circle if the magnitude
+        //(distance) is less than the circle's radius
+        hit = magnitude < sprite.radius;
+      }
+
+      //`hit` will be either `true` or `false`
+      return hit;
+    }
+  }, {
+    key: "hitTestCircle",
+
+    /*
+    hitTestCircle
+    -------------
+     Use it to find out if two circular sprites are touching.
+    Parameters: 
+    a. A sprite object with `centerX`, `centerY` and `radius` properties.
+    b. A sprite object with `centerX`, `centerY` and `radius`.
+    */
+
+    value: function hitTestCircle(c1, c2) {
+      var global = arguments[2] === undefined ? false : arguments[2];
+
+      //Add collision properties
+      if (!c1._bumpPropertiesAdded) this.addCollisionProperties(c1);
+      if (!c2._bumpPropertiesAdded) this.addCollisionProperties(c2);
+
+      var vx = undefined,
+          vy = undefined,
+          magnitude = undefined,
+          combinedRadii = undefined,
+          hit = undefined;
+
+      //Calculate the vector between the circles’ center points
+      if (global) {
+        //Use global coordinates
+        vx = c2.gx + c2.radius - (c1.gx + c1.radius);
+        vy = c2.gy + c2.radius - (c1.gy + c1.radius);
+      } else {
+        //Use local coordinates
+        vx = c2.centerX - c1.centerX;
+        vy = c2.centerY - c1.centerY;
+      }
+
+      //Find the distance between the circles by calculating
+      //the vector's magnitude (how long the vector is)
+      magnitude = Math.sqrt(vx * vx + vy * vy);
+
+      //Add together the circles' total radii
+      combinedRadii = c1.radius + c2.radius;
+
+      //Set `hit` to `true` if the distance between the circles is
+      //less than their `combinedRadii`
+      hit = magnitude < combinedRadii;
+
+      //`hit` will be either `true` or `false`
+      return hit;
+    }
+  }, {
+    key: "circleCollision",
+
+    /*
+    circleCollision
+    ---------------
+     Use it to prevent a moving circular sprite from overlapping and optionally
+    bouncing off a non-moving circular sprite.
+    Parameters: 
+    a. A sprite object with `x`, `y` `centerX`, `centerY` and `radius` properties.
+    b. A sprite object with `x`, `y` `centerX`, `centerY` and `radius` properties.
+    c. Optional: true or false to indicate whether or not the first sprite
+    should bounce off the second sprite.
+    The sprites can contain an optional mass property that should be greater than 1.
+     */
+
+    value: function circleCollision(c1, c2) {
+      var bounce = arguments[2] === undefined ? false : arguments[2];
+      var global = arguments[3] === undefined ? false : arguments[3];
+
+      //Add collision properties
+      if (!c1._bumpPropertiesAdded) this.addCollisionProperties(c1);
+      if (!c2._bumpPropertiesAdded) this.addCollisionProperties(c2);
+
+      var magnitude = undefined,
+          combinedRadii = undefined,
+          overlap = undefined,
+          vx = undefined,
+          vy = undefined,
+          dx = undefined,
+          dy = undefined,
+          s = {},
+          hit = false;
+
+      //Calculate the vector between the circles’ center points
+
+      if (global) {
+        //Use global coordinates
+        vx = c2.gx + c2.radius - (c1.gx + c1.radius);
+        vy = c2.gy + c2.radius - (c1.gy + c1.radius);
+      } else {
+        //Use local coordinates
+        vx = c2.centerX - c1.centerX;
+        vy = c2.centerY - c1.centerY;
+      }
+
+      //Find the distance between the circles by calculating
+      //the vector's magnitude (how long the vector is)
+      magnitude = Math.sqrt(vx * vx + vy * vy);
+
+      //Add together the circles' combined half-widths
+      combinedRadii = c1.radius + c2.radius;
+
+      //Figure out if there's a collision
+      if (magnitude < combinedRadii) {
+
+        //Yes, a collision is happening
+        hit = true;
+
+        //Find the amount of overlap between the circles
+        overlap = combinedRadii - magnitude;
+
+        //Add some "quantum padding". This adds a tiny amount of space
+        //between the circles to reduce their surface tension and make
+        //them more slippery. "0.3" is a good place to start but you might
+        //need to modify this slightly depending on the exact behaviour
+        //you want. Too little and the balls will feel sticky, too much
+        //and they could start to jitter if they're jammed together
+        var quantumPadding = 0.3;
+        overlap += quantumPadding;
+
+        //Normalize the vector
+        //These numbers tell us the direction of the collision
+        dx = vx / magnitude;
+        dy = vy / magnitude;
+
+        //Move circle 1 out of the collision by multiplying
+        //the overlap with the normalized vector and subtract it from
+        //circle 1's position
+        c1.x -= overlap * dx;
+        c1.y -= overlap * dy;
+
+        //Bounce
+        if (bounce) {
+          //Create a collision vector object, `s` to represent the bounce "surface".
+          //Find the bounce surface's x and y properties
+          //(This represents the normal of the distance vector between the circles)
+          s.x = vy;
+          s.y = -vx;
+
+          //Bounce c1 off the surface
+          bounceOffSurface(c1, s);
+        }
+      }
+      return hit;
+    }
+  }, {
+    key: "movingCircleCollision",
+
+    /*
+    movingCircleCollision
+    ---------------------
+     Use it to make two moving circles bounce off each other.
+    Parameters: 
+    a. A sprite object with `x`, `y` `centerX`, `centerY` and `radius` properties.
+    b. A sprite object with `x`, `y` `centerX`, `centerY` and `radius` properties.
+    The sprites can contain an optional mass property that should be greater than 1.
+     */
+
+    value: function movingCircleCollision(c1, c2) {
+      var global = arguments[2] === undefined ? false : arguments[2];
+
+      //Add collision properties
+      if (!c1._bumpPropertiesAdded) this.addCollisionProperties(c1);
+      if (!c2._bumpPropertiesAdded) this.addCollisionProperties(c2);
+
+      var combinedRadii = undefined,
+          overlap = undefined,
+          xSide = undefined,
+          ySide = undefined,
+
+      //`s` refers to the distance vector between the circles
+      s = {},
+          p1A = {},
+          p1B = {},
+          p2A = {},
+          p2B = {},
+          hit = false;
+
+      //Apply mass, if the circles have mass properties
+      c1.mass = c1.mass || 1;
+      c2.mass = c2.mass || 1;
+
+      //Calculate the vector between the circles’ center points
+      if (global) {
+        //Use global coordinates
+        s.vx = c2.gx + c2.radius - (c1.gx + c1.radius);
+        s.vy = c2.gy + c2.radius - (c1.gy + c1.radius);
+      } else {
+        //Use local coordinates
+        s.vx = c2.centerX - c1.centerX;
+        s.vy = c2.centerY - c1.centerY;
+      }
+
+      //Find the distance between the circles by calculating
+      //the vector's magnitude (how long the vector is)
+      s.magnitude = Math.sqrt(s.vx * s.vx + s.vy * s.vy);
+
+      //Add together the circles' combined half-widths
+      combinedRadii = c1.radius + c2.radius;
+
+      //Figure out if there's a collision
+      if (s.magnitude < combinedRadii) {
+
+        //Yes, a collision is happening
+        hit = true;
+
+        //Find the amount of overlap between the circles
+        overlap = combinedRadii - s.magnitude;
+
+        //Add some "quantum padding" to the overlap
+        overlap += 0.3;
+
+        //Normalize the vector.
+        //These numbers tell us the direction of the collision
+        s.dx = s.vx / s.magnitude;
+        s.dy = s.vy / s.magnitude;
+
+        //Find the collision vector.
+        //Divide it in half to share between the circles, and make it absolute
+        s.vxHalf = Math.abs(s.dx * overlap / 2);
+        s.vyHalf = Math.abs(s.dy * overlap / 2);
+
+        //Find the side that the collision is occurring on
+        c1.x > c2.x ? xSide = 1 : xSide = -1;
+        c1.y > c2.y ? ySide = 1 : ySide = -1;
+
+        //Move c1 out of the collision by multiplying
+        //the overlap with the normalized vector and adding it to
+        //the circles' positions
+        c1.x = c1.x + s.vxHalf * xSide;
+        c1.y = c1.y + s.vyHalf * ySide;
+
+        //Move c2 out of the collision
+        c2.x = c2.x + s.vxHalf * -xSide;
+        c2.y = c2.y + s.vyHalf * -ySide;
+
+        //1. Calculate the collision surface's properties
+
+        //Find the surface vector's left normal
+        s.lx = s.vy;
+        s.ly = -s.vx;
+
+        //2. Bounce c1 off the surface (s)
+
+        //Find the dot product between c1 and the surface
+        var dp1 = c1.vx * s.dx + c1.vy * s.dy;
+
+        //Project c1's velocity onto the collision surface
+        p1A.x = dp1 * s.dx;
+        p1A.y = dp1 * s.dy;
+
+        //Find the dot product of c1 and the surface's left normal (s.lx and s.ly)
+        var dp2 = c1.vx * (s.lx / s.magnitude) + c1.vy * (s.ly / s.magnitude);
+
+        //Project the c1's velocity onto the surface's left normal
+        p1B.x = dp2 * (s.lx / s.magnitude);
+        p1B.y = dp2 * (s.ly / s.magnitude);
+
+        //3. Bounce c2 off the surface (s)
+
+        //Find the dot product between c2 and the surface
+        var dp3 = c2.vx * s.dx + c2.vy * s.dy;
+
+        //Project c2's velocity onto the collision surface
+        p2A.x = dp3 * s.dx;
+        p2A.y = dp3 * s.dy;
+
+        //Find the dot product of c2 and the surface's left normal (s.lx and s.ly)
+        var dp4 = c2.vx * (s.lx / s.magnitude) + c2.vy * (s.ly / s.magnitude);
+
+        //Project c2's velocity onto the surface's left normal
+        p2B.x = dp4 * (s.lx / s.magnitude);
+        p2B.y = dp4 * (s.ly / s.magnitude);
+
+        //4. Calculate the bounce vectors
+
+        //Bounce c1
+        //using p1B and p2A
+        c1.bounce = {};
+        c1.bounce.x = p1B.x + p2A.x;
+        c1.bounce.y = p1B.y + p2A.y;
+
+        //Bounce c2
+        //using p1A and p2B
+        c2.bounce = {};
+        c2.bounce.x = p1A.x + p2B.x;
+        c2.bounce.y = p1A.y + p2B.y;
+
+        //Add the bounce vector to the circles' velocity
+        //and add mass if the circle has a mass property
+        c1.vx = c1.bounce.x / c1.mass;
+        c1.vy = c1.bounce.y / c1.mass;
+        c2.vx = c2.bounce.x / c2.mass;
+        c2.vy = c2.bounce.y / c2.mass;
+      }
+      return hit;
+    }
+  }, {
+    key: "multipleCircleCollision",
+
+    /*
+    multipleCircleCollision
+    -----------------------
+     Checks all the circles in an array for a collision against
+    all the other circles in an array, using `movingCircleCollision` (above)
+    */
+
+    value: function multipleCircleCollision(arrayOfCircles) {
+      var global = arguments[1] === undefined ? false : arguments[1];
+
+      for (var i = 0; i < arrayOfCircles.length; i++) {
+
+        //The first circle to use in the collision check
+        var c1 = arrayOfCircles[i];
+        for (var j = i + 1; j < arrayOfCircles.length; j++) {
+
+          //The second circle to use in the collision check
+          var c2 = arrayOfCircles[j];
+
+          //Check for a collision and bounce the circles apart if
+          //they collide. Use an optional `mass` property on the sprite
+          //to affect the bounciness of each marble
+          this.movingCircleCollision(c1, c2, global);
+        }
+      }
+    }
+  }, {
+    key: "rectangleCollision",
+
+    /*
+    rectangleCollision
+    ------------------
+     Use it to prevent two rectangular sprites from overlapping. 
+    Optionally, make the first rectangle bounce off the second rectangle.
+    Parameters: 
+    a. A sprite object with `x`, `y` `centerX`, `centerY`, `halfWidth` and `halfHeight` properties.
+    b. A sprite object with `x`, `y` `centerX`, `centerY`, `halfWidth` and `halfHeight` properties.
+    c. Optional: true or false to indicate whether or not the first sprite
+    should bounce off the second sprite.
+    */
+
+    value: function rectangleCollision(r1, r2) {
+      var bounce = arguments[2] === undefined ? false : arguments[2];
+      var global = arguments[3] === undefined ? true : arguments[3];
+
+      //Add collision properties
+      if (!r1._bumpPropertiesAdded) this.addCollisionProperties(r1);
+      if (!r2._bumpPropertiesAdded) this.addCollisionProperties(r2);
+
+      var collision = undefined,
+          combinedHalfWidths = undefined,
+          combinedHalfHeights = undefined,
+          overlapX = undefined,
+          overlapY = undefined,
+          vx = undefined,
+          vy = undefined;
+
+      //Calculate the distance vector
+      if (global) {
+        vx = r1.gx + r1.halfWidth - (r2.gx + r2.halfWidth);
+        vy = r1.gy + r1.halfHeight - (r2.gy + r2.halfHeight);
+      } else {
+        vx = r1.centerX - r2.centerX;
+        vy = r1.centerY - r2.centerY;
+      }
+
+      //Figure out the combined half-widths and half-heights
+      combinedHalfWidths = r1.halfWidth + r2.halfWidth;
+      combinedHalfHeights = r1.halfHeight + r2.halfHeight;
+
+      //Check whether vx is less than the combined half widths
+      if (Math.abs(vx) < combinedHalfWidths) {
+
+        //A collision might be occurring!
+        //Check whether vy is less than the combined half heights
+        if (Math.abs(vy) < combinedHalfHeights) {
+
+          //A collision has occurred! This is good!
+          //Find out the size of the overlap on both the X and Y axes
+          overlapX = combinedHalfWidths - Math.abs(vx);
+          overlapY = combinedHalfHeights - Math.abs(vy);
+
+          //The collision has occurred on the axis with the
+          //*smallest* amount of overlap. Let's figure out which
+          //axis that is
+
+          if (overlapX >= overlapY) {
+            //The collision is happening on the X axis
+            //But on which side? vy can tell us
+
+            if (vy > 0) {
+              collision = "top";
+              //Move the rectangle out of the collision
+              r1.y = r1.y + overlapY;
+            } else {
+              collision = "bottom";
+              //Move the rectangle out of the collision
+              r1.y = r1.y - overlapY;
+            }
+
+            //Bounce
+            if (bounce) {
+              r1.vy *= -1;
+
+              /*Alternative
+              //Find the bounce surface's vx and vy properties
+              var s = {};
+              s.vx = r2.x - r2.x + r2.width;
+              s.vy = 0;
+               //Bounce r1 off the surface
+              //bounceOffSurface(r1, s);
+              */
+            }
+          } else {
+            //The collision is happening on the Y axis
+            //But on which side? vx can tell us
+
+            if (vx > 0) {
+              collision = "left";
+              //Move the rectangle out of the collision
+              r1.x = r1.x + overlapX;
+            } else {
+              collision = "right";
+              //Move the rectangle out of the collision
+              r1.x = r1.x - overlapX;
+            }
+
+            //Bounce
+            if (bounce) {
+              r1.vx *= -1;
+
+              /*Alternative
+              //Find the bounce surface's vx and vy properties
+              var s = {};
+              s.vx = 0;
+              s.vy = r2.y - r2.y + r2.height;
+               //Bounce r1 off the surface
+              bounceOffSurface(r1, s);
+              */
+            }
+          }
+        } else {}
+      } else {}
+
+      //Return the collision string. it will be either "top", "right",
+      //"bottom", or "left" depending on which side of r1 is touching r2.
+      return collision;
+    }
+  }, {
+    key: "hitTestRectangle",
+
+    /*
+    hitTestRectangle
+    ----------------
+     Use it to find out if two rectangular sprites are touching.
+    Parameters: 
+    a. A sprite object with `centerX`, `centerY`, `halfWidth` and `halfHeight` properties.
+    b. A sprite object with `centerX`, `centerY`, `halfWidth` and `halfHeight` properties.
+     */
+
+    value: function hitTestRectangle(r1, r2) {
+      var global = arguments[2] === undefined ? false : arguments[2];
+
+      //Add collision properties
+      if (!r1._bumpPropertiesAdded) this.addCollisionProperties(r1);
+      if (!r2._bumpPropertiesAdded) this.addCollisionProperties(r2);
+
+      var hit = undefined,
+          combinedHalfWidths = undefined,
+          combinedHalfHeights = undefined,
+          vx = undefined,
+          vy = undefined;
+
+      //A variable to determine whether there's a collision
+      hit = false;
+
+      //Calculate the distance vector
+      if (global) {
+        vx = r1.gx + r1.halfWidth - (r2.gx + r2.halfWidth);
+        vy = r1.gy + r1.halfHeight - (r2.gy + r2.halfHeight);
+      } else {
+        vx = r1.centerX - r2.centerX;
+        vy = r1.centerY - r2.centerY;
+      }
+
+      //Figure out the combined half-widths and half-heights
+      combinedHalfWidths = r1.halfWidth + r2.halfWidth;
+      combinedHalfHeights = r1.halfHeight + r2.halfHeight;
+
+      //Check for a collision on the x axis
+      if (Math.abs(vx) < combinedHalfWidths) {
+
+        //A collision might be occuring. Check for a collision on the y axis
+        if (Math.abs(vy) < combinedHalfHeights) {
+
+          //There's definitely a collision happening
+          hit = true;
+        } else {
+
+          //There's no collision on the y axis
+          hit = false;
+        }
+      } else {
+
+        //There's no collision on the x axis
+        hit = false;
+      }
+
+      //`hit` will be either `true` or `false`
+      return hit;
+    }
+  }, {
+    key: "hitTestCircleRectangle",
+
+    /*
+    hitTestCircleRectangle
+    ----------------
+     Use it to find out if a circular shape is touching a rectangular shape
+    Parameters: 
+    a. A sprite object with `centerX`, `centerY`, `halfWidth` and `halfHeight` properties.
+    b. A sprite object with `centerX`, `centerY`, `halfWidth` and `halfHeight` properties.
+     */
+
+    value: function hitTestCircleRectangle(c1, r1) {
+      var global = arguments[2] === undefined ? false : arguments[2];
+
+      //Add collision properties
+      if (!r1._bumpPropertiesAdded) this.addCollisionProperties(r1);
+      if (!c1._bumpPropertiesAdded) this.addCollisionProperties(c1);
+
+      var region = undefined,
+          collision = undefined,
+          c1x = undefined,
+          c1y = undefined,
+          r1x = undefined,
+          r1y = undefined;
+
+      //Use either global or local coordinates
+      if (global) {
+        c1x = c1.gx;
+        c1y = c1.gy;
+        r1x = r1.gx;
+        r1y = r1.gy;
+      } else {
+        c1x = c1.x;
+        c1y = c1.y;
+        r1x = r1.x;
+        r1y = r1.y;
+      }
+
+      //Is the circle above the rectangle's top edge?
+      if (c1y < r1y - r1.halfHeight) {
+
+        //If it is, we need to check whether it's in the
+        //top left, top center or top right
+        //(Increasing the size of the region by 2 pixels slightly weights
+        //the text in favor of a rectangle vs. rectangle collision test.
+        //This gives a more natural looking result with corner collisions
+        //when physics is added)
+        if (c1x < r1x - 1 - r1.halfWidth) {
+          region = "topLeft";
+        } else if (c1x > r1x + 1 + r1.halfWidth) {
+          region = "topRight";
+        } else {
+          region = "topMiddle";
+        }
+      }
+
+      //The circle isn't above the top edge, so it might be
+      //below the bottom edge
+      else if (c1y > r1y + r1.halfHeight) {
+
+        //If it is, we need to check whether it's in the bottom left,
+        //bottom center, or bottom right
+        if (c1x < r1x - 1 - r1.halfWidth) {
+          region = "bottomLeft";
+        } else if (c1x > r1x + 1 + r1.halfWidth) {
+          region = "bottomRight";
+        } else {
+          region = "bottomMiddle";
+        }
+      }
+
+      //The circle isn't above the top edge or below the bottom edge,
+      //so it must be on the left or right side
+      else {
+        if (c1x < r1x - r1.halfWidth) {
+          region = "leftMiddle";
+        } else {
+          region = "rightMiddle";
+        }
+      }
+
+      //Is this the circle touching the flat sides
+      //of the rectangle?
+      if (region === "topMiddle" || region === "bottomMiddle" || region === "leftMiddle" || region === "rightMiddle") {
+
+        //Yes, it is, so do a standard rectangle vs. rectangle collision test
+        collision = hitTestRectangle(c1, r1, global);
+      }
+
+      //The circle is touching one of the corners, so do a
+      //circle vs. point collision test
+      else {
+        var point = {};
+
+        switch (region) {
+          case "topLeft":
+            point.x = r1x;
+            point.y = r1y;
+            break;
+
+          case "topRight":
+            point.x = r1x + r1.width;
+            point.y = r1y;
+            break;
+
+          case "bottomLeft":
+            point.x = r1x;
+            point.y = r1y + r1.height;
+            break;
+
+          case "bottomRight":
+            point.x = r1x + r1.width;
+            point.y = r1y + r1.height;
+        }
+
+        //Check for a collision between the circle and the point
+        collision = hitTestCirclePoint(c1, point, global);
+      }
+
+      //Return the result of the collision.
+      //The return value will be `undefined` if there's no collision
+      if (collision) {
+        return region;
+      } else {
+        return collision;
+      }
+    }
+  }, {
+    key: "hitTestCirclePoint",
+
+    /*
+    hitTestCirclePoint
+    ------------------
+     Use it to find out if a circular shape is touching a point
+    Parameters: 
+    a. A sprite object with `centerX`, `centerY`, and `radius` properties.
+    b. A point object with `x` and `y` properties.
+     */
+
+    value: function hitTestCirclePoint(c1, point) {
+      var global = arguments[2] === undefined ? false : arguments[2];
+
+      //Add collision properties
+      if (!c1._bumpPropertiesAdded) this.addCollisionProperties(c1);
+
+      //A point is just a circle with a diameter of
+      //1 pixel, so we can cheat. All we need to do is an ordinary circle vs. circle
+      //Collision test. Just supply the point with the properties
+      //it needs
+      point.diameter = 1;
+      point.radius = 0.5;
+      point.centerX = point.x;
+      point.centerY = point.y;
+      point.gx = point.x;
+      point.gy = point.y;
+      return hitTestCircle(c1, point, global);
+    }
+  }, {
+    key: "circleRectangleCollision",
+
+    /*
+    circleRectangleCollision
+    ------------------------
+     Use it to bounce a circular shape off a rectangular shape
+    Parameters: 
+    a. A sprite object with `centerX`, `centerY`, `halfWidth` and `halfHeight` properties.
+    b. A sprite object with `centerX`, `centerY`, `halfWidth` and `halfHeight` properties.
+     */
+
+    value: function circleRectangleCollision(c1, r1) {
+      var bounce = arguments[2] === undefined ? false : arguments[2];
+      var global = arguments[3] === undefined ? false : arguments[3];
+
+      //Add collision properties
+      if (!r1._bumpPropertiesAdded) this.addCollisionProperties(r1);
+      if (!c1._bumpPropertiesAdded) this.addCollisionProperties(c1);
+
+      var region = undefined,
+          collision = undefined,
+          c1x = undefined,
+          c1y = undefined,
+          r1x = undefined,
+          r1y = undefined;
+
+      //Use either the global or local coordinates
+      if (global) {
+        c1x = c1.gx;
+        c1y = c1.gy;
+        r1x = r1.gx;
+        r1y = r1.gy;
+      } else {
+        c1x = c1.x;
+        c1y = c1.y;
+        r1x = r1.x;
+        r1y = r1.y;
+      }
+
+      //Is the circle above the rectangle's top edge?
+      if (c1y < r1y - r1.halfHeight) {
+        //If it is, we need to check whether it's in the
+        //top left, top center or top right
+        if (c1x < r1x - 1 - r1.halfWidth) {
+          region = "topLeft";
+        } else if (c1x > r1x + 1 + r1.halfWidth) {
+          region = "topRight";
+        } else {
+          region = "topMiddle";
+        }
+      }
+
+      //The circle isn't above the top edge, so it might be
+      //below the bottom edge
+      else if (c1y > r1y + r1.halfHeight) {
+        //If it is, we need to check whether it's in the bottom left,
+        //bottom center, or bottom right
+        if (c1x < r1x - 1 - r1.halfWidth) {
+          region = "bottomLeft";
+        } else if (c1x > r1x + 1 + r1.halfWidth) {
+          region = "bottomRight";
+        } else {
+          region = "bottomMiddle";
+        }
+      }
+
+      //The circle isn't above the top edge or below the bottom edge,
+      //so it must be on the left or right side
+      else {
+        if (c1x < r1x - r1.halfWidth) {
+          region = "leftMiddle";
+        } else {
+          region = "rightMiddle";
+        }
+      }
+
+      //Is this the circle touching the flat sides
+      //of the rectangle?
+      if (region === "topMiddle" || region === "bottomMiddle" || region === "leftMiddle" || region === "rightMiddle") {
+
+        //Yes, it is, so do a standard rectangle vs. rectangle collision test
+        collision = rectangleCollision(c1, r1, bounce, global);
+      }
+
+      //The circle is touching one of the corners, so do a
+      //circle vs. point collision test
+      else {
+        var point = {};
+
+        switch (region) {
+          case "topLeft":
+            point.x = r1x;
+            point.y = r1y;
+            break;
+
+          case "topRight":
+            point.x = r1x + r1.width;
+            point.y = r1y;
+            break;
+
+          case "bottomLeft":
+            point.x = r1x;
+            point.y = r1y + r1.height;
+            break;
+
+          case "bottomRight":
+            point.x = r1x + r1.width;
+            point.y = r1y + r1.height;
+        }
+
+        //Check for a collision between the circle and the point
+        collision = circlePointCollision(c1, point, bounce, global);
+      }
+
+      if (collision) {
+        return region;
+      } else {
+        return collision;
+      }
+    }
+  }, {
+    key: "circlePointCollision",
+
+    /*
+    circlePointCollision
+    --------------------
+     Use it to boucnce a circle off a point.
+    Parameters: 
+    a. A sprite object with `centerX`, `centerY`, and `radius` properties.
+    b. A point object with `x` and `y` properties.
+     */
+
+    value: function circlePointCollision(c1, point) {
+      var bounce = arguments[2] === undefined ? false : arguments[2];
+      var global = arguments[3] === undefined ? false : arguments[3];
+
+      //Add collision properties
+      if (!c1._bumpPropertiesAdded) this.addCollisionProperties(c1);
+
+      //A point is just a circle with a diameter of
+      //1 pixel, so we can cheat. All we need to do is an ordinary circle vs. circle
+      //Collision test. Just supply the point with the properties
+      //it needs
+      point.diameter = 1;
+      point.radius = 0.5;
+      point.centerX = point.x;
+      point.centerY = point.y;
+      point.gx = point.x;
+      point.gy = point.y;
+      return circleCollision(c1, point, bounce, global);
+    }
+  }, {
+    key: "bounceOffSurface",
+
+    /*
+    bounceOffSurface
+    ----------------
+     Use this to bounce an object off another object.
+    Parameters: 
+    a. An object with `v.x` and `v.y` properties. This represents the object that is colliding
+    with a surface.
+    b. An object with `x` and `y` properties. This represents the surface that the object
+    is colliding into.
+    The first object can optionally have a mass property that's greater than 1. The mass will
+    be used to dampen the bounce effect.
+    */
+
+    value: function bounceOffSurface(o, s) {
+
+      //Add collision properties
+      if (!o._bumpPropertiesAdded) this.addCollisionProperties(o);
+
+      var dp1 = undefined,
+          dp2 = undefined,
+          p1 = {},
+          p2 = {},
+          bounce = {},
+          mass = o.mass || 1;
+
+      //1. Calculate the collision surface's properties
+      //Find the surface vector's left normal
+      s.lx = s.y;
+      s.ly = -s.x;
+
+      //Find its magnitude
+      s.magnitude = Math.sqrt(s.x * s.x + s.y * s.y);
+
+      //Find its normalized values
+      s.dx = s.x / s.magnitude;
+      s.dy = s.y / s.magnitude;
+
+      //2. Bounce the object (o) off the surface (s)
+
+      //Find the dot product between the object and the surface
+      dp1 = o.vx * s.dx + o.vy * s.dy;
+
+      //Project the object's velocity onto the collision surface
+      p1.vx = dp1 * s.dx;
+      p1.vy = dp1 * s.dy;
+
+      //Find the dot product of the object and the surface's left normal (s.lx and s.ly)
+      dp2 = o.vx * (s.lx / s.magnitude) + o.vy * (s.ly / s.magnitude);
+
+      //Project the object's velocity onto the surface's left normal
+      p2.vx = dp2 * (s.lx / s.magnitude);
+      p2.vy = dp2 * (s.ly / s.magnitude);
+
+      //Reverse the projection on the surface's left normal
+      p2.vx *= -1;
+      p2.vy *= -1;
+
+      //Add up the projections to create a new bounce vector
+      bounce.x = p1.vx + p2.vx;
+      bounce.y = p1.vy + p2.vy;
+
+      //Assign the bounce vector to the object's velocity
+      //with optional mass to dampen the effect
+      o.vx = bounce.x / mass;
+      o.vy = bounce.y / mass;
+    }
+  }, {
+    key: "contain",
+
+    /*
+    contain
+    -------
+    `contain` can be used to contain a sprite with `x` and
+    `y` properties inside a rectangular area.
+     The `contain` function takes two arguments: a sprite with `x` and `y`
+    properties, and an object literal with `x`, `y`, `width` and `height` properties.
+    ```js
+    contain(anySprite, {x: 0, y: 0, width: 512, height: 512});
+    ```
+    The code above will contain the sprite's position inside the 512 by
+    512 pixel area defined by the object. For example, you could contain
+    the a sprite inside a 512 by 512 area like this:
+     If the sprite bumps into any of the containing object's boundaries,
+    the `contain` function will return a value that tells you which side
+    the sprite bumped into: “left”, “top”, “right” or “bottom”. Here's how
+    you could keep the sprite contained and also find out which boundary
+    it hit:
+    ```js
+    //Contain the sprite and find the collision value
+    let collision = contain(anySprite, {x: 0, y: 0, width: 512, height: 512});
+     //If there's a collision, display the boundary that the collision happened on
+    if(collision) {
+      if collision.has("left") console.log("The sprite hit the left");  
+      if collision.has("top") console.log("The sprite hit the top");  
+      if collision.has("right") console.log("The sprite hit the right");  
+      if collision.has("bottom") console.log("The sprite hit the bottom");  
+    }
+    ```
+    If the sprite doesn't hit a boundary, the value of
+    `collision` will be `undefined`. 
+    */
+
+    value: function contain(sprite, container) {
+
+      //Create a set called `collision` to keep track of the
+      //boundaries with which the sprite is colliding
+      var collision = new Set();
+
+      //Left
+      if (sprite.x < container.x) {
+        sprite.x = container.x;
+        collision.add("left");
+      }
+
+      //Top
+      if (sprite.y < container.y) {
+        sprite.y = container.y;
+        collision.add("top");
+      }
+
+      //Right
+      if (sprite.x + sprite.width > container.width) {
+        sprite.x = container.width - sprite.width;
+        collision.add("right");
+      }
+
+      //Bottom
+      if (sprite.y + sprite.height > container.height) {
+        sprite.y = container.height - sprite.height;
+        collision.add("bottom");
+      }
+
+      //If there were no collisions, set `collision` to `undefined`
+      if (collision.size === 0) collision = undefined;
+
+      //Return the `collision` value
+      return collision;
+    }
+  }, {
+    key: "hit",
+
+    /*
+    hit
+    ---
+    A convenient universal collision function to test for collisions
+    between rectangles, circles, and points.
+    */
+
+    value: function hit(a, b, react, bounce, global) {
+      if (react === undefined) react = false;
+      if (bounce === undefined) bounce = false;
+      var extra = arguments[5] === undefined ? undefined : arguments[5];
+
+      //Local references to bump's collision methods
+      var hitTestPoint = this.hitTestPoint.bind(this),
+          hitTestRectangle = this.hitTestRectangle.bind(this),
+          hitTestCircle = this.hitTestCircle.bind(this),
+          movingCircleCollision = this.movingCircleCollision.bind(this),
+          circleCollision = this.circleCollision.bind(this),
+          hitTestCircleRectangle = this.hitTestCircleRectangle.bind(this),
+          circleRectangleCollision = this.circleRectangleCollision.bind(this);
+
+      var collision = undefined,
+          aIsASprite = a.parent !== undefined,
+          bIsASprite = b.parent !== undefined;
+
+      //Check to make sure one of the arguments isn't an array
+      if (aIsASprite && b instanceof Array || bIsASprite && a instanceof Array) {
+        //If it is, check for a collision between a sprite and an array
+        spriteVsArray();
+      } else {
+        //If one of the arguments isn't an array, find out what type of
+        //collision check to run
+        collision = findCollisionType(a, b);
+        if (collision && extra) extra(collision);
+      }
+
+      //Return the result of the collision.
+      //It will be `undefined` if there's no collision and `true` if
+      //there is a collision. `rectangleCollision` sets `collsision` to
+      //"top", "bottom", "left" or "right" depeneding on which side the
+      //collision is occuring on
+      return collision;
+
+      function findCollisionType(a, b) {
+        //Are `a` and `b` both sprites?
+        //(We have to check again if this function was called from
+        //`spriteVsArray`)
+        var aIsASprite = a.parent !== undefined;
+        var bIsASprite = b.parent !== undefined;
+
+        if (aIsASprite && bIsASprite) {
+          //Yes, but what kind of sprites?
+          if (a.diameter && b.diameter) {
+            //They're circles
+            return circleVsCircle(a, b);
+          } else if (a.diameter && !b.diameter) {
+            //The first one is a circle and the second is a rectangle
+            return circleVsRectangle(a, b);
+          } else {
+            //They're rectangles
+            return rectangleVsRectangle(a, b);
+          }
+        }
+        //They're not both sprites, so what are they?
+        //Is `a` not a sprite and does it have x and y properties?
+        else if (bIsASprite && !(a.x === undefined) && !(a.y === undefined)) {
+          //Yes, so this is a point vs. sprite collision test
+          return hitTestPoint(a, b);
+        } else {
+          //The user is trying to test some incompatible objects
+          throw new Error("I'm sorry, " + a + " and " + b + " cannot be use together in a collision test.'");
+        }
+      }
+
+      function spriteVsArray() {
+        //If `a` happens to be the array, flip it around so that it becomes `b`
+        if (a instanceof Array) {
+          var _ref = [_b, _a];
+          var _a = _ref[0];
+          var _b = _ref[1];
+        }
+        //Loop through the array in reverse
+        for (var i = b.length - 1; i >= 0; i--) {
+          var sprite = b[i];
+          collision = findCollisionType(a, sprite);
+          if (collision && extra) extra(collision, sprite);
+        }
+      }
+
+      function circleVsCircle(a, b) {
+        //If the circles shouldn't react to the collision,
+        //just test to see if they're touching
+        if (!react) {
+          return hitTestCircle(a, b);
+        }
+        //Yes, the circles should react to the collision
+        else {
+          //Are they both moving?
+          if (a.vx + a.vy !== 0 && b.vx + b.vy !== 0) {
+            //Yes, they are both moving
+            //(moving circle collisions always bounce apart so there's
+            //no need for the third, `bounce`, argument)
+            return movingCircleCollision(a, b, global);
+          } else {
+            //No, they're not both moving
+            return circleCollision(a, b, bounce, global);
+          }
+        }
+      }
+
+      function rectangleVsRectangle(a, b) {
+        //If the rectangles shouldn't react to the collision, just
+        //test to see if they're touching
+        if (!react) {
+          return hitTestRectangle(a, b, global);
+        } else {
+          return rectangleCollision(a, b, bounce, global);
+        }
+      }
+
+      function circleVsRectangle(a, b) {
+        //If the rectangles shouldn't react to the collision, just
+        //test to see if they're touching
+        if (!react) {
+          return hitTestCircleRectangle(a, b, global);
+        } else {
+          return circleRectangleCollision(a, b, bounce, global);
+        }
+      }
+    }
+  }]);
+
+  return Bump;
+})();
+
+//No collision
+
+//No collision
+//# sourceMappingURL=bump.js.map"use strict";
+
+var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+
+function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) arr2[i] = arr[i]; return arr2; } else { return Array.from(arr); } }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var Charm = (function () {
+  function Charm() {
+    var _this = this;
+
+    var renderingEngine = arguments[0] === undefined ? PIXI : arguments[0];
+
+    _classCallCheck(this, Charm);
+
+    if (renderingEngine === undefined) throw new Error("Please assign a rendering engine in the constructor before using charm.js");
+
+    //Find out which rendering engine is being used (the default is Pixi)
+    this.renderer = "";
+
+    //If the `renderingEngine` is Pixi, set up Pixi object aliases
+    if (renderingEngine.ParticleContainer && renderingEngine.Sprite) {
+      this.renderer = "pixi";
+    }
+
+    //An array to store the global tweens
+    this.globalTweens = [];
+
+    //An object that stores all the easing formulas
+    this.easingFormulas = {
+
+      //Linear
+      linear: function linear(x) {
+        return x;
+      },
+
+      //Smoothstep
+      smoothstep: function smoothstep(x) {
+        return x * x * (3 - 2 * x);
+      },
+      smoothstepSquared: function smoothstepSquared(x) {
+        return Math.pow(x * x * (3 - 2 * x), 2);
+      },
+      smoothstepCubed: function smoothstepCubed(x) {
+        return Math.pow(x * x * (3 - 2 * x), 3);
+      },
+
+      //Acceleration
+      acceleration: function acceleration(x) {
+        return x * x;
+      },
+      accelerationCubed: function accelerationCubed(x) {
+        return Math.pow(x * x, 3);
+      },
+
+      //Deceleration
+      deceleration: function deceleration(x) {
+        return 1 - Math.pow(1 - x, 2);
+      },
+      decelerationCubed: function decelerationCubed(x) {
+        return 1 - Math.pow(1 - x, 3);
+      },
+
+      //Sine
+      sine: function sine(x) {
+        return Math.sin(x * Math.PI / 2);
+      },
+      sineSquared: function sineSquared(x) {
+        return Math.pow(Math.sin(x * Math.PI / 2), 2);
+      },
+      sineCubed: function sineCubed(x) {
+        return Math.pow(Math.sin(x * Math.PI / 2), 2);
+      },
+      inverseSine: function inverseSine(x) {
+        return 1 - Math.sin((1 - x) * Math.PI / 2);
+      },
+      inverseSineSquared: function inverseSineSquared(x) {
+        return 1 - Math.pow(Math.sin((1 - x) * Math.PI / 2), 2);
+      },
+      inverseSineCubed: function inverseSineCubed(x) {
+        return 1 - Math.pow(Math.sin((1 - x) * Math.PI / 2), 3);
+      },
+
+      //Spline
+      spline: function spline(t, p0, p1, p2, p3) {
+        return 0.5 * (2 * p1 + (-p0 + p2) * t + (2 * p0 - 5 * p1 + 4 * p2 - p3) * t * t + (-p0 + 3 * p1 - 3 * p2 + p3) * t * t * t);
+      },
+
+      //Bezier curve
+      cubicBezier: function cubicBezier(t, a, b, c, d) {
+        var t2 = t * t;
+        var t3 = t2 * t;
+        return a + (-a * 3 + t * (3 * a - a * t)) * t + (3 * b + t * (-6 * b + b * 3 * t)) * t + (c * 3 - c * 3 * t) * t2 + d * t3;
+      }
+    };
+
+    //Add `scaleX` and `scaleY` properties to Pixi sprites
+    this._addScaleProperties = function (sprite) {
+      if (_this.renderer === "pixi") {
+        if (!sprite.scaleX && sprite.scale.x) {
+          Object.defineProperty(sprite, "scaleX", {
+            get: function get() {
+              return sprite.scale.x;
+            },
+            set: function set(value) {
+              sprite.scale.x = value;
+            }
+          });
+        }
+        if (!sprite.scaleY && sprite.scale.y) {
+          Object.defineProperty(sprite, "scaleY", {
+            get: function get() {
+              return sprite.scale.y;
+            },
+            set: function set(value) {
+              sprite.scale.y = value;
+            }
+          });
+        }
+      }
+    };
+  }
+
+  _createClass(Charm, [{
+    key: "tweenProperty",
+
+    //The low level `tweenProperty` function is used as the foundation
+    //for the the higher level tween methods.
+    value: function tweenProperty(sprite, //Sprite object
+    property, //String property
+    startValue, //Tween start value
+    endValue, //Tween end value
+    totalFrames) {
+      var type = arguments[5] === undefined ? "smoothstep" : arguments[5];
+
+      var _this2 = this;
+
+      var yoyo = arguments[6] === undefined ? false : arguments[6];
+      var delayBeforeRepeat = arguments[7] === undefined ? 0 //Delay in frames before repeating
+      : arguments[7];
+
+      //Create the tween object
+      var o = {};
+
+      //If the tween is a bounce type (a spline), set the
+      //start and end magnitude values
+      var typeArray = type.split(" ");
+      if (typeArray[0] === "bounce") {
+        o.startMagnitude = parseInt(typeArray[1]);
+        o.endMagnitude = parseInt(typeArray[2]);
+      }
+
+      //Use `o.start` to make a new tween using the current
+      //end point values
+      o.start = function (startValue, endValue) {
+
+        //Clone the start and end values so that any possible references to sprite
+        //properties are converted to ordinary numbers
+        o.startValue = JSON.parse(JSON.stringify(startValue));
+        o.endValue = JSON.parse(JSON.stringify(endValue));
+        o.playing = true;
+        o.totalFrames = totalFrames;
+        o.frameCounter = 0;
+
+        //Add the tween to the global `tweens` array. The `tweens` array is
+        //updated on each frame
+        _this2.globalTweens.push(o);
+      };
+
+      //Call `o.start` to start the tween
+      o.start(startValue, endValue);
+
+      //The `update` method will be called on each frame by the game loop.
+      //This is what makes the tween move
+      o.update = function () {
+
+        var time = undefined,
+            curvedTime = undefined;
+
+        if (o.playing) {
+
+          //If the elapsed frames are less than the total frames,
+          //use the tweening formulas to move the sprite
+          if (o.frameCounter < o.totalFrames) {
+
+            //Find the normalized value
+            var normalizedTime = o.frameCounter / o.totalFrames;
+
+            //Select the correct easing function from the
+            //`ease` object’s library of easing functions
+
+            //If it's not a spline, use one of the ordinary easing functions
+            if (typeArray[0] !== "bounce") {
+              curvedTime = _this2.easingFormulas[type](normalizedTime);
+            }
+
+            //If it's a spline, use the `spline` function and apply the
+            //2 additional `type` array values as the spline's start and
+            //end points
+            else {
+              curvedTime = _this2.easingFormulas.spline(normalizedTime, o.startMagnitude, 0, 1, o.endMagnitude);
+            }
+
+            //Interpolate the sprite's property based on the curve
+            sprite[property] = o.endValue * curvedTime + o.startValue * (1 - curvedTime);
+
+            o.frameCounter += 1;
+          }
+
+          //When the tween has finished playing, run the end tasks
+          else {
+            o.end();
+          }
+        }
+      };
+
+      //The `end` method will be called when the tween is finished
+      o.end = function () {
+
+        //Set `playing` to `false`
+        o.playing = false;
+
+        //Call the tween's `onComplete` method, if it's been assigned
+        if (o.onComplete) o.onComplete();
+
+        //Remove the tween from the `tweens` array
+        _this2.globalTweens.splice(_this2.globalTweens.indexOf(o), 1);
+
+        //If the tween's `yoyo` property is `true`, create a new tween
+        //using the same values, but use the current tween's `startValue`
+        //as the next tween's `endValue`
+        if (yoyo) {
+          _this2.wait(delayBeforeRepeat).then(function () {
+            o.start(o.endValue, o.startValue);
+          });
+        }
+      };
+
+      //Pause and play methods
+      o.play = function () {
+        return o.playing = true;
+      };
+      o.pause = function () {
+        return o.playing = false;
+      };
+
+      //Return the tween object
+      return o;
+    }
+  }, {
+    key: "makeTween",
+
+    //`makeTween` is a general low-level method for making complex tweens
+    //out of multiple `tweenProperty` functions. Its one argument,
+    //`tweensToAdd` is an array containing multiple `tweenProperty` calls
+
+    value: function makeTween(tweensToAdd) {
+      var _this3 = this;
+
+      //Create an object to manage the tweens
+      var o = {};
+
+      //Create a `tweens` array to store the new tweens
+      o.tweens = [];
+
+      //Make a new tween for each array
+      tweensToAdd.forEach(function (tweenPropertyArguments) {
+
+        //Use the tween property arguments to make a new tween
+        var newTween = _this3.tweenProperty.apply(_this3, _toConsumableArray(tweenPropertyArguments));
+
+        //Push the new tween into this object's internal `tweens` array
+        o.tweens.push(newTween);
+      });
+
+      //Add a counter to keep track of the
+      //number of tweens that have completed their actions
+      var completionCounter = 0;
+
+      //`o.completed` will be called each time one of the tweens
+      //finishes
+      o.completed = function () {
+
+        //Add 1 to the `completionCounter`
+        completionCounter += 1;
+
+        //If all tweens have finished, call the user-defined `onComplete`
+        //method, if it's been assigned. Reset the `completionCounter`
+        if (completionCounter === o.tweens.length) {
+          if (o.onComplete) o.onComplete();
+          completionCounter = 0;
+        }
+      };
+
+      //Add `onComplete` methods to all tweens
+      o.tweens.forEach(function (tween) {
+        tween.onComplete = function () {
+          return o.completed();
+        };
+      });
+
+      //Add pause and play methods to control all the tweens
+      o.pause = function () {
+        o.tweens.forEach(function (tween) {
+          tween.playing = false;
+        });
+      };
+      o.play = function () {
+        o.tweens.forEach(function (tween) {
+          tween.playing = true;
+        });
+      };
+
+      //Return the tween object
+      return o;
+    }
+  }, {
+    key: "fadeOut",
+
+    /* High level tween methods */
+
+    //1. Simple tweens
+
+    //`fadeOut`
+    value: function fadeOut(sprite) {
+      var frames = arguments[1] === undefined ? 60 : arguments[1];
+
+      return this.tweenProperty(sprite, "alpha", sprite.alpha, 0, frames, "sine");
+    }
+  }, {
+    key: "fadeIn",
+
+    //`fadeIn`
+    value: function fadeIn(sprite) {
+      var frames = arguments[1] === undefined ? 60 : arguments[1];
+
+      return this.tweenProperty(sprite, "alpha", sprite.alpha, 1, frames, "sine");
+    }
+  }, {
+    key: "pulse",
+
+    //`pulse`
+    //Fades the sprite in and out at a steady rate.
+    //Set the `minAlpha` to something greater than 0 if you
+    //don't want the sprite to fade away completely
+    value: function pulse(sprite) {
+      var frames = arguments[1] === undefined ? 60 : arguments[1];
+      var minAlpha = arguments[2] === undefined ? 0 : arguments[2];
+
+      return this.tweenProperty(sprite, "alpha", sprite.alpha, minAlpha, frames, "smoothstep", true);
+    }
+  }, {
+    key: "slide",
+
+    //2. Complex tweens
+
+    value: function slide(sprite, endX, endY) {
+      var frames = arguments[3] === undefined ? 60 : arguments[3];
+      var type = arguments[4] === undefined ? "smoothstep" : arguments[4];
+      var yoyo = arguments[5] === undefined ? false : arguments[5];
+      var delayBeforeRepeat = arguments[6] === undefined ? 0 : arguments[6];
+
+      return this.makeTween([
+
+      //Create the x axis tween
+      [sprite, "x", sprite.x, endX, frames, type, yoyo, delayBeforeRepeat],
+
+      //Create the y axis tween
+      [sprite, "y", sprite.y, endY, frames, type, yoyo, delayBeforeRepeat]]);
+    }
+  }, {
+    key: "breathe",
+    value: function breathe(sprite) {
+      var endScaleX = arguments[1] === undefined ? 0.8 : arguments[1];
+      var endScaleY = arguments[2] === undefined ? 0.8 : arguments[2];
+      var frames = arguments[3] === undefined ? 60 : arguments[3];
+      var yoyo = arguments[4] === undefined ? true : arguments[4];
+      var delayBeforeRepeat = arguments[5] === undefined ? 0 : arguments[5];
+
+      //Add `scaleX` and `scaleY` properties to Pixi sprites
+      this._addScaleProperties(sprite);
+
+      return this.makeTween([
+
+      //Create the scaleX tween
+      [sprite, "scaleX", sprite.scaleX, endScaleX, frames, "smoothstepSquared", yoyo, delayBeforeRepeat],
+
+      //Create the scaleY tween
+      [sprite, "scaleY", sprite.scaleY, endScaleY, frames, "smoothstepSquared", yoyo, delayBeforeRepeat]]);
+    }
+  }, {
+    key: "scale",
+    value: function scale(sprite) {
+      var endScaleX = arguments[1] === undefined ? 0.5 : arguments[1];
+      var endScaleY = arguments[2] === undefined ? 0.5 : arguments[2];
+      var frames = arguments[3] === undefined ? 60 : arguments[3];
+
+      //Add `scaleX` and `scaleY` properties to Pixi sprites
+      this._addScaleProperties(sprite);
+
+      return this.makeTween([
+
+      //Create the scaleX tween
+      [sprite, "scaleX", sprite.scaleX, endScaleX, frames, "smoothstep", false],
+
+      //Create the scaleY tween
+      [sprite, "scaleY", sprite.scaleY, endScaleY, frames, "smoothstep", false]]);
+    }
+  }, {
+    key: "strobe",
+    value: function strobe(sprite) {
+      var scaleFactor = arguments[1] === undefined ? 1.3 : arguments[1];
+      var startMagnitude = arguments[2] === undefined ? 10 : arguments[2];
+      var endMagnitude = arguments[3] === undefined ? 20 : arguments[3];
+      var frames = arguments[4] === undefined ? 10 : arguments[4];
+      var yoyo = arguments[5] === undefined ? true : arguments[5];
+      var delayBeforeRepeat = arguments[6] === undefined ? 0 : arguments[6];
+
+      var bounce = "bounce " + startMagnitude + " " + endMagnitude;
+
+      //Add `scaleX` and `scaleY` properties to Pixi sprites
+      this._addScaleProperties(sprite);
+
+      return this.makeTween([
+
+      //Create the scaleX tween
+      [sprite, "scaleX", sprite.scaleX, scaleFactor, frames, bounce, yoyo, delayBeforeRepeat],
+
+      //Create the scaleY tween
+      [sprite, "scaleY", sprite.scaleY, scaleFactor, frames, bounce, yoyo, delayBeforeRepeat]]);
+    }
+  }, {
+    key: "wobble",
+    value: function wobble(sprite) {
+      var scaleFactorX = arguments[1] === undefined ? 1.2 : arguments[1];
+      var scaleFactorY = arguments[2] === undefined ? 1.2 : arguments[2];
+      var frames = arguments[3] === undefined ? 10 : arguments[3];
+      var xStartMagnitude = arguments[4] === undefined ? 10 : arguments[4];
+      var xEndMagnitude = arguments[5] === undefined ? 10 : arguments[5];
+      var yStartMagnitude = arguments[6] === undefined ? -10 : arguments[6];
+      var yEndMagnitude = arguments[7] === undefined ? -10 : arguments[7];
+      var friction = arguments[8] === undefined ? 0.98 : arguments[8];
+
+      var _this4 = this;
+
+      var yoyo = arguments[9] === undefined ? true : arguments[9];
+      var delayBeforeRepeat = arguments[10] === undefined ? 0 : arguments[10];
+
+      var bounceX = "bounce " + xStartMagnitude + " " + xEndMagnitude;
+      var bounceY = "bounce " + yStartMagnitude + " " + yEndMagnitude;
+
+      //Add `scaleX` and `scaleY` properties to Pixi sprites
+      this._addScaleProperties(sprite);
+
+      var o = this.makeTween([
+
+      //Create the scaleX tween
+      [sprite, "scaleX", sprite.scaleX, scaleFactorX, frames, bounceX, yoyo, delayBeforeRepeat],
+
+      //Create the scaleY tween
+      [sprite, "scaleY", sprite.scaleY, scaleFactorY, frames, bounceY, yoyo, delayBeforeRepeat]]);
+
+      //Add some friction to the `endValue` at the end of each tween
+      o.tweens.forEach(function (tween) {
+        tween.onComplete = function () {
+
+          //Add friction if the `endValue` is greater than 1
+          if (tween.endValue > 1) {
+            tween.endValue *= friction;
+
+            //Set the `endValue` to 1 when the effect is finished and
+            //remove the tween from the global `tweens` array
+            if (tween.endValue <= 1) {
+              tween.endValue = 1;
+              _this4.removeTween(tween);
+            }
+          }
+        };
+      });
+
+      return o;
+    }
+  }, {
+    key: "followCurve",
+
+    //3. Motion path tweens
+
+    value: function followCurve(sprite, pointsArray, totalFrames) {
+      var type = arguments[3] === undefined ? "smoothstep" : arguments[3];
+
+      var _this5 = this;
+
+      var yoyo = arguments[4] === undefined ? false : arguments[4];
+      var delayBeforeRepeat = arguments[5] === undefined ? 0 : arguments[5];
+
+      //Create the tween object
+      var o = {};
+
+      //If the tween is a bounce type (a spline), set the
+      //start and end magnitude values
+      var typeArray = type.split(" ");
+      if (typeArray[0] === "bounce") {
+        o.startMagnitude = parseInt(typeArray[1]);
+        o.endMagnitude = parseInt(typeArray[2]);
+      }
+
+      //Use `tween.start` to make a new tween using the current
+      //end point values
+      o.start = function (pointsArray) {
+        o.playing = true;
+        o.totalFrames = totalFrames;
+        o.frameCounter = 0;
+
+        //Clone the points array
+        o.pointsArray = JSON.parse(JSON.stringify(pointsArray));
+
+        //Add the tween to the `globalTweens` array. The `globalTweens` array is
+        //updated on each frame
+        _this5.globalTweens.push(o);
+      };
+
+      //Call `tween.start` to start the first tween
+      o.start(pointsArray);
+
+      //The `update` method will be called on each frame by the game loop.
+      //This is what makes the tween move
+      o.update = function () {
+
+        var normalizedTime = undefined,
+            curvedTime = undefined,
+            p = o.pointsArray;
+
+        if (o.playing) {
+
+          //If the elapsed frames are less than the total frames,
+          //use the tweening formulas to move the sprite
+          if (o.frameCounter < o.totalFrames) {
+
+            //Find the normalized value
+            normalizedTime = o.frameCounter / o.totalFrames;
+
+            //Select the correct easing function
+
+            //If it's not a spline, use one of the ordinary tween
+            //functions
+            if (typeArray[0] !== "bounce") {
+              curvedTime = _this5.easingFormulas[type](normalizedTime);
+            }
+
+            //If it's a spline, use the `spline` function and apply the
+            //2 additional `type` array values as the spline's start and
+            //end points
+            else {
+              //curve = tweenFunction.spline(n, type[1], 0, 1, type[2]);
+              curvedTime = _this5.easingFormulas.spline(normalizedTime, o.startMagnitude, 0, 1, o.endMagnitude);
+            }
+
+            //Apply the Bezier curve to the sprite's position
+            sprite.x = _this5.easingFormulas.cubicBezier(curvedTime, p[0][0], p[1][0], p[2][0], p[3][0]);
+            sprite.y = _this5.easingFormulas.cubicBezier(curvedTime, p[0][1], p[1][1], p[2][1], p[3][1]);
+
+            //Add one to the `elapsedFrames`
+            o.frameCounter += 1;
+          }
+
+          //When the tween has finished playing, run the end tasks
+          else {
+            o.end();
+          }
+        }
+      };
+
+      //The `end` method will be called when the tween is finished
+      o.end = function () {
+
+        //Set `playing` to `false`
+        o.playing = false;
+
+        //Call the tween's `onComplete` method, if it's been
+        //assigned
+        if (o.onComplete) o.onComplete();
+
+        //Remove the tween from the global `tweens` array
+        _this5.globalTweens.splice(_this5.globalTweens.indexOf(o), 1);
+
+        //If the tween's `yoyo` property is `true`, reverse the array and
+        //use it to create a new tween
+        if (yoyo) {
+          _this5.wait(delayBeforeRepeat).then(function () {
+            o.pointsArray = o.pointsArray.reverse();
+            o.start(o.pointsArray);
+          });
+        }
+      };
+
+      //Pause and play methods
+      o.pause = function () {
+        o.playing = false;
+      };
+      o.play = function () {
+        o.playing = true;
+      };
+
+      //Return the tween object
+      return o;
+    }
+  }, {
+    key: "walkPath",
+    value: function walkPath(sprite, //The sprite
+    originalPathArray) {
+      var totalFrames = arguments[2] === undefined ? 300 : arguments[2];
+      var type = arguments[3] === undefined ? "smoothstep" : arguments[3];
+      var loop = arguments[4] === undefined ? false : arguments[4];
+
+      var _this6 = this;
+
+      var yoyo = arguments[5] === undefined ? false : arguments[5];
+      var delayBetweenSections = arguments[6] === undefined ? 0 //Delay, in milliseconds, between sections
+      : arguments[6];
+
+      //Clone the path array so that any possible references to sprite
+      //properties are converted into ordinary numbers
+      var pathArray = JSON.parse(JSON.stringify(originalPathArray));
+
+      //Figure out the duration, in frames, of each path section by
+      //dividing the `totalFrames` by the length of the `pathArray`
+      var frames = totalFrames / pathArray.length;
+
+      //Set the current point to 0, which will be the first waypoint
+      var currentPoint = 0;
+
+      //The `makePath` function creates a single tween between two points and
+      //then schedules the next path to be made after it
+      var makePath = function makePath(currentPoint) {
+
+        //Use the `makeTween` function to tween the sprite's
+        //x and y position
+        var tween = _this6.makeTween([
+
+        //Create the x axis tween between the first x value in the
+        //current point and the x value in the following point
+        [sprite, "x", pathArray[currentPoint][0], pathArray[currentPoint + 1][0], frames, type],
+
+        //Create the y axis tween in the same way
+        [sprite, "y", pathArray[currentPoint][1], pathArray[currentPoint + 1][1], frames, type]]);
+
+        //When the tween is complete, advance the `currentPoint` by one.
+        //Add an optional delay between path segments, and then make the
+        //next connecting path
+        tween.onComplete = function () {
+
+          //Advance to the next point
+          currentPoint += 1;
+
+          //If the sprite hasn't reached the end of the
+          //path, tween the sprite to the next point
+          if (currentPoint < pathArray.length - 1) {
+            _this6.wait(delayBetweenSections).then(function () {
+              tween = makePath(currentPoint);
+            });
+          }
+
+          //If we've reached the end of the path, optionally
+          //loop and yoyo it
+          else {
+
+            //Reverse the path if `loop` is `true`
+            if (loop) {
+
+              //Reverse the array if `yoyo` is `true`
+              if (yoyo) pathArray.reverse();
+
+              //Optionally wait before restarting
+              _this6.wait(delayBetweenSections).then(function () {
+
+                //Reset the `currentPoint` to 0 so that we can
+                //restart at the first point
+                currentPoint = 0;
+
+                //Set the sprite to the first point
+                sprite.x = pathArray[0][0];
+                sprite.y = pathArray[0][1];
+
+                //Make the first new path
+                tween = makePath(currentPoint);
+
+                //... and so it continues!
+              });
+            }
+          }
+        };
+
+        //Return the path tween to the main function
+        return tween;
+      };
+
+      //Make the first path using the internal `makePath` function (below)
+      var tween = makePath(currentPoint);
+
+      //Pass the tween back to the main program
+      return tween;
+    }
+  }, {
+    key: "walkCurve",
+    value: function walkCurve(sprite, //The sprite
+    pathArray) {
+      var totalFrames = arguments[2] === undefined ? 300 : arguments[2];
+      var type = arguments[3] === undefined ? "smoothstep" : arguments[3];
+      var loop = arguments[4] === undefined ? false : arguments[4];
+
+      var _this7 = this;
+
+      var yoyo = arguments[5] === undefined ? false : arguments[5];
+      var delayBeforeContinue = arguments[6] === undefined ? 0 //Delay, in milliseconds, between sections
+      : arguments[6];
+
+      //Divide the `totalFrames` into sections for each part of the path
+      var frames = totalFrames / pathArray.length;
+
+      //Set the current curve to 0, which will be the first one
+      var currentCurve = 0;
+
+      //The `makePath` function
+      var makePath = function makePath(currentCurve) {
+
+        //Use the custom `followCurve` function to make
+        //a sprite follow a curve
+        var tween = _this7.followCurve(sprite, pathArray[currentCurve], frames, type);
+
+        //When the tween is complete, advance the `currentCurve` by one.
+        //Add an optional delay between path segments, and then make the
+        //next path
+        tween.onComplete = function () {
+          currentCurve += 1;
+          if (currentCurve < pathArray.length) {
+            _this7.wait(delayBeforeContinue).then(function () {
+              tween = makePath(currentCurve);
+            });
+          }
+
+          //If we've reached the end of the path, optionally
+          //loop and reverse it
+          else {
+            if (loop) {
+              if (yoyo) {
+
+                //Reverse order of the curves in the `pathArray`
+                pathArray.reverse();
+
+                //Reverse the order of the points in each curve
+                pathArray.forEach(function (curveArray) {
+                  return curveArray.reverse();
+                });
+              }
+
+              //After an optional delay, reset the sprite to the
+              //beginning of the path and make the next new path
+              _this7.wait(delayBeforeContinue).then(function () {
+                currentCurve = 0;
+                sprite.x = pathArray[0][0];
+                sprite.y = pathArray[0][1];
+                tween = makePath(currentCurve);
+              });
+            }
+          }
+        };
+
+        //Return the path tween to the main function
+        return tween;
+      };
+
+      //Make the first path
+      var tween = makePath(currentCurve);
+
+      //Pass the tween back to the main program
+      return tween;
+    }
+  }, {
+    key: "wait",
+
+    //4. Utilities
+
+    /*
+    The `wait` method lets you set up a timed sequence of events
+       wait(1000)
+        .then(() => console.log("One"))
+        .then(() => wait(1000))
+        .then(() => console.log("Two"))
+        .then(() => wait(1000))
+        .then(() => console.log("Three"))
+     */
+
+    value: function wait() {
+      var duration = arguments[0] === undefined ? 0 : arguments[0];
+
+      return new Promise(function (resolve, reject) {
+        setTimeout(resolve, duration);
+      });
+    }
+  }, {
+    key: "removeTween",
+
+    //A utility to remove tweens from the game
+    value: function removeTween(tweenObject) {
+      var _this8 = this;
+
+      //Remove the tween if `tweenObject` doesn't have any nested
+      //tween objects
+      if (!tweenObject.tweens) {
+        tweenObject.pause();
+        this.globalTweens.splice(this.globalTweens.indexOf(tweenObject), 1);
+
+        //Otherwise, remove the nested tween objects
+      } else {
+        tweenObject.pause();
+        tweenObject.tweens.forEach(function (element) {
+          _this8.globalTweens.splice(_this8.globalTweens.indexOf(element), 1);
+        });
+      }
+    }
+  }, {
+    key: "update",
+    value: function update() {
+
+      //Update all the tween objects in the `globalTweens` array
+      if (this.globalTweens.length > 0) {
+        for (var i = this.globalTweens.length - 1; i >= 0; i--) {
+          var tween = this.globalTweens[i];
+          if (tween) tween.update();
+        }
+      }
+    }
+  }]);
+
+  return Charm;
+})();
+
+//Duration in frames
+//The easing type
+//Yoyo?
+//A 2D array of waypoints
+//The duration, in frames
+//The easing type
+//Should the animation loop?
+//Shoud the direction reverse?
+//2D array of Bezier curves
+//The duration, in frames
+//The easing type
+//Should the animation loop?
+//Should the direction reverse?
+//# sourceMappingURL=charm.js.map"use strict";
+
+var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var Tink = (function () {
+  function Tink(PIXI, element) {
+    var scale = arguments[2] === undefined ? 1 : arguments[2];
+
+    _classCallCheck(this, Tink);
+
+    //Add element and scale properties
+    this.element = element;
+    this.scale = scale;
+
+    //An array to store all the draggable sprites
+    this.draggableSprites = [];
+
+    //An array to store all the pointer objects
+    //(there will usually just be one)
+    this.pointers = [];
+
+    //An array to store all the buttons and button-like
+    //interactive sprites
+    this.buttons = [];
+
+    //A local PIXI reference
+    this.PIXI = PIXI;
+
+    //Aliases for Pixi objects
+    this.TextureCache = this.PIXI.utils.TextureCache;
+    this.MovieClip = this.PIXI.extras.MovieClip;
+    this.Texture = this.PIXI.Texture;
+  }
+
+  _createClass(Tink, [{
+    key: "makeDraggable",
+
+    //`makeDraggable` lets you make a drag-and-drop sprite by pushing it
+    //into the `draggableSprites` array
+    value: function makeDraggable() {
+      var _this = this;
+
+      for (var _len = arguments.length, sprites = Array(_len), _key = 0; _key < _len; _key++) {
+        sprites[_key] = arguments[_key];
+      }
+
+      sprites.forEach(function (sprite) {
+        _this.draggableSprites.push(sprite);
+        sprite.draggable = true;
+      });
+    }
+  }, {
+    key: "makeUndraggable",
+
+    //`makeUndraggable` removes the sprite from the `draggableSprites`
+    //array
+    value: function makeUndraggable() {
+      var _this2 = this;
+
+      for (var _len2 = arguments.length, sprites = Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
+        sprites[_key2] = arguments[_key2];
+      }
+
+      sprites.forEach(function (sprite) {
+        _this2.draggableSprites.splice(_this2.draggableSprites.indexOf(sprite), 1);
+        sprite.undraggable = false;
+      });
+    }
+  }, {
+    key: "makePointer",
+    value: function makePointer() {
+      var element = arguments[0] === undefined ? this.element : arguments[0];
+      var scale = arguments[1] === undefined ? this.scale : arguments[1];
+
+      //Get a reference to Tink's global `draggableSprites` array
+      var draggableSprites = this.draggableSprites;
+
+      //Get a reference to Tink's `addGlobalPositionProperties` method
+      var addGlobalPositionProperties = this.addGlobalPositionProperties;
+
+      //The pointer object will be returned by this function
+      var pointer = Object.defineProperties({
+        element: element,
+        scale: scale,
+
+        //Private x and y properties
+        _x: 0,
+        _y: 0,
+
+        //Width and height
+        width: 1,
+        height: 1,
+
+        //Booleans to track the pointer state
+        isDown: false,
+        isUp: true,
+        tapped: false,
+
+        //Properties to help measure the time between up and down states
+        downTime: 0,
+        elapsedTime: 0,
+
+        //Optional `press`,`release` and `tap` methods
+        press: undefined,
+        release: undefined,
+        tap: undefined,
+
+        //A `dragSprite` property to help with drag and drop
+        dragSprite: null,
+
+        //The drag offsets to help drag sprites
+        dragOffsetX: 0,
+        dragOffsetY: 0,
+
+        //A property to check whether or not the pointer
+        //is visible
+        _visible: true,
+
+        //Methods to hide and show the pointer
+        hide: function hide() {
+          this.hidden = true;
+        },
+        show: function show() {
+          this.hidden = false;
+        },
+
+        //The pointer's mouse `moveHandler`
+        moveHandler: function moveHandler(event) {
+
+          //Get the element that's firing the event
+          var element = event.target;
+
+          //Find the pointer’s x and y position (for mouse).
+          //Subtract the element's top and left offset from the browser window
+          this._x = event.pageX - element.offsetLeft;
+          this._y = event.pageY - element.offsetTop;
+
+          //Prevent the event's default behavior
+          event.preventDefault();
+        },
+
+        //The pointer's `touchmoveHandler`
+        touchmoveHandler: function touchmoveHandler(event) {
+          var element = event.target;
+
+          //Find the touch point's x and y position
+          this._x = event.targetTouches[0].pageX - element.offsetLeft;
+          this._y = event.targetTouches[0].pageY - element.offsetTop;
+          event.preventDefault();
+        },
+
+        //The pointer's `downHandler`
+        downHandler: function downHandler(event) {
+
+          //Set the down states
+          this.isDown = true;
+          this.isUp = false;
+          this.tapped = false;
+
+          //Capture the current time
+          this.downTime = Date.now();
+
+          //Call the `press` method if it's been assigned
+          if (this.press) this.press();
+          event.preventDefault();
+        },
+
+        //The pointer's `touchstartHandler`
+        touchstartHandler: function touchstartHandler(event) {
+          var element = event.target;
+
+          //Find the touch point's x and y position
+          this._x = event.targetTouches[0].pageX - element.offsetLeft;
+          this._y = event.targetTouches[0].pageY - element.offsetTop;
+
+          //Set the down states
+          this.isDown = true;
+          this.isUp = false;
+          this.tapped = false;
+
+          //Capture the current time
+          this.downTime = Date.now();
+
+          //Call the `press` method if it's been assigned
+          if (this.press) this.press();
+          event.preventDefault();
+        },
+
+        //The pointer's `upHandler`
+        upHandler: function upHandler(event) {
+
+          //Figure out how much time the pointer has been down
+          this.elapsedTime = Math.abs(this.downTime - Date.now());
+
+          //If it's less than 200 milliseconds, it must be a tap or click
+          if (this.elapsedTime <= 200 && this.tapped === false) {
+            this.tapped = true;
+
+            //Call the `tap` method if it's been assigned
+            if (this.tap) this.tap();
+          }
+          this.isUp = true;
+          this.isDown = false;
+
+          //Call the `release` method if it's been assigned
+          if (this.release) this.release();
+          event.preventDefault();
+        },
+
+        //The pointer's `touchendHandler`
+        touchendHandler: function touchendHandler(event) {
+
+          //Figure out how much time the pointer has been down
+          this.elapsedTime = Math.abs(this.downTime - Date.now());
+
+          //If it's less than 200 milliseconds, it must be a tap or click
+          if (this.elapsedTime <= 200 && this.tapped === false) {
+            this.tapped = true;
+
+            //Call the `tap` method if it's been assigned
+            if (this.tap) this.tap();
+          }
+          this.isUp = true;
+          this.isDown = false;
+
+          //Call the `release` method if it's been assigned
+          if (this.release) this.release();
+          event.preventDefault();
+        },
+
+        //`hitTestSprite` figures out if the pointer is touching a sprite
+        hitTestSprite: function hitTestSprite(sprite) {
+
+          //Add global `gx` and `gy` properties to the sprite if they
+          //don't already exist
+          addGlobalPositionProperties(sprite);
+
+          //The `hit` variable will become `true` if the pointer is
+          //touching the sprite and remain `false` if it isn't
+          var hit = false;
+
+          //Is the sprite rectangular?
+          if (!sprite.circular) {
+
+            //Get the position of the sprite's edges using global
+            //coordinates
+            var left = sprite.gx,
+                right = sprite.gx + sprite.width,
+                _top = sprite.gy,
+                bottom = sprite.gy + sprite.height;
+
+            //Find out if the pointer is intersecting the rectangle.
+            //`hit` will become `true` if the pointer is inside the
+            //sprite's area
+            hit = this.x > left && this.x < right && this.y > _top && this.y < bottom;
+          }
+
+          //Is the sprite circular?
+          else {
+
+            //Find the distance between the pointer and the
+            //center of the circle
+            var vx = this.x - (sprite.gx + sprite.width / 2),
+                vy = this.y - (sprite.gy + sprite.width / 2),
+                distance = Math.sqrt(vx * vx + vy * vy);
+
+            //The pointer is intersecting the circle if the
+            //distance is less than the circle's radius
+            hit = distance < sprite.width / 2;
+          }
+          return hit;
+        }
+      }, {
+        x: { //The public x and y properties are divided by the scale. If the
+          //HTML element that the pointer is sensitive to (like the canvas)
+          //is scaled up or down, you can change the `scale` value to
+          //correct the pointer's position values
+
+          get: function () {
+            return this._x / this.scale;
+          },
+          configurable: true,
+          enumerable: true
+        },
+        y: {
+          get: function () {
+            return this._y / this.scale;
+          },
+          configurable: true,
+          enumerable: true
+        },
+        centerX: {
+
+          //Add `centerX` and `centerY` getters so that we
+          //can use the pointer's coordinates with easing
+          //and collision functions
+
+          get: function () {
+            return this.x;
+          },
+          configurable: true,
+          enumerable: true
+        },
+        centerY: {
+          get: function () {
+            return this.y;
+          },
+          configurable: true,
+          enumerable: true
+        },
+        position: {
+
+          //`position` returns an object with x and y properties that
+          //contain the pointer's position
+
+          get: function () {
+            return {
+              x: this.x,
+              y: this.y
+            };
+          },
+          configurable: true,
+          enumerable: true
+        },
+        cursor: {
+
+          //Add a `cursor` getter/setter to change the pointer's cursor
+          //style. Values can be "pointer" (for a hand icon) or "auto" for
+          //an ordinary arrow icon.
+
+          get: function () {
+            return this.element.style.cursor;
+          },
+          set: function (value) {
+            this.element.style.cursor = value;
+          },
+          configurable: true,
+          enumerable: true
+        },
+        visible: {
+          get: function () {
+            return this._visible;
+          },
+          set: function (value) {
+            if (value === true) {
+              this.cursor = "auto";
+            } else {
+              this.cursor = "none";
+            }
+            this._visible = value;
+          },
+          configurable: true,
+          enumerable: true
+        }
+      });
+
+      //Bind the events to the handlers
+      //Mouse events
+      element.addEventListener("mousemove", pointer.moveHandler.bind(pointer), false);
+      element.addEventListener("mousedown", pointer.downHandler.bind(pointer), false);
+
+      //Add the `mouseup` event to the `window` to
+      //catch a mouse button release outside of the canvas area
+      window.addEventListener("mouseup", pointer.upHandler.bind(pointer), false);
+
+      //Touch events
+      element.addEventListener("touchmove", pointer.touchmoveHandler.bind(pointer), false);
+      element.addEventListener("touchstart", pointer.touchstartHandler.bind(pointer), false);
+
+      //Add the `touchend` event to the `window` object to
+      //catch a mouse button release outside of the canvas area
+      window.addEventListener("touchend", pointer.touchendHandler.bind(pointer), false);
+
+      //Disable the default pan and zoom actions on the `canvas`
+      element.style.touchAction = "none";
+
+      //Add the pointer to Tink's global `pointers` array
+      this.pointers.push(pointer);
+
+      //Return the pointer
+      return pointer;
+    }
+  }, {
+    key: "addGlobalPositionProperties",
+
+    //Many of Tink's objects, like pointers, use collision
+    //detection using the sprites' global x and y positions. To make
+    //this easier, new `gx` and `gy` properties are added to sprites
+    //that reference Pixi sprites' `getGlobalPosition()` values.
+    value: function addGlobalPositionProperties(sprite) {
+      if (sprite.gx === undefined) {
+        Object.defineProperty(sprite, "gx", {
+          get: function get() {
+            return sprite.getGlobalPosition().x;
+          }
+        });
+      }
+
+      if (sprite.gy === undefined) {
+        Object.defineProperty(sprite, "gy", {
+          get: function get() {
+            return sprite.getGlobalPosition().y;
+          }
+        });
+      }
+    }
+  }, {
+    key: "updateDragAndDrop",
+
+    //A method that implments drag-and-drop functionality
+    //for each pointer
+    value: function updateDragAndDrop(draggableSprites) {
+
+      //Create a pointer if one doesn't already exist
+      if (this.pointers.length === 0) {
+        this.makePointer(this.element, this.scale);
+      }
+
+      //Loop through all the pointers in Tink's global `pointers` array
+      //(there will usually just be one, but you never know)
+      this.pointers.forEach(function (pointer) {
+
+        //Check whether the pointer is pressed down
+        if (pointer.isDown) {
+
+          //You need to capture the co-ordinates at which the pointer was
+          //pressed down and find out if it's touching a sprite
+
+          //Only run pointer.code if the pointer isn't already dragging
+          //sprite
+          if (pointer.dragSprite === null) {
+
+            //Loop through the `draggableSprites` in reverse to start searching at the bottom of the stack
+            for (var i = draggableSprites.length - 1; i > -1; i--) {
+
+              //Get a reference to the current sprite
+              var sprite = draggableSprites[i];
+
+              //Check for a collision with the pointer using `hitTestSprite`
+              if (pointer.hitTestSprite(sprite) && sprite.draggable) {
+
+                //Calculate the difference between the pointer's
+                //position and the sprite's position
+                pointer.dragOffsetX = pointer.x - sprite.gx;
+                pointer.dragOffsetY = pointer.y - sprite.gy;
+
+                //Set the sprite as the pointer's `dragSprite` property
+                pointer.dragSprite = sprite;
+
+                //The next two lines re-order the `sprites` array so that the
+                //selected sprite is displayed above all the others.
+                //First, splice the sprite out of its current position in
+                //its parent's `children` array
+                var children = sprite.parent.children;
+                children.splice(children.indexOf(sprite), 1);
+
+                //Next, push the `dragSprite` to the end of its `children` array so that it's
+                //displayed last, above all the other sprites
+                children.push(sprite);
+
+                //Reorganize the `draggableSpites` array in the same way
+                draggableSprites.splice(draggableSprites.indexOf(sprite), 1);
+                draggableSprites.push(sprite);
+
+                //Break the loop, because we only need to drag the topmost sprite
+                break;
+              }
+            }
+          }
+
+          //If the pointer is down and it has a `dragSprite`, make the sprite follow the pointer's
+          //position, with the calculated offset
+          else {
+            pointer.dragSprite.x = pointer.x - pointer.dragOffsetX;
+            pointer.dragSprite.y = pointer.y - pointer.dragOffsetY;
+          }
+        }
+
+        //If the pointer is up, drop the `dragSprite` by setting it to `null`
+        if (pointer.isUp) {
+          pointer.dragSprite = null;
+        }
+
+        //Change the mouse arrow pointer to a hand if it's over a
+        //draggable sprite
+        draggableSprites.some(function (sprite) {
+          if (pointer.hitTestSprite(sprite) && sprite.draggable) {
+            if (!pointer.visible) pointer.cursor = "pointer";
+            return true;
+          } else {
+            if (!pointer.visible) pointer.cursor = "auto";
+            return false;
+          }
+        });
+      });
+    }
+  }, {
+    key: "makeInteractive",
+    value: function makeInteractive(o) {
+
+      //The `press`,`release`, `over`, `out` and `tap` methods. They're `undefined`
+      //for now, but they can be defined in the game program
+      o.press = o.press || undefined;
+      o.release = o.release || undefined;
+      o.over = o.over || undefined;
+      o.out = o.out || undefined;
+      o.tap = o.tap || undefined;
+
+      //The `state` property tells you the button's
+      //current state. Set its initial state to "up"
+      o.state = "up";
+
+      //The `action` property tells you whether its being pressed or
+      //released
+      o.action = "";
+
+      //The `pressed` and `hoverOver` Booleans are mainly for internal
+      //use in this code to help figure out the correct state.
+      //`pressed` is a Boolean that helps track whether or not
+      //the sprite has been pressed down
+      o.pressed = false;
+
+      //`hoverOver` is a Boolean which checks whether the pointer
+      //has hovered over the sprite
+      o.hoverOver = false;
+
+      //tinkType is a string that will be set to "button" if the
+      //user creates an object using the `button` function
+      o.tinkType = "";
+
+      //Add the sprite to the global `buttons` array so that it can
+      //be updated each frame in the `updateButtons method
+      this.buttons.push(o);
+    }
+  }, {
+    key: "updateButtons",
+
+    //The `updateButtons` method will be called each frame
+    //inside the game loop. It updates all the button-like sprites
+    value: function updateButtons() {
+      var _this3 = this;
+
+      //Create a pointer if one doesn't already exist
+      if (this.pointers.length === 0) {
+        this.makePointer(this.element, this.scale);
+      }
+
+      //Loop through all the button-like sprites that were created
+      //using the `makeInteractive` method
+      this.buttons.forEach(function (o) {
+
+        //Loop through all of Tink's pointers (there will usually
+        //just be one)
+        _this3.pointers.forEach(function (pointer) {
+
+          //Figure out if the pointer is touching the sprite
+          var hit = pointer.hitTestSprite(o);
+
+          //1. Figure out the current state
+          if (pointer.isUp) {
+
+            //Up state
+            o.state = "up";
+
+            //Show the first image state frame, if this is a `Button` sprite
+            if (o.tinkType === "button") o.gotoAndStop(0);
+          }
+
+          //If the pointer is touching the sprite, figure out
+          //if the over or down state should be displayed
+          if (hit) {
+
+            //Over state
+            o.state = "over";
+
+            //Show the second image state frame if this sprite has
+            //3 frames and it's a `Button` sprite
+            if (o.totalFrames && o.totalFrames === 3 && o.tinkType === "button") {
+              o.gotoAndStop(1);
+            }
+
+            //Down state
+            if (pointer.isDown) {
+              o.state = "down";
+
+              //Show the third frame if this sprite is a `Button` sprite and it
+              //has only three frames, or show the second frame if it
+              //only has two frames
+              if (o.tinkType === "button") {
+                if (o.totalFrames === 3) {
+                  o.gotoAndStop(2);
+                } else {
+                  o.gotoAndStop(1);
+                }
+              }
+            }
+
+            //Change the pointer icon to a hand
+            if (pointer.visible) pointer.cursor = "pointer";
+          } else {
+            //Turn the pointer to an ordinary arrow icon if the
+            //pointer isn't touching a sprite
+            if (pointer.visible) pointer.cursor = "auto";
+          }
+
+          //Perform the correct interactive action
+
+          //a. Run the `press` method if the sprite state is "down" and
+          //the sprite hasn't already been pressed
+          if (o.state === "down") {
+            if (!o.pressed) {
+              if (o.press) o.press();
+              o.pressed = true;
+              o.action = "pressed";
+            }
+          }
+
+          //b. Run the `release` method if the sprite state is "over" and
+          //the sprite has been pressed
+          if (o.state === "over") {
+            if (o.pressed) {
+              if (o.release) o.release();
+              o.pressed = false;
+              o.action = "released";
+              //If the pointer was tapped and the user assigned a `tap`
+              //method, call the `tap` method
+              if (pointer.tapped && o.tap) o.tap();
+            }
+
+            //Run the `over` method if it has been assigned
+            if (!o.hoverOver) {
+              if (o.over) o.over();
+              o.hoverOver = true;
+            }
+          }
+
+          //c. Check whether the pointer has been released outside
+          //the sprite's area. If the button state is "up" and it's
+          //already been pressed, then run the `release` method.
+          if (o.state === "up") {
+            if (o.pressed) {
+              if (o.release) o.release();
+              o.pressed = false;
+              o.action = "released";
+            }
+
+            //Run the `out` method if it has been assigned
+            if (o.hoverOver) {
+              if (o.out) o.out();
+              o.hoverOver = false;
+            }
+          }
+        });
+      });
+    }
+  }, {
+    key: "button",
+
+    //A function that creates a sprite with 3 frames that
+    //represent the button states: up, over and down
+    value: function button(source) {
+      var x = arguments[1] === undefined ? 0 : arguments[1];
+      var y = arguments[2] === undefined ? 0 : arguments[2];
+
+      //The sprite object that will be returned
+      var o = undefined;
+
+      //Is it an array of frame ids or textures?
+      if (typeof source[0] === "string") {
+
+        //They're strings, but are they pre-existing texture or
+        //paths to image files?
+        //Check to see if the first element matches a texture in the
+        //cache
+        if (this.TextureCache[source[0]]) {
+
+          //It does, so it's an array of frame ids
+          o = this.MovieClip.fromFrames(source);
+        } else {
+
+          //It's not already in the cache, so let's load it
+          o = this.MovieClip.fromImages(source);
+        }
+      }
+
+      //If the `source` isn't an array of strings, check whether
+      //it's an array of textures
+      else if (source[0] instanceof this.Texture) {
+
+        //Yes, it's an array of textures.
+        //Use them to make a MovieClip o
+        o = new this.MovieClip(source);
+      }
+
+      //Add interactive properties to the button
+      this.makeInteractive(o);
+
+      //Set the `tinkType` to "button"
+      o.tinkType = "button";
+
+      //Position the button
+      o.x = x;
+      o.y = y;
+
+      //Return the new button sprite
+      return o;
+    }
+  }, {
+    key: "update",
+
+    //Run the `udpate` function in your game loop
+    //to update all of Tink's interactive objects
+    value: function update() {
+
+      //Update the drag and drop system
+      if (this.draggableSprites.length !== 0) this.updateDragAndDrop(this.draggableSprites);
+
+      //Update the buttons and button-like interactive sprites
+      if (this.buttons.length !== 0) this.updateButtons();
+    }
+  }, {
+    key: "keyboard",
+
+    /*
+    `keyboard` is a method that listens for and captures keyboard events. It's really
+    just a convenient wrapper function for HTML `keyup` and `keydown` events so that you can keep your application code clutter-free and easier to write and read.
+     Here's how to use the `keyboard` method. Create a new keyboard object like this:
+    ```js
+    let keyObject = keyboard(asciiKeyCodeNumber);
+    ```
+    It's one argument is the ASCII key code number of the keyboard key
+    that you want to listen for. [Here's a list of ASCII key codes you can
+    use](http://www.asciitable.com).
+    Then assign `press` and `release` methods to the keyboard object like this:
+    ```js
+    keyObject.press = () => {
+      //key object pressed
+    };
+    keyObject.release = () => {
+      //key object released
+    };
+    ```
+    Keyboard objects also have `isDown` and `isUp` Boolean properties that you can use to check the state of each key. 
+    */
+    value: function keyboard(keyCode) {
+      var key = {};
+      key.code = keyCode;
+      key.isDown = false;
+      key.isUp = true;
+      key.press = undefined;
+      key.release = undefined;
+
+      //The `downHandler`
+      key.downHandler = function (event) {
+        if (event.keyCode === key.code) {
+          if (key.isUp && key.press) key.press();
+          key.isDown = true;
+          key.isUp = false;
+        }
+        event.preventDefault();
+      };
+
+      //The `upHandler`
+      key.upHandler = function (event) {
+        if (event.keyCode === key.code) {
+          if (key.isDown && key.release) key.release();
+          key.isDown = false;
+          key.isUp = true;
+        }
+        event.preventDefault();
+      };
+
+      //Attach event listeners
+      window.addEventListener("keydown", key.downHandler.bind(key), false);
+      window.addEventListener("keyup", key.upHandler.bind(key), false);
+
+      //Return the key object
+      return key;
+    }
+  }]);
+
+  return Tink;
+})();
+//# sourceMappingURL=tink.js.map"use strict";
+
+var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var Dust = (function () {
+  function Dust() {
+    var renderingEngine = arguments[0] === undefined ? PIXI : arguments[0];
+
+    _classCallCheck(this, Dust);
+
+    if (renderingEngine === undefined) throw new Error("Please assign a rendering engine in the constructor before using pixiDust.js");
+
+    //Find out which rendering engine is being used (the default is Pixi)
+    this.renderer = "";
+
+    //If the `renderingEngine` is Pixi, set up Pixi object aliases
+    if (renderingEngine.ParticleContainer) {
+      this.Container = renderingEngine.Container;
+      this.renderer = "pixi";
+    }
+
+    //The `particles` array stores all the particles you make
+    this.globalParticles = [];
+  }
+
+  _createClass(Dust, [{
+    key: "randomFloat",
+
+    //Random number functions
+    value: function randomFloat(min, max) {
+      return min + Math.random() * (max - min);
+    }
+  }, {
+    key: "randomInt",
+    value: function randomInt(min, max) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+  }, {
+    key: "create",
+
+    //Use the create function to create new particle effects
+    value: function create() {
+      var x = arguments[0] === undefined ? 0 : arguments[0];
+      var y = arguments[1] === undefined ? 0 : arguments[1];
+      var spriteFunction = arguments[2] === undefined ? function () {
+        return console.log("Sprite creation function");
+      } : arguments[2];
+      var container = arguments[3] === undefined ? function () {
+        return new _this.Container();
+      } : arguments[3];
+      var numberOfParticles = arguments[4] === undefined ? 20 : arguments[4];
+      var gravity = arguments[5] === undefined ? 0 : arguments[5];
+      var randomSpacing = arguments[6] === undefined ? true : arguments[6];
+      var minAngle = arguments[7] === undefined ? 0 : arguments[7];
+      var maxAngle = arguments[8] === undefined ? 6.28 : arguments[8];
+      var minSize = arguments[9] === undefined ? 4 : arguments[9];
+      var maxSize = arguments[10] === undefined ? 16 : arguments[10];
+      var minSpeed = arguments[11] === undefined ? 0.3 : arguments[11];
+      var maxSpeed = arguments[12] === undefined ? 3 : arguments[12];
+      var minScaleSpeed = arguments[13] === undefined ? 0.01 : arguments[13];
+      var maxScaleSpeed = arguments[14] === undefined ? 0.05 : arguments[14];
+      var minAlphaSpeed = arguments[15] === undefined ? 0.02 : arguments[15];
+      var maxAlphaSpeed = arguments[16] === undefined ? 0.02 : arguments[16];
+
+      var _this = this;
+
+      var minRotationSpeed = arguments[17] === undefined ? 0.01 : arguments[17];
+      var maxRotationSpeed = arguments[18] === undefined ? 0.03 : arguments[18];
+
+      //An array to store the curent batch of particles
+      var particles = [];
+
+      //Add the current `particles` array to the `globalParticles` array
+      this.globalParticles.push(particles);
+
+      //An array to store the angles
+      var angles = [];
+
+      //A variable to store the current particle's angle
+      var angle = undefined;
+
+      //Figure out by how many radians each particle should be separated
+      var spacing = (maxAngle - minAngle) / (numberOfParticles - 1);
+
+      //Create an angle value for each particle and push that //value into the `angles` array
+      for (var i = 0; i < numberOfParticles; i++) {
+
+        //If `randomSpacing` is `true`, give the particle any angle
+        //value between `minAngle` and `maxAngle`
+        if (randomSpacing) {
+          angle = this.randomFloat(minAngle, maxAngle);
+          angles.push(angle);
+        }
+
+        //If `randomSpacing` is `false`, space each particle evenly,
+        //starting with the `minAngle` and ending with the `maxAngle`
+        else {
+          if (angle === undefined) angle = minAngle;
+          angles.push(angle);
+          angle += spacing;
+        }
+      }
+
+      //A function to make particles
+      var makeParticle = function makeParticle(angle) {
+
+        //Create the particle using the supplied sprite function
+        var particle = spriteFunction();
+
+        //Display a random frame if the particle has more than 1 frame
+        if (particle.totalFrames > 0) {
+          particle.gotoAndStop(_this.randomInt(0, particle.totalFrames - 1));
+        }
+
+        //Set a random width and height
+        var size = _this.randomInt(minSize, maxSize);
+        particle.width = size;
+        particle.height = size;
+
+        //Set the particle's `anchor` to its center
+        particle.anchor.set(0.5, 0.5);
+
+        //Set the x and y position
+        particle.x = x;
+        particle.y = y;
+
+        //Set a random speed to change the scale, alpha and rotation
+        particle.scaleSpeed = _this.randomFloat(minScaleSpeed, maxScaleSpeed);
+        particle.alphaSpeed = _this.randomFloat(minAlphaSpeed, maxAlphaSpeed);
+        particle.rotationSpeed = _this.randomFloat(minRotationSpeed, maxRotationSpeed);
+
+        //Set a random velocity at which the particle should move
+        var speed = _this.randomFloat(minSpeed, maxSpeed);
+        particle.vx = speed * Math.cos(angle);
+        particle.vy = speed * Math.sin(angle);
+
+        //Push the particle into the `particles` array.
+        //The `particles` array needs to be updated by the game loop each frame particles.push(particle);
+        particles.push(particle);
+
+        //Add the particle to its parent container
+        container.addChild(particle);
+
+        //The particle's `updateParticle` method is called on each frame of the
+        //game loop
+        particle.updateParticle = function () {
+
+          //Add gravity
+          particle.vy += gravity;
+
+          //Move the particle
+          particle.x += particle.vx;
+          particle.y += particle.vy;
+
+          //Change the particle's `scale`
+          if (particle.scale.x - particle.scaleSpeed > 0) {
+            particle.scale.x -= particle.scaleSpeed;
+          }
+          if (particle.scale.y - particle.scaleSpeed > 0) {
+            particle.scale.y -= particle.scaleSpeed;
+          }
+
+          //Change the particle's rotation
+          particle.rotation += particle.rotationSpeed;
+
+          //Change the particle's `alpha`
+          particle.alpha -= particle.alphaSpeed;
+
+          //Remove the particle if its `alpha` reaches zero
+          if (particle.alpha <= 0) {
+            container.removeChild(particle);
+            particles.splice(particles.indexOf(particle), 1);
+          }
+        };
+      };
+
+      //Make a particle for each angle
+      angles.forEach(function (angle) {
+        return makeParticle(angle);
+      });
+
+      //Return the `particles` array back to the main program
+      return particles;
+    }
+  }, {
+    key: "emitter",
+
+    //A particle emitter
+    value: function emitter(interval, particleFunction) {
+      var emitter = {},
+          timerInterval = undefined;
+
+      emitter.playing = false;
+
+      function play() {
+        if (!emitter.playing) {
+          particleFunction();
+          timerInterval = setInterval(emitParticle.bind(this), interval);
+          emitter.playing = true;
+        }
+      }
+
+      function stop() {
+        if (emitter.playing) {
+          clearInterval(timerInterval);
+          emitter.playing = false;
+        }
+      }
+
+      function emitParticle() {
+        particleFunction();
+      }
+
+      emitter.play = play;
+      emitter.stop = stop;
+      return emitter;
+    }
+  }, {
+    key: "update",
+
+    //A function to update the particles in the game loop
+    value: function update() {
+
+      //Check so see if the `globalParticles` array contains any
+      //sub-arrays
+      if (this.globalParticles.length > 0) {
+
+        //If it does, Loop through the particle arrays in reverse
+        for (var i = this.globalParticles.length - 1; i >= 0; i--) {
+
+          //Get the current particle sub-array
+          var particles = this.globalParticles[i];
+
+          //Loop through the `particles` sub-array and update the
+          //all the particle sprites that it contains
+          if (particles.length > 0) {
+            for (var j = particles.length - 1; j >= 0; j--) {
+              var particle = particles[j];
+              particle.updateParticle();
+            }
+          }
+
+          //Remove the particle array from the `globalParticles` array if doesn't
+          //contain any more sprites
+          else {
+            this.globalParticles.splice(this.globalParticles.indexOf(particles), 1);
+          }
+        }
+      }
+    }
+  }]);
+
+  return Dust;
+})();
+//# sourceMappingURL=dust.js.map"use strict";
+
+var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var SpriteUtilities = (function () {
+  function SpriteUtilities() {
+    var renderingEngine = arguments[0] === undefined ? PIXI : arguments[0];
+
+    _classCallCheck(this, SpriteUtilities);
+
+    if (renderingEngine === undefined) throw new Error("Please supply a reference to PIXI in the SpriteUtilities constructor before using spriteUtilities.js");
+
+    //Find out which rendering engine is being used (the default is Pixi)
+    this.renderer = "";
+
+    //If the `renderingEngine` is Pixi, set up Pixi object aliases
+    if (renderingEngine.ParticleContainer && renderingEngine.Sprite) {
+      this.renderer = "pixi";
+      this.Container = renderingEngine.Container;
+      this.ParticleContainer = renderingEngine.ParticleContainer;
+      this.TextureCache = renderingEngine.utils.TextureCache;
+      this.Texture = renderingEngine.Texture;
+      this.Rectangle = renderingEngine.Rectangle;
+      this.MovieClip = renderingEngine.extras.MovieClip;
+      this.BitmapText = renderingEngine.extras.BitmapText;
+      this.Sprite = renderingEngine.Sprite;
+      this.TilingSprite = renderingEngine.extras.TilingSprite;
+      this.Graphics = renderingEngine.Graphics;
+      this.Text = renderingEngine.Text;
+    }
+  }
+
+  _createClass(SpriteUtilities, [{
+    key: "sprite",
+    value: function sprite(source, x, y, tiling, width, height) {
+      if (x === undefined) x = 0;
+      if (y === undefined) y = 0;
+      if (tiling === undefined) tiling = false;
+
+      var o = undefined,
+          texture = undefined;
+
+      //Create a sprite if the `source` is a string
+      if (typeof source === "string") {
+
+        //Access the texture in the cache if it's there
+        if (this.TextureCache[source]) {
+          texture = this.TextureCache[source];
+        }
+
+        //If it's not is the cache, load it from the source file
+        else {
+          texture = this.Texture.fromImage(source);
+        }
+
+        //If the texture was created, make the o
+        if (texture) {
+
+          //If `tiling` is `false`, make a regular `Sprite`
+          if (!tiling) {
+            o = new this.Sprite(texture);
+          }
+
+          //If `tiling` is `true` make a `TilingSprite`
+          else {
+            o = new this.TilingSprite(texture, width, height);
+          }
+        }
+        //But if the source still can't be found, alert the user
+        else {
+          console.log("" + source + " cannot be found");
+        }
+      }
+
+      //Create a o if the `source` is a texture
+      else if (source instanceof this.Texture) {
+        if (!tiling) {
+          o = new this.Sprite(source);
+        } else {
+          o = new this.TilingSprite(source, width, height);
+        }
+      }
+
+      //Create a `MovieClip` o if the `source` is an array
+      else if (source instanceof Array) {
+
+        //Is it an array of frame ids or textures?
+        if (typeof source[0] === "string") {
+
+          //They're strings, but are they pre-existing texture or
+          //paths to image files?
+          //Check to see if the first element matches a texture in the
+          //cache
+          if (this.TextureCache[source[0]]) {
+
+            //It does, so it's an array of frame ids
+            o = this.MovieClip.fromFrames(source);
+          } else {
+
+            //It's not already in the cache, so let's load it
+            o = this.MovieClip.fromImages(source);
+          }
+        }
+
+        //If the `source` isn't an array of strings, check whether
+        //it's an array of textures
+        else if (source[0] instanceof this.Texture) {
+
+          //Yes, it's an array of textures.
+          //Use them to make a MovieClip o
+          o = new this.MovieClip(source);
+        }
+      }
+
+      //If the sprite was successfully created, intialize it
+      if (o) {
+
+        //Position the sprite
+        o.x = x;
+        o.y = y;
+
+        //Set optional width and height
+        if (width) o.width = width;
+        if (height) o.height = height;
+
+        //If the sprite is a MovieClip, add a state player so that
+        //it's easier to control
+        if (o instanceof this.MovieClip) this.addStatePlayer(o);
+
+        //Assign the sprite
+        return o;
+      }
+    }
+  }, {
+    key: "addStatePlayer",
+    value: function addStatePlayer(sprite) {
+
+      var frameCounter = 0,
+          numberOfFrames = 0,
+          startFrame = 0,
+          endFrame = 0,
+          timerInterval = undefined;
+
+      //The `show` function (to display static states)
+      function show(frameNumber) {
+
+        //Reset any possible previous animations
+        reset();
+
+        //Find the new state on the sprite
+        sprite.gotoAndStop(frameNumber);
+      }
+
+      //The `stop` function stops the animation at the current frame
+      function stopAnimation() {
+        reset();
+        sprite.gotoAndStop(sprite.currentFrame);
+      }
+
+      //The `playSequence` function, to play a sequence of frames
+      function playAnimation(sequenceArray) {
+
+        //Reset any possible previous animations
+        reset();
+
+        //Figure out how many frames there are in the range
+        if (!sequenceArray) {
+          startFrame = 0;
+          endFrame = sprite.totalFrames - 1;
+        } else {
+          startFrame = sequenceArray[0];
+          endFrame = sequenceArray[1];
+        }
+
+        //Calculate the number of frames
+        numberOfFrames = endFrame - startFrame;
+
+        //Compensate for two edge cases:
+        //1. If the `startFrame` happens to be `0`
+        /*
+        if (startFrame === 0) {
+          numberOfFrames += 1;
+          frameCounter += 1;
+        }
+        */
+
+        //2. If only a two-frame sequence was provided
+        /*
+        if(numberOfFrames === 1) {
+          numberOfFrames = 2;
+          frameCounter += 1;
+        }  
+        */
+
+        //Calculate the frame rate. Set the default fps to 12
+        if (!sprite.fps) sprite.fps = 12;
+        var frameRate = 1000 / sprite.fps;
+
+        //Set the sprite to the starting frame
+        sprite.gotoAndStop(startFrame);
+
+        //Set the `frameCounter` to the first frame
+        frameCounter = 1;
+
+        //If the state isn't already `playing`, start it
+        if (!sprite.animating) {
+          timerInterval = setInterval(advanceFrame.bind(this), frameRate);
+          sprite.animating = true;
+        }
+      }
+
+      //`advanceFrame` is called by `setInterval` to display the next frame
+      //in the sequence based on the `frameRate`. When the frame sequence
+      //reaches the end, it will either stop or loop
+      function advanceFrame() {
+
+        //Advance the frame if `frameCounter` is less than
+        //the state's total frames
+        if (frameCounter < numberOfFrames + 1) {
+
+          //Advance the frame
+          sprite.gotoAndStop(sprite.currentFrame + 1);
+
+          //Update the frame counter
+          frameCounter += 1;
+
+          //If we've reached the last frame and `loop`
+          //is `true`, then start from the first frame again
+        } else {
+          if (sprite.loop) {
+            sprite.gotoAndStop(startFrame);
+            frameCounter = 1;
+          }
+        }
+      }
+
+      function reset() {
+
+        //Reset `sprite.playing` to `false`, set the `frameCounter` to 0, //and clear the `timerInterval`
+        if (timerInterval !== undefined && sprite.animating === true) {
+          sprite.animating = false;
+          frameCounter = 0;
+          startFrame = 0;
+          endFrame = 0;
+          numberOfFrames = 0;
+          clearInterval(timerInterval);
+        }
+      }
+
+      //Add the `show`, `play`, `stop`, and `playSequence` methods to the sprite
+      sprite.show = show;
+      sprite.stopAnimation = stopAnimation;
+      sprite.playAnimation = playAnimation;
+    }
+  }, {
+    key: "filmstrip",
+    value: function filmstrip(texture, frameWidth, frameHeight) {
+      var spacing = arguments[3] === undefined ? 0 : arguments[3];
+
+      //An array to store the x/y positions of the frames
+      var positions = [];
+
+      //Find the width and height of the texture
+      var textureWidth = this.TextureCache[texture].width,
+          textureHeight = this.TextureCache[texture].height;
+
+      //Find out how many columns and rows there are
+      var columns = textureWidth / frameWidth,
+          rows = textureHeight / frameHeight;
+
+      //Find the total number of frames
+      var numberOfFrames = columns * rows;
+
+      for (var i = 0; i < numberOfFrames; i++) {
+
+        //Find the correct row and column for each frame
+        //and figure out its x and y position
+        var x = i % columns * frameWidth,
+            y = Math.floor(i / columns) * frameHeight;
+
+        //Compensate for any optional spacing (padding) around the tiles if
+        //there is any. This bit of code accumlates the spacing offsets from the
+        //left side of the tileset and adds them to the current tile's position
+        if (spacing > 0) {
+          x += spacing + spacing * i % columns;
+          y += spacing + spacing * Math.floor(i / columns);
+        }
+
+        //Add the x and y value of each frame to the `positions` array
+        positions.push([x, y]);
+      }
+      console.log(positions);
+
+      //Return the frames
+      return this.frames(texture, positions, frameWidth, frameHeight);
+    }
+  }, {
+    key: "frame",
+
+    //Make a texture from a frame in another texture or image
+    value: function frame(source, x, y, width, height) {
+
+      var texture = undefined,
+          imageFrame = undefined;
+
+      //If the source is a string, it's either a texture in the
+      //cache or an image file
+      if (typeof source === "string") {
+        if (this.TextureCache[source]) {
+          texture = new this.Texture(this.TextureCache[source]);
+        }
+      }
+
+      //If the `source` is a texture,  use it
+      else if (source instanceof this.Texture) {
+        texture = new this.Texture(source);
+      }
+      if (!texture) {
+        console.log("Please load the " + source + " texture into the cache.");
+      } else {
+
+        //Make a rectangle the size of the sub-image
+        imageFrame = new this.Rectangle(x, y, width, height);
+        texture.frame = imageFrame;
+        return texture;
+      }
+    }
+  }, {
+    key: "frames",
+
+    //Make an array of textures from a 2D array of frame x and y coordinates in
+    //texture
+    value: function frames(source, coordinates, frameWidth, frameHeight) {
+      var _this = this;
+
+      var baseTexture = undefined,
+          textures = undefined;
+
+      //If the source is a string, it's either a texture in the
+      //cache or an image file
+      if (typeof source === "string") {
+        if (this.TextureCache[source]) {
+          baseTexture = new this.Texture(this.TextureCache[source]);
+        }
+      }
+      //If the `source` is a texture,  use it
+      else if (source instanceof this.Texture) {
+        baseTexture = new this.Texture(source);
+      }
+      if (!baseTexture) {
+        console.log("Please load the " + source + " texture into the cache.");
+      } else {
+        var _textures = coordinates.map(function (position) {
+          var x = position[0],
+              y = position[1];
+          var imageFrame = new _this.Rectangle(x, y, frameWidth, frameHeight);
+          var frameTexture = new _this.Texture(baseTexture);
+          frameTexture.frame = imageFrame;
+          return frameTexture;
+        });
+        return _textures;
+      }
+    }
+  }, {
+    key: "frameSeries",
+    value: function frameSeries() {
+      var startNumber = arguments[0] === undefined ? 0 : arguments[0];
+      var endNumber = arguments[1] === undefined ? 1 : arguments[1];
+      var baseName = arguments[2] === undefined ? "" : arguments[2];
+      var extension = arguments[3] === undefined ? "" : arguments[3];
+
+      //Create an array to store the frame names
+      var frames = [];
+
+      for (var i = startNumber; i < endNumber + 1; i++) {
+        var frame = this.TextureCache["" + (baseName + i + extension)];
+        frames.push(frame);
+      }
+      return frames;
+    }
+  }, {
+    key: "text",
+
+    /* Text creation */
+
+    //The`text` method is a quick way to create a Pixi Text sprite
+    value: function text() {
+      var content = arguments[0] === undefined ? "message" : arguments[0];
+      var font = arguments[1] === undefined ? "16px sans" : arguments[1];
+      var fillStyle = arguments[2] === undefined ? "red" : arguments[2];
+      var x = arguments[3] === undefined ? 0 : arguments[3];
+      var y = arguments[4] === undefined ? 0 : arguments[4];
+
+      //Create a Pixi Sprite object
+      var message = new this.Text(content, { font: font, fill: fillStyle });
+      message.x = x;
+      message.y = y;
+
+      //Add a `_text` property with a getter/setter
+      message._content = content;
+      Object.defineProperty(message, "content", {
+        get: function get() {
+          return this._content;
+        },
+        set: function set(value) {
+          this._content = value;
+          this.text = value;
+        },
+        enumerable: true, configurable: true
+      });
+
+      //Return the text object
+      return message;
+    }
+  }, {
+    key: "bitmapText",
+
+    //The`bitmapText` method lets you create bitmap text
+    value: function bitmapText(content, font, align, tint) {
+      if (content === undefined) content = "message";
+      var x = arguments[4] === undefined ? 0 : arguments[4];
+      var y = arguments[5] === undefined ? 0 : arguments[5];
+
+      //Create a Pixi Sprite object
+      var message = new this.BitmapText(content, { font: font, align: align, tint: tint });
+      message.x = x;
+      message.y = y;
+
+      //Add a `_text` property with a getter/setter
+      message._content = content;
+      Object.defineProperty(message, "content", {
+        get: function get() {
+          return this._content;
+        },
+        set: function set(value) {
+          this._content = value;
+          this.text = value;
+        },
+        enumerable: true, configurable: true
+      });
+
+      //Return the text object
+      return message;
+    }
+  }, {
+    key: "rectangle",
+
+    /* Shapes and lines */
+
+    //Rectangle
+    value: function rectangle() {
+      var width = arguments[0] === undefined ? 32 : arguments[0];
+      var height = arguments[1] === undefined ? 32 : arguments[1];
+      var fillStyle = arguments[2] === undefined ? 16724736 : arguments[2];
+      var strokeStyle = arguments[3] === undefined ? 13260 : arguments[3];
+      var lineWidth = arguments[4] === undefined ? 0 : arguments[4];
+      var x = arguments[5] === undefined ? 0 : arguments[5];
+      var y = arguments[6] === undefined ? 0 : arguments[6];
+
+      var o = new this.Graphics();
+      o._sprite = undefined;
+      o._width = width;
+      o._height = height;
+      o._fillStyle = this.color(fillStyle);
+      o._strokeStyle = this.color(strokeStyle);
+      o._lineWidth = lineWidth;
+
+      //Draw the rectangle
+      var draw = function draw(width, height, fillStyle, strokeStyle, lineWidth) {
+        o.clear();
+        o.beginFill(fillStyle);
+        if (lineWidth > 0) {
+          o.lineStyle(lineWidth, strokeStyle, 1);
+        }
+        o.drawRect(0, 0, width, height);
+        o.endFill();
+      };
+
+      //Draw the line and capture the sprite that the `draw` function
+      //returns
+      draw(o._width, o._height, o._fillStyle, o._strokeStyle, o._lineWidth);
+
+      //Generate a texture from the rectangle
+      var texture = o.generateTexture();
+
+      //Use the texture to create a sprite
+      var sprite = new this.Sprite(texture);
+
+      //Position the sprite
+      sprite.x = x;
+      sprite.y = y;
+
+      //Add getters and setters to the sprite
+      var self = this;
+      Object.defineProperties(sprite, {
+        "fillStyle": {
+          get: function get() {
+            return o._fillStyle;
+          },
+          set: function set(value) {
+            o._fillStyle = self.color(value);
+
+            //Draw the new rectangle
+            draw(o._width, o._height, o._fillStyle, o._strokeStyle, o._lineWidth, o._x, o._y);
+
+            //Generate a new texture and set it as the sprite's texture
+            var texture = o.generateTexture();
+            o._sprite.texture = texture;
+          },
+          enumerable: true, configurable: true
+        },
+        "strokeStyle": {
+          get: function get() {
+            return o._strokeStyle;
+          },
+          set: function set(value) {
+            o._strokeStyle = self.color(value);
+
+            //Draw the new rectangle
+            draw(o._width, o._height, o._fillStyle, o._strokeStyle, o._lineWidth, o._x, o._y);
+
+            //Generate a new texture and set it as the sprite's texture
+            var texture = o.generateTexture();
+            o._sprite.texture = texture;
+          },
+          enumerable: true, configurable: true
+        },
+        "lineWidth": {
+          get: function get() {
+            return o._lineWidth;
+          },
+          set: function set(value) {
+            o._lineWidth = value;
+
+            //Draw the new rectangle
+            draw(o._width, o._height, o._fillStyle, o._strokeStyle, o._lineWidth, o._x, o._y);
+
+            //Generate a new texture and set it as the sprite's texture
+            var texture = o.generateTexture();
+            o._sprite.texture = texture;
+          },
+          enumerable: true, configurable: true
+        }
+      });
+
+      //Get a local reference to the sprite so that we can
+      //change the rectangle properties later using the getters/setters
+      o._sprite = sprite;
+
+      //Return the sprite
+      return sprite;
+    }
+  }, {
+    key: "circle",
+
+    //Circle
+    value: function circle() {
+      var diameter = arguments[0] === undefined ? 32 : arguments[0];
+      var fillStyle = arguments[1] === undefined ? 16724736 : arguments[1];
+      var strokeStyle = arguments[2] === undefined ? 13260 : arguments[2];
+      var lineWidth = arguments[3] === undefined ? 0 : arguments[3];
+      var x = arguments[4] === undefined ? 0 : arguments[4];
+      var y = arguments[5] === undefined ? 0 : arguments[5];
+
+      var o = new this.Graphics();
+      o._diameter = diameter;
+      o._fillStyle = this.color(fillStyle);
+      o._strokeStyle = this.color(strokeStyle);
+      o._lineWidth = lineWidth;
+
+      //Draw the circle
+      var draw = function draw(diameter, fillStyle, strokeStyle, lineWidth) {
+        o.clear();
+        o.beginFill(fillStyle);
+        if (lineWidth > 0) {
+          o.lineStyle(lineWidth, strokeStyle, 1);
+        }
+        o.drawCircle(0, 0, diameter / 2);
+        o.endFill();
+      };
+
+      //Draw the cirlce
+      draw(o._diameter, o._fillStyle, o._strokeStyle, o._lineWidth);
+
+      //Generate a texture from the rectangle
+      var texture = o.generateTexture();
+
+      //Use the texture to create a sprite
+      var sprite = new this.Sprite(texture);
+
+      //Position the sprite
+      sprite.x = x;
+      sprite.y = y;
+
+      //Add getters and setters to the sprite
+      var self = this;
+      Object.defineProperties(sprite, {
+        "fillStyle": {
+          get: function get() {
+            return o._fillStyle;
+          },
+          set: function set(value) {
+            o._fillStyle = self.color(value);
+
+            //Draw the cirlce
+            draw(o._diameter, o._fillStyle, o._strokeStyle, o._lineWidth);
+
+            //Generate a new texture and set it as the sprite's texture
+            var texture = o.generateTexture();
+            o._sprite.texture = texture;
+          },
+          enumerable: true, configurable: true
+        },
+        "strokeStyle": {
+          get: function get() {
+            return o._strokeStyle;
+          },
+          set: function set(value) {
+            o._strokeStyle = self.color(value);
+
+            //Draw the cirlce
+            draw(o._diameter, o._fillStyle, o._strokeStyle, o._lineWidth);
+
+            //Generate a new texture and set it as the sprite's texture
+            var texture = o.generateTexture();
+            o._sprite.texture = texture;
+          },
+          enumerable: true, configurable: true
+        },
+        "diameter": {
+          get: function get() {
+            return o._diameter;
+          },
+          set: function set(value) {
+            o._lineWidth = 10;
+
+            //Draw the cirlce
+            draw(o._diameter, o._fillStyle, o._strokeStyle, o._lineWidth);
+
+            //Generate a new texture and set it as the sprite's texture
+            var texture = o.generateTexture();
+            o._sprite.texture = texture;
+          },
+          enumerable: true, configurable: true
+        },
+        "radius": {
+          get: function get() {
+            return o._diameter / 2;
+          },
+          set: function set(value) {
+
+            //Draw the cirlce
+            draw(value * 2, o._fillStyle, o._strokeStyle, o._lineWidth);
+
+            //Generate a new texture and set it as the sprite's texture
+            var texture = o.generateTexture();
+            o._sprite.texture = texture;
+          },
+          enumerable: true, configurable: true
+        }
+      });
+      //Get a local reference to the sprite so that we can
+      //change the circle properties later using the getters/setters
+      o._sprite = sprite;
+
+      //Return the sprite
+      return sprite;
+    }
+  }, {
+    key: "line",
+
+    //Line
+    value: function line() {
+      var strokeStyle = arguments[0] === undefined ? 0 : arguments[0];
+      var lineWidth = arguments[1] === undefined ? 1 : arguments[1];
+      var ax = arguments[2] === undefined ? 0 : arguments[2];
+      var ay = arguments[3] === undefined ? 0 : arguments[3];
+      var bx = arguments[4] === undefined ? 32 : arguments[4];
+      var by = arguments[5] === undefined ? 32 : arguments[5];
+
+      //Create the line object
+      var o = new this.Graphics();
+
+      //Private properties
+      o._strokeStyle = this.color(strokeStyle);
+      o._width = lineWidth;
+      o._ax = ax;
+      o._ay = ay;
+      o._bx = bx;
+      o._by = by;
+
+      //A helper function that draws the line
+      var draw = function draw(strokeStyle, lineWidth, ax, ay, bx, by) {
+        o.clear();
+        o.lineStyle(lineWidth, strokeStyle, 1);
+        o.moveTo(ax, ay);
+        o.lineTo(bx, by);
+      };
+
+      //Draw the line
+      draw(o._strokeStyle, o._width, o._ax, o._ay, o._bx, o._by);
+
+      //Define getters and setters that redefine the line's start and
+      //end points and re-draws it if they change
+      var self = this;
+      Object.defineProperties(o, {
+        "ax": {
+          get: function get() {
+            return o._ax;
+          },
+          set: function set(value) {
+            o._ax = value;
+            draw(o._strokeStyle, o._width, o._ax, o._ay, o._bx, o._by);
+          },
+          enumerable: true, configurable: true
+        },
+        "ay": {
+          get: function get() {
+            return o._ay;
+          },
+          set: function set(value) {
+            o._ay = value;
+            draw(o._strokeStyle, o._width, o._ax, o._ay, o._bx, o._by);
+          },
+          enumerable: true, configurable: true
+        },
+        "bx": {
+          get: function get() {
+            return o._bx;
+          },
+          set: function set(value) {
+            o._bx = value;
+            draw(o._strokeStyle, o._width, o._ax, o._ay, o._bx, o._by);
+          },
+          enumerable: true, configurable: true
+        },
+        "by": {
+          get: function get() {
+            return o._by;
+          },
+          set: function set(value) {
+            o._by = value;
+            draw(o._strokeStyle, o._width, o._ax, o._ay, o._bx, o._by);
+          },
+          enumerable: true, configurable: true
+        },
+        "strokeStyle": {
+          get: function get() {
+            return o._strokeStyle;
+          },
+          set: function set(value) {
+            o._strokeStyle = self.color(value);
+
+            //Draw the line
+            draw(o._strokeStyle, o._width, o._ax, o._ay, o._bx, o._by);
+          },
+          enumerable: true, configurable: true
+        },
+        "width": {
+          get: function get() {
+            return o._width;
+          },
+          set: function set(value) {
+            o._width = value;
+
+            //Draw the line
+            draw(o._strokeStyle, o._width, o._ax, o._ay, o._bx, o._by);
+          },
+          enumerable: true, configurable: true
+        }
+      });
+
+      //Return the line
+      return o;
+    }
+  }, {
+    key: "grid",
+
+    /* Compound sprites */
+
+    //Use `grid` to create a grid of sprites
+    value: function grid() {
+      var columns = arguments[0] === undefined ? 0 : arguments[0];
+      var rows = arguments[1] === undefined ? 0 : arguments[1];
+      var cellWidth = arguments[2] === undefined ? 32 : arguments[2];
+      var cellHeight = arguments[3] === undefined ? 32 : arguments[3];
+      var centerCell = arguments[4] === undefined ? false : arguments[4];
+      var xOffset = arguments[5] === undefined ? 0 : arguments[5];
+      var yOffset = arguments[6] === undefined ? 0 : arguments[6];
+      var makeSprite = arguments[7] === undefined ? undefined : arguments[7];
+      var extra = arguments[8] === undefined ? undefined : arguments[8];
+
+      //Create an empty group called `container`. This `container`
+      //group is what the function returns back to the main program.
+      //All the sprites in the grid cells will be added
+      //as children to this container
+      var container = new this.Container();
+
+      //The `create` method plots the grid
+
+      var createGrid = function createGrid() {
+
+        //Figure out the number of cells in the grid
+        var length = columns * rows;
+
+        //Create a sprite for each cell
+        for (var i = 0; i < length; i++) {
+
+          //Figure out the sprite's x/y placement in the grid
+          var x = i % columns * cellWidth,
+              y = Math.floor(i / columns) * cellHeight;
+
+          //Use the `makeSprite` function supplied in the constructor
+          //to make a sprite for the grid cell
+          var sprite = makeSprite();
+
+          //Add the sprite to the `container`
+          container.addChild(sprite);
+
+          //Should the sprite be centered in the cell?
+
+          //No, it shouldn't be centered
+          if (!centerCell) {
+            sprite.x = x + xOffset;
+            sprite.y = y + yOffset;
+          }
+
+          //Yes, it should be centered
+          else {
+            sprite.x = x + cellWidth / 2 - sprite.width / 2 + xOffset;
+            sprite.y = y + cellHeight / 2 - sprite.width / 2 + yOffset;
+          }
+
+          //Run any optional extra code. This calls the
+          //`extra` function supplied by the constructor
+          if (extra) extra(sprite);
+        }
+      };
+
+      //Run the `createGrid` method
+      createGrid();
+
+      //Return the `container` group back to the main program
+      return container;
+    }
+  }, {
+    key: "group",
+
+    /* Groups */
+
+    //Group sprites into a container
+    value: function group() {
+      for (var _len = arguments.length, sprites = Array(_len), _key = 0; _key < _len; _key++) {
+        sprites[_key] = arguments[_key];
+      }
+
+      var container = new this.Container();
+      sprites.forEach(function (sprite) {
+        container.addChild(sprite);
+      });
+      return container;
+    }
+  }, {
+    key: "batch",
+
+    //Use the `batch` method to create a ParticleContainer
+    value: function batch() {
+      var size = arguments[0] === undefined ? 15000 : arguments[0];
+      var options = arguments[1] === undefined ? { rotation: true, alpha: true, scale: true, uvs: true } : arguments[1];
+
+      var batch = new this.ParticleContainer(size, options);
+      return batch;
+    }
+  }, {
+    key: "remove",
+
+    //`remove` is a global convenience method that will
+    //remove any sprite, or an argument list of sprites, from its parent.
+    value: function remove() {
+      for (var _len2 = arguments.length, spritesToRemove = Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
+        spritesToRemove[_key2] = arguments[_key2];
+      }
+
+      //Remove sprites that's aren't in an array
+      if (!(sprites[0] instanceof Array)) {
+        if (sprites.length > 1) {
+          sprites.forEach(function (sprite) {
+            sprite.parent.removeChild(sprite);
+          });
+        } else {
+          sprites[0].parent.removeChild(sprites[0]);
+        }
+      }
+
+      //Remove sprites in an array of sprites
+      else {
+        var spritesArray = sprites[0];
+        if (spritesArray.length > 0) {
+          for (var i = spritesArray.length - 1; i >= 0; i--) {
+            var sprite = spritesArray[i];
+            sprite.parent.removeChild(sprite);
+            spritesArray.splice(spritesArray.indexOf(sprite), 1);
+          }
+        }
+      }
+    }
+  }, {
+    key: "colorToRGBA",
+
+    /* Color conversion */
+    //From: http://stackoverflow.com/questions/1573053/javascript-function-to-convert-color-names-to-hex-codes
+    //Utilities to convert HTML color string names to hexadecimal codes
+
+    value: function colorToRGBA(color) {
+      // Returns the color as an array of [r, g, b, a] -- all range from 0 - 255
+      // color must be a valid canvas fillStyle. This will cover most anything
+      // you'd want to use.
+      // Examples:
+      // colorToRGBA('red')  # [255, 0, 0, 255]
+      // colorToRGBA('#f00') # [255, 0, 0, 255]
+      var cvs, ctx;
+      cvs = document.createElement("canvas");
+      cvs.height = 1;
+      cvs.width = 1;
+      ctx = cvs.getContext("2d");
+      ctx.fillStyle = color;
+      ctx.fillRect(0, 0, 1, 1);
+      var data = ctx.getImageData(0, 0, 1, 1).data;
+      return data;
+    }
+  }, {
+    key: "byteToHex",
+    value: function byteToHex(num) {
+      // Turns a number (0-255) into a 2-character hex number (00-ff)
+      return ("0" + num.toString(16)).slice(-2);
+    }
+  }, {
+    key: "colorToHex",
+    value: function colorToHex(color) {
+      var _this2 = this;
+
+      // Convert any CSS color to a hex representation
+      // Examples:
+      // colorToHex('red')            # '#ff0000'
+      // colorToHex('rgb(255, 0, 0)') # '#ff0000'
+      var rgba, hex;
+      rgba = this.colorToRGBA(color);
+      hex = [0, 1, 2].map(function (idx) {
+        return _this2.byteToHex(rgba[idx]);
+      }).join("");
+      return "0x" + hex;
+    }
+  }, {
+    key: "color",
+
+    //A function to find out if the user entered a number (a hex color
+    //code) or a string (an HTML color string)
+    value: function color(value) {
+
+      //Check if it's a number
+      if (!isNaN(value)) {
+        console.log("It's a number");
+
+        //Yes, it is a number, so just return it
+        return value;
+      }
+
+      //No it's not a number, so it must be a string   
+      else {
+
+        return this.colorToHex(value);
+        /*
+         //Find out what kind of color string it is.
+        //Let's first grab the first character of the string
+        let firstCharacter = value.charAt(0);
+         //If the first character is a "#" or a number, then
+        //we know it must be a RGBA color
+        if (firstCharacter === "#") {
+          console.log("first character: " + value.charAt(0))
+        }
+        */
+      }
+
+      /*
+      //Find out if the first character in the string is a number
+      if (!isNaN(parseInt(string.charAt(0)))) {
+        
+        //It's not, so convert it to a hex code
+        return colorToHex(string);
+        
+      //The use input a number, so it must be a hex code. Just return it
+      } else {
+      
+        return string;
+      }
+      
+      */
+    }
+  }]);
+
+  return SpriteUtilities;
+})();
+//# sourceMappingURL=spriteUtilities.js.map"use strict";
+
+var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var GameUtilities = (function () {
+  function GameUtilities() {
+    _classCallCheck(this, GameUtilities);
+  }
+
+  _createClass(GameUtilities, [{
+    key: "distance",
+
+    /*
+    distance
+    ----------------
+     Find the distance in pixels between two sprites.
+    Parameters: 
+    a. A sprite object. 
+    b. A sprite object. 
+    The function returns the number of pixels distance between the sprites.
+        let distanceBetweenSprites = gu.distance(spriteA, spriteB);
+     */
+
+    value: function distance(s1, s2) {
+      var vx = s2.x + this._getCenter(s2, s2.width, "x") - (s1.x + this._getCenter(s1, s1.width, "x")),
+          vy = s2.y + this._getCenter(s2, s2.height, "y") - (s1.y + this._getCenter(s1, s1.height, "y"));
+      return Math.sqrt(vx * vx + vy * vy);
+    }
+  }, {
+    key: "followEase",
+
+    /*
+    followEase
+    ----------------
+     Make a sprite ease to the position of another sprite.
+    Parameters: 
+    a. A sprite object. This is the `follower` sprite.
+    b. A sprite object. This is the `leader` sprite that the follower will chase.
+    c. The easing value, such as 0.3. A higher number makes the follower move faster.
+        gu.followEase(follower, leader, speed);
+     Use it inside a game loop.
+    */
+
+    value: function followEase(follower, leader, speed) {
+
+      //Figure out the distance between the sprites
+      /*
+      let vx = (leader.x + leader.width / 2) - (follower.x + follower.width / 2),
+          vy = (leader.y + leader.height / 2) - (follower.y + follower.height / 2),
+          distance = Math.sqrt(vx * vx + vy * vy);
+      */
+
+      var vx = leader.x + this._getCenter(leader, leader.width, "x") - (follower.x + this._getCenter(follower, follower.width, "x")),
+          vy = leader.y + this._getCenter(leader, leader.height, "y") - (follower.y + this._getCenter(follower, follower.height, "y")),
+          distance = Math.sqrt(vx * vx + vy * vy);
+
+      //Move the follower if it's more than 1 pixel
+      //away from the leader
+      if (distance >= 1) {
+        follower.x += vx * speed;
+        follower.y += vy * speed;
+      }
+    }
+  }, {
+    key: "followConstant",
+
+    /*
+    followConstant
+    ----------------
+     Make a sprite move towards another sprite at a constant speed.
+    Parameters: 
+    a. A sprite object. This is the `follower` sprite.
+    b. A sprite object. This is the `leader` sprite that the follower will chase.
+    c. The speed value, such as 3. The is the pixels per frame that the sprite will move. A higher number makes the follower move faster.
+        gu.followConstant(follower, leader, speed);
+     */
+
+    value: function followConstant(follower, leader, speed) {
+
+      //Figure out the distance between the sprites
+      var vx = leader.x + this._getCenter(leader, leader.width, "x") - (follower.x + this._getCenter(follower, follower.width, "x")),
+          vy = leader.y + this._getCenter(leader, leader.height, "y") - (follower.y + this._getCenter(follower, follower.height, "y")),
+          distance = Math.sqrt(vx * vx + vy * vy);
+
+      //Move the follower if it's more than 1 move
+      //away from the leader
+      if (distance >= speed) {
+        follower.x += vx / distance * speed;
+        follower.y += vy / distance * speed;
+      }
+    }
+  }, {
+    key: "angle",
+
+    /*
+    angle
+    -----
+     Return the angle in Radians between two sprites.
+    Parameters: 
+    a. A sprite object.
+    b. A sprite object.
+    You can use it to make a sprite rotate towards another sprite like this:
+         box.rotation = angle(box, pointer);
+     */
+
+    value: function angle(s1, s2) {
+      return Math.atan2(
+      /*
+      (s2.y + s2.height / 2) - (s1.y + s1.height / 2),
+      (s2.x + s2.width / 2) - (s1.x + s1.width / 2)
+      */
+      s2.y + this._getCenter(s2, s2.height, "y") - (s1.y + this._getCenter(s1, s1.height, "y")), s2.x + this._getCenter(s2, s2.width, "x") - (s1.x + this._getCenter(s1, s1.width, "x")));
+    }
+  }, {
+    key: "_getCenter",
+
+    /*
+    _getCenter
+    ----------
+     A utility that finds the center point of the sprite. If it's anchor point is the
+    sprite's top left corner, then the center is calculated from that point.
+    If the anchor point has been shifted, then the anchor x/y point is used as the sprite's center
+    */
+
+    value: function _getCenter(o, dimension, axis) {
+      if (o.anchor !== undefined) {
+        if (o.anchor[axis] !== 0) {
+          return 0;
+        } else {
+          //console.log(o.anchor[axis])
+          return dimension / 2;
+        }
+      } else {
+        return dimension;
+      }
+    }
+  }, {
+    key: "rotateAroundSprite",
+
+    /*
+    rotateAroundSprite
+    ------------
+    Make a sprite rotate around another sprite.
+    Parameters:
+    a. The sprite you want to rotate.
+    b. The sprite around which you want to rotate the first sprite.
+    c. The distance, in pixels, that the roating sprite should be offset from the center.
+    d. The angle of rotations, in radians.
+        gu.rotateAroundSprite(orbitingSprite, centerSprite, 50, angleInRadians);
+     Use it inside a game loop, and make sure you update the angle value (the 4th argument) each frame.
+    */
+
+    value: function rotateAroundSprite(rotatingSprite, centerSprite, distance, angle) {
+      rotatingSprite.x = centerSprite.x + this._getCenter(centerSprite, centerSprite.width, "x") - rotatingSprite.parent.x + distance * Math.cos(angle) - this._getCenter(rotatingSprite, rotatingSprite.width, "x");
+
+      rotatingSprite.y = centerSprite.y + (centerSprite, centerSprite.height, "y") - rotatingSprite.parent.y + distance * Math.sin(angle) - this._getCenter(rotatingSprite, rotatingSprite.width, "y");
+    }
+  }, {
+    key: "rotateAroundPoint",
+
+    /*
+    rotateAroundPoint
+    -----------------
+    Make a point rotate around another point.
+    Parameters:
+    a. The point you want to rotate.
+    b. The point around which you want to rotate the first point.
+    c. The distance, in pixels, that the roating sprite should be offset from the center.
+    d. The angle of rotations, in radians.
+        gu.rotateAroundPoint(orbitingPoint, centerPoint, 50, angleInRadians);
+     Use it inside a game loop, and make sure you update the angle value (the 4th argument) each frame.
+     */
+
+    value: function rotateAroundPoint(pointX, pointY, distanceX, distanceY, angle) {
+      var point = {};
+      point.x = pointX + Math.cos(angle) * distanceX;
+      point.y = pointY + Math.sin(angle) * distanceY;
+      return point;
+    }
+  }, {
+    key: "randomInt",
+
+    /*
+    randomInt
+    ---------
+     Return a random integer between a minimum and maximum value
+    Parameters: 
+    a. An integer.
+    b. An integer.
+    Here's how you can use it to get a random number between, 1 and 10:
+        let number = gu.randomInt(1, 10);
+     */
+
+    value: function randomInt(min, max) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+  }, {
+    key: "randomFloat",
+
+    /*
+    randomFloat
+    -----------
+     Return a random floating point number between a minimum and maximum value
+    Parameters: 
+    a. Any number.
+    b. Any number.
+    Here's how you can use it to get a random floating point number between, 1 and 10:
+         let number = gu.randomFloat(1, 10);
+     */
+
+    value: function randomFloat(min, max) {
+      return min + Math.random() * (max - min);
+    }
+  }, {
+    key: "wait",
+
+    /*
+    Wait
+    ----
+     Lets you set up a timed sequence of events. Supply a number in milliseconds.
+         wait(1000)
+          .then(() => console.log("One"))
+          .then(() => wait(1000))
+          .then(() => console.log("Two"))
+          .then(() => wait(1000))
+          .then(() => console.log("Three"))
+     */
+
+    value: function wait() {
+      var duration = arguments[0] === undefined ? 0 : arguments[0];
+
+      return new Promise(function (resolve, reject) {
+        setTimeout(resolve, duration);
+      });
+    }
+  }, {
+    key: "move",
+
+    /*
+    Move
+    ----
+     Move a sprite by adding it's velocity to it's position. The sprite 
+    must have `vx` and `vy` values for this to work. You can supply a
+    single sprite, or a list of sprites, separated by commas.
+         move(sprite);
+    */
+
+    value: function move() {
+      for (var _len = arguments.length, sprites = Array(_len), _key = 0; _key < _len; _key++) {
+        sprites[_key] = arguments[_key];
+      }
+
+      if (sprites.length === 1) {
+        var s = sprites[0];
+        s.x += s.vx;
+        s.y += s.vy;
+      } else {
+        for (var i = 0; i < sprites.length; i++) {
+          var s = sprites[i];
+          s.x += s.vx;
+          s.y += s.vy;
+        }
+      }
+    }
+  }]);
+
+  return GameUtilities;
+})();
+//# sourceMappingURL=gameUtilities.js.map"use strict";
+
+var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var Smoothie = (function () {
+  function Smoothie() {
+    var options = arguments[0] === undefined ? {
+      engine: PIXI, //The rendering engine (Pixi)
+      renderer: undefined, //The Pixi renderer you created in your application
+      root: undefined, //The root Pixi display object (usually the `stage`)
+      update: undefined, //A logic function that should be called every frame of the game loop
+      interpolate: true, //A Boolean to turn interpolation on or off
+      fps: 60, //The frame rate at which the application's looping logic function should update
+      renderFps: undefined, //The frame rate at which sprites should be rendered
+      properties: { //Sprite roperties that should be interpolated
+        position: true,
+        rotation: true,
+        size: false,
+        scale: false,
+        alpha: false
+      }
+    } : arguments[0];
+
+    _classCallCheck(this, Smoothie);
+
+    if (options.engine === undefined) throw new Error("Please assign a rendering engine as Smoothie's engine option");
+
+    //Find out which rendering engine is being used (the default is Pixi)
+    this.engine = "";
+
+    //If the `renderingEngine` is Pixi, set up Pixi object aliases
+    if (options.engine.ParticleContainer && options.engine.Sprite) {
+      this.renderingEngine = "pixi";
+      this.Container = options.engine.Container;
+      this.Sprite = options.engine.Sprite;
+      this.MovieClip = options.engine.extras.MovieClip;
+    }
+
+    //Check to make sure the user had supplied a renderer. If you're
+    //using Pixi, this should be the instantiated `renderer` object
+    //that you created in your main application
+    if (options.renderer === undefined) {
+      throw new Error("Please assign a renderer object as Smoothie's renderer option");
+    } else {
+      this.renderer = options.renderer;
+    }
+
+    //Check to make sure the user has supplied a root container. This
+    //is the object is at the top of the display list heirarchy. If
+    //you're using Pixi, it would be a `Container` object, often by
+    //convention called the `stage`
+    if (options.root === undefined) {
+      throw new Error("Please assign a root container object (the stage) as Smoothie's rootr option");
+    } else {
+      this.stage = options.root;
+    }
+
+    if (options.update === undefined) {
+      throw new Error("Please assign a function that you want to update on each frame as Smoothie's update option");
+    } else {
+      this.update = options.update;
+    }
+
+    //Define the sprite properties that should be interpolated
+    if (options.properties === undefined) {
+      this.properties = { position: true, rotation: true };
+    } else {
+      this.properties = options.properties;
+    }
+
+    //The upper-limit frames per second that the game' logic update
+    //function should run at.
+    //Smoothie defaults to 60 fps.
+    if (options.fps !== undefined) {
+      this._fps = options.fps;
+    } else {
+      this._fps = undefined;
+    }
+
+    //Optionally Clamp the upper-limit frame rate at which sprites should render
+    if (options.renderFps !== undefined) {
+      this._renderFps = options.renderFps;
+    } else {
+      this._renderFps = undefined;
+    }
+    //Set sprite rendering position interpolation to
+    //`true` by default
+    if (options.interpolate === false) {
+      this.interpolate = false;
+    } else {
+      this.interpolate = true;
+    }
+
+    //A variable that can be used to pause and play Smoothie
+    this.paused = false;
+
+    //Private properties used to set the frame rate and figure out the interpolation values
+    this._startTime = Date.now();
+    this._frameDuration = 1000 / this._fps;
+    this._lag = 0;
+    this._lagOffset = 0;
+
+    this._renderStartTime = 0;
+    if (this._renderFps !== undefined) {
+      this._renderDuration = 1000 / this._renderFps;
+    }
+  }
+
+  _createClass(Smoothie, [{
+    key: "pause",
+
+    //Methods to pause and resume Smoothie
+    value: function pause() {
+      this.paused = true;
+    }
+  }, {
+    key: "resume",
+    value: function resume() {
+      this.paused = false;
+    }
+  }, {
+    key: "start",
+
+    //The `start` method gets Smoothie's game loop running
+    value: function start() {
+
+      //Start the game loop
+      this.gameLoop();
+    }
+  }, {
+    key: "gameLoop",
+
+    //The core game loop
+    value: function gameLoop(timestamp) {
+      var _this = this;
+
+      requestAnimationFrame(this.gameLoop.bind(this));
+
+      //Only run if Smoothie isn't paused
+      if (!this.paused) {
+
+        //The `interpolate` function updates the logic function at the
+        //same rate as the user-defined fps, renders the sprites, with
+        //interpolation, at the maximum frame rate the system is capbale
+        //of
+
+        var interpolate = function interpolate() {
+
+          //Calculate the time that has elapsed since the last frame
+          var current = Date.now(),
+              elapsed = current - _this._startTime;
+
+          //Catch any unexpectedly large frame rate spikes
+          if (elapsed > 1000) elapsed = _this._frameDuration;
+
+          //For interpolation:
+          _this._startTime = current;
+
+          //Add the elapsed time to the lag counter
+          _this._lag += elapsed;
+
+          //Update the frame if the lag counter is greater than or
+          //equal to the frame duration
+          while (_this._lag >= _this._frameDuration) {
+
+            //Capture the sprites' previous properties for rendering
+            //interpolation
+            _this.capturePreviousSpriteProperties();
+
+            //Update the logic in the user-defined update function
+            _this.update();
+
+            //Reduce the lag counter by the frame duration
+            _this._lag -= _this._frameDuration;
+          }
+
+          //Calculate the lag offset and use it to render the sprites
+          _this._lagOffset = _this._lag / _this._frameDuration;
+          _this.render(_this._lagOffset);
+        };
+
+        //If the `fps` hasn't been defined, call the user-defined update
+        //function and render the sprites at the maximum rate the
+        //system is capable of
+        if (this._fps === undefined) {
+
+          //Run the user-defined game logic function each frame of the
+          //game at the maxium frame rate your system is capable of
+          this.update();
+          this.render();
+        } else {
+          if (this._renderFps === undefined) {
+            interpolate();
+          } else {
+
+            //Implement optional frame rate rendering clamping
+            if (timestamp >= this._renderStartTime) {
+
+              //Update the current logic frame and render with
+              //interpolation
+              interpolate();
+
+              //Reset the frame render start time
+              this._renderStartTime = timestamp + this._renderDuration;
+            }
+          }
+        }
+      }
+    }
+  }, {
+    key: "capturePreviousSpriteProperties",
+
+    //`capturePreviousSpritePositions`
+    //This function is run in the game loop just before the logic update
+    //to store all the sprites' previous positions from the last frame.
+    //It allows the render function to interpolate the sprite positions
+    //for ultra-smooth sprite rendering at any frame rate
+    value: function capturePreviousSpriteProperties() {
+      var _this2 = this;
+
+      //A function that capture's the sprites properties
+      var setProperties = function setProperties(sprite) {
+        if (_this2.properties.position) {
+          sprite._previousX = sprite.x;
+          sprite._previousY = sprite.y;
+        }
+        if (_this2.properties.rotation) {
+          sprite._previousRotation = sprite.rotation;
+        }
+        if (_this2.properties.size) {
+          sprite._previousWidth = sprite.width;
+          sprite._previousHeight = sprite.height;
+        }
+        if (_this2.properties.scale) {
+          sprite._previousScaleX = sprite.scale.x;
+          sprite._previousScaleY = sprite.scale.y;
+        }
+        if (_this2.properties.alpha) {
+          sprite._previousAlpha = sprite.alpha;
+        }
+
+        if (sprite.children && sprite.children.length > 0) {
+          for (var i = 0; i < sprite.children.length; i++) {
+            var child = sprite.children[i];
+            setProperties(child);
+          }
+        }
+      };
+
+      //loop through the all the sprites and capture their properties
+      for (var i = 0; i < this.stage.children.length; i++) {
+        var sprite = this.stage.children[i];
+        setProperties(sprite);
+      }
+    }
+  }, {
+    key: "render",
+
+    //Smoothie's `render` method will interpolate the sprite positions and
+    //rotation for
+    //ultra-smooth animation, if Hexi's `interpolate` property is `true`
+    //(it is by default)
+    value: function render() {
+      var _this3 = this;
+
+      var lagOffset = arguments[0] === undefined ? 1 : arguments[0];
+
+      //Calculate the sprites' interpolated render positions if
+      //`this.interpolate` is `true` (It is true by default)
+
+      if (this.interpolate) {
+        (function () {
+
+          //A recursive function that does the work of figuring out the
+          //interpolated positions
+          var interpolateSprite = function interpolateSprite(sprite) {
+
+            //Position (`x` and `y` properties)
+            if (_this3.properties.position) {
+
+              //Capture the sprite's current x and y positions
+              sprite._currentX = sprite.x;
+              sprite._currentY = sprite.y;
+
+              //Figure out its interpolated positions
+              if (sprite._previousX !== undefined) {
+                sprite.x = (sprite.x - sprite._previousX) * lagOffset + sprite._previousX;
+              }
+              if (sprite._previousY !== undefined) {
+                sprite.y = (sprite.y - sprite._previousY) * lagOffset + sprite._previousY;
+              }
+            }
+
+            //Rotation (`rotation` property)
+            if (_this3.properties.rotation) {
+
+              //Capture the sprite's current rotation
+              sprite._currentRotation = sprite.rotation;
+
+              //Figure out its interpolated rotation
+              if (sprite._previousRotation !== undefined) {
+                sprite.rotation = (sprite.rotation - sprite._previousRotation) * lagOffset + sprite._previousRotation;
+              }
+            }
+
+            //Size (`width` and `height` properties)
+            if (_this3.properties.size) {
+
+              //Only allow this for Sprites or MovieClips. Because
+              //Containers vary in size when the sprites they contain
+              //move, the interpolation will cause them to scale erraticly
+              if (sprite instanceof _this3.Sprite || sprite instanceof _this3.MovieClip) {
+
+                //Capture the sprite's current size
+                sprite._currentWidth = sprite.width;
+                sprite._currentHeight = sprite.height;
+
+                //Figure out the sprite's interpolated size
+                if (sprite._previousWidth !== undefined) {
+                  sprite.width = (sprite.width - sprite._previousWidth) * lagOffset + sprite._previousWidth;
+                }
+                if (sprite._previousHeight !== undefined) {
+                  sprite.height = (sprite.height - sprite._previousHeight) * lagOffset + sprite._previousHeight;
+                }
+              }
+            }
+
+            //Scale (`scale.x` and `scale.y` properties)
+            if (_this3.properties.scale) {
+
+              //Capture the sprite's current scale
+              sprite._currentScaleX = sprite.scale.x;
+              sprite._currentScaleY = sprite.scale.y;
+
+              //Figure out the sprite's interpolated scale
+              if (sprite._previousScaleX !== undefined) {
+                sprite.scale.x = (sprite.scale.x - sprite._previousScaleX) * lagOffset + sprite._previousScaleX;
+              }
+              if (sprite._previousScaleY !== undefined) {
+                sprite.scale.y = (sprite.scale.y - sprite._previousScaleY) * lagOffset + sprite._previousScaleY;
+              }
+            }
+
+            //Alpha (`alpha` property)
+            if (_this3.properties.alpha) {
+
+              //Capture the sprite's current alpha
+              sprite._currentAlpha = sprite.alpha;
+
+              //Figure out its interpolated alpha
+              if (sprite._previousAlpha !== undefined) {
+                sprite.alpha = (sprite.alpha - sprite._previousAlpha) * lagOffset + sprite._previousAlpha;
+              }
+            }
+
+            //Interpolate the sprite's children, if it has any
+            if (sprite.children.length !== 0) {
+              for (var j = 0; j < sprite.children.length; j++) {
+
+                //Find the sprite's child
+                var child = sprite.children[j];
+
+                //display the child
+                interpolateSprite(child);
+              }
+            }
+          };
+
+          //loop through the all the sprites and interpolate them
+          for (var i = 0; i < _this3.stage.children.length; i++) {
+            var sprite = _this3.stage.children[i];
+            interpolateSprite(sprite);
+          }
+        })();
+      }
+
+      //Render the stage. If the sprite positions have been
+      //interpolated, those position values will be used to render the
+      //sprite
+      this.renderer.render(this.stage);
+
+      //Restore the sprites' original x and y values if they've been
+      //interpolated for this frame
+      if (this.interpolate) {
+        (function () {
+
+          //A recursive function that restores the sprite's original,
+          //uninterpolated x and y positions
+          var restoreSpriteProperties = function restoreSpriteProperties(sprite) {
+            if (_this3.properties.position) {
+              sprite.x = sprite._currentX;
+              sprite.y = sprite._currentY;
+            }
+            if (_this3.properties.rotation) {
+              sprite.rotation = sprite._currentRotation;
+            }
+            if (_this3.properties.size) {
+
+              //Only allow this for Sprites or Movie clips, to prevent
+              //Container scaling bug
+              if (sprite instanceof _this3.Sprite || sprite instanceof _this3.MovieClip) {
+                sprite.width = sprite._currentWidth;
+                sprite.height = sprite._currentHeight;
+              }
+            }
+            if (_this3.properties.scale) {
+              sprite.scale.x = sprite._currentScaleX;
+              sprite.scale.y = sprite._currentScaleY;
+            }
+            if (_this3.properties.alpha) {
+              sprite.alpha = sprite._currentAlpha;
+            }
+
+            //Restore the sprite's children, if it has any
+            if (sprite.children.length !== 0) {
+              for (var i = 0; i < sprite.children.length; i++) {
+
+                //Find the sprite's child
+                var child = sprite.children[i];
+
+                //Restore the child sprite properties
+                restoreSpriteProperties(child);
+              }
+            }
+          };
+          for (var i = 0; i < _this3.stage.children.length; i++) {
+            var sprite = _this3.stage.children[i];
+            restoreSpriteProperties(sprite);
+          }
+        })();
+      }
+    }
+  }, {
+    key: "fps",
+
+    //Getters and setters
+
+    //Fps
+    get: function () {
+      return this._fps;
+    },
+    set: function (value) {
+      this._fps = value;
+      this._frameDuration = 1000 / this._fps;
+    }
+  }, {
+    key: "renderFps",
+
+    //renderFps
+    get: function () {
+      return this._renderFps;
+    },
+    set: function (value) {
+      this._renderFps = value;
+      this._renderDuration = 1000 / this._renderFps;
+    }
+  }, {
+    key: "dt",
+
+    //`dt` (Delta time, the `this._lagOffset` value in Smoothie's code)
+    get: function () {
+      return this._lagOffset;
+    }
+  }]);
+
+  return Smoothie;
+})();
+//# sourceMappingURL=smoothie.js.map
