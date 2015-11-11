@@ -30738,6 +30738,10 @@ var Tink = (function () {
         _x: 0,
         _y: 0,
 
+        //Width and height
+        width: 1,
+        height: 1,
+
         //Booleans to track the pointer state
         isDown: false,
         isUp: true,
@@ -30758,6 +30762,18 @@ var Tink = (function () {
         //The drag offsets to help drag sprites
         dragOffsetX: 0,
         dragOffsetY: 0,
+
+        //A property to check whether or not the pointer
+        //is visible
+        _visible: true,
+
+        //Methods to hide and show the pointer
+        hide: function hide() {
+          this.hidden = true;
+        },
+        show: function show() {
+          this.hidden = false;
+        },
 
         //The pointer's mouse `moveHandler`
         moveHandler: function moveHandler(event) {
@@ -30949,7 +30965,10 @@ var Tink = (function () {
           //contain the pointer's position
 
           get: function () {
-            return { x: this.x, y: this.y };
+            return {
+              x: this.x,
+              y: this.y
+            };
           },
           configurable: true,
           enumerable: true
@@ -30960,11 +30979,26 @@ var Tink = (function () {
           //style. Values can be "pointer" (for a hand icon) or "auto" for
           //an ordinary arrow icon.
 
-          get: function (value) {
+          get: function () {
             return this.element.style.cursor;
           },
           set: function (value) {
             this.element.style.cursor = value;
+          },
+          configurable: true,
+          enumerable: true
+        },
+        visible: {
+          get: function () {
+            return this._visible;
+          },
+          set: function (value) {
+            if (value === true) {
+              this.cursor = "auto";
+            } else {
+              this.cursor = "none";
+            }
+            this._visible = value;
           },
           configurable: true,
           enumerable: true
@@ -31102,10 +31136,10 @@ var Tink = (function () {
         //draggable sprite
         draggableSprites.some(function (sprite) {
           if (pointer.hitTestSprite(sprite) && sprite.draggable) {
-            pointer.cursor = "pointer";
+            if (!pointer.visible) pointer.cursor = "pointer";
             return true;
           } else {
-            pointer.cursor = "auto";
+            if (!pointer.visible) pointer.cursor = "auto";
             return false;
           }
         });
@@ -31213,9 +31247,11 @@ var Tink = (function () {
             }
 
             //Change the pointer icon to a hand
-            pointer.cursor = "pointer";
+            if (pointer.visible) pointer.cursor = "pointer";
           } else {
-            pointer.cursor = "auto";
+            //Turn the pointer to an ordinary arrow icon if the
+            //pointer isn't touching a sprite
+            if (pointer.visible) pointer.cursor = "auto";
           }
 
           //Perform the correct interactive action
@@ -32113,17 +32149,31 @@ var SpriteUtilities = (function () {
       var x = arguments[5] === undefined ? 0 : arguments[5];
       var y = arguments[6] === undefined ? 0 : arguments[6];
 
+      var o = new this.Graphics();
+      o._sprite = undefined;
+      o._width = width;
+      o._height = height;
+      o._fillStyle = this.color(fillStyle);
+      o._strokeStyle = this.color(strokeStyle);
+      o._lineWidth = lineWidth;
+
       //Draw the rectangle
-      var rectangle = new this.Graphics();
-      rectangle.beginFill(fillStyle);
-      if (lineWidth > 0) {
-        rectangle.lineStyle(lineWidth, strokeStyle, 1);
-      }
-      rectangle.drawRect(0, 0, width, height);
-      rectangle.endFill();
+      var draw = function draw(width, height, fillStyle, strokeStyle, lineWidth) {
+        o.clear();
+        o.beginFill(fillStyle);
+        if (lineWidth > 0) {
+          o.lineStyle(lineWidth, strokeStyle, 1);
+        }
+        o.drawRect(0, 0, width, height);
+        o.endFill();
+      };
+
+      //Draw the line and capture the sprite that the `draw` function
+      //returns
+      draw(o._width, o._height, o._fillStyle, o._strokeStyle, o._lineWidth);
 
       //Generate a texture from the rectangle
-      var texture = rectangle.generateTexture();
+      var texture = o.generateTexture();
 
       //Use the texture to create a sprite
       var sprite = new this.Sprite(texture);
@@ -32131,6 +32181,63 @@ var SpriteUtilities = (function () {
       //Position the sprite
       sprite.x = x;
       sprite.y = y;
+
+      //Add getters and setters to the sprite
+      var self = this;
+      Object.defineProperties(sprite, {
+        "fillStyle": {
+          get: function get() {
+            return o._fillStyle;
+          },
+          set: function set(value) {
+            o._fillStyle = self.color(value);
+
+            //Draw the new rectangle
+            draw(o._width, o._height, o._fillStyle, o._strokeStyle, o._lineWidth, o._x, o._y);
+
+            //Generate a new texture and set it as the sprite's texture
+            var texture = o.generateTexture();
+            o._sprite.texture = texture;
+          },
+          enumerable: true, configurable: true
+        },
+        "strokeStyle": {
+          get: function get() {
+            return o._strokeStyle;
+          },
+          set: function set(value) {
+            o._strokeStyle = self.color(value);
+
+            //Draw the new rectangle
+            draw(o._width, o._height, o._fillStyle, o._strokeStyle, o._lineWidth, o._x, o._y);
+
+            //Generate a new texture and set it as the sprite's texture
+            var texture = o.generateTexture();
+            o._sprite.texture = texture;
+          },
+          enumerable: true, configurable: true
+        },
+        "lineWidth": {
+          get: function get() {
+            return o._lineWidth;
+          },
+          set: function set(value) {
+            o._lineWidth = value;
+
+            //Draw the new rectangle
+            draw(o._width, o._height, o._fillStyle, o._strokeStyle, o._lineWidth, o._x, o._y);
+
+            //Generate a new texture and set it as the sprite's texture
+            var texture = o.generateTexture();
+            o._sprite.texture = texture;
+          },
+          enumerable: true, configurable: true
+        }
+      });
+
+      //Get a local reference to the sprite so that we can
+      //change the rectangle properties later using the getters/setters
+      o._sprite = sprite;
 
       //Return the sprite
       return sprite;
@@ -32147,17 +32254,28 @@ var SpriteUtilities = (function () {
       var x = arguments[4] === undefined ? 0 : arguments[4];
       var y = arguments[5] === undefined ? 0 : arguments[5];
 
+      var o = new this.Graphics();
+      o._diameter = diameter;
+      o._fillStyle = this.color(fillStyle);
+      o._strokeStyle = this.color(strokeStyle);
+      o._lineWidth = lineWidth;
+
       //Draw the circle
-      var circle = new this.Graphics();
-      circle.beginFill(fillStyle);
-      if (lineWidth > 0) {
-        circle.lineStyle(lineWidth, strokeStyle, 1);
-      }
-      circle.drawCircle(0, 0, diameter / 2);
-      circle.endFill();
+      var draw = function draw(diameter, fillStyle, strokeStyle, lineWidth) {
+        o.clear();
+        o.beginFill(fillStyle);
+        if (lineWidth > 0) {
+          o.lineStyle(lineWidth, strokeStyle, 1);
+        }
+        o.drawCircle(0, 0, diameter / 2);
+        o.endFill();
+      };
+
+      //Draw the cirlce
+      draw(o._diameter, o._fillStyle, o._strokeStyle, o._lineWidth);
 
       //Generate a texture from the rectangle
-      var texture = circle.generateTexture();
+      var texture = o.generateTexture();
 
       //Use the texture to create a sprite
       var sprite = new this.Sprite(texture);
@@ -32165,6 +32283,77 @@ var SpriteUtilities = (function () {
       //Position the sprite
       sprite.x = x;
       sprite.y = y;
+
+      //Add getters and setters to the sprite
+      var self = this;
+      Object.defineProperties(sprite, {
+        "fillStyle": {
+          get: function get() {
+            return o._fillStyle;
+          },
+          set: function set(value) {
+            o._fillStyle = self.color(value);
+
+            //Draw the cirlce
+            draw(o._diameter, o._fillStyle, o._strokeStyle, o._lineWidth);
+
+            //Generate a new texture and set it as the sprite's texture
+            var texture = o.generateTexture();
+            o._sprite.texture = texture;
+          },
+          enumerable: true, configurable: true
+        },
+        "strokeStyle": {
+          get: function get() {
+            return o._strokeStyle;
+          },
+          set: function set(value) {
+            o._strokeStyle = self.color(value);
+
+            //Draw the cirlce
+            draw(o._diameter, o._fillStyle, o._strokeStyle, o._lineWidth);
+
+            //Generate a new texture and set it as the sprite's texture
+            var texture = o.generateTexture();
+            o._sprite.texture = texture;
+          },
+          enumerable: true, configurable: true
+        },
+        "diameter": {
+          get: function get() {
+            return o._diameter;
+          },
+          set: function set(value) {
+            o._lineWidth = 10;
+
+            //Draw the cirlce
+            draw(o._diameter, o._fillStyle, o._strokeStyle, o._lineWidth);
+
+            //Generate a new texture and set it as the sprite's texture
+            var texture = o.generateTexture();
+            o._sprite.texture = texture;
+          },
+          enumerable: true, configurable: true
+        },
+        "radius": {
+          get: function get() {
+            return o._diameter / 2;
+          },
+          set: function set(value) {
+
+            //Draw the cirlce
+            draw(value * 2, o._fillStyle, o._strokeStyle, o._lineWidth);
+
+            //Generate a new texture and set it as the sprite's texture
+            var texture = o.generateTexture();
+            o._sprite.texture = texture;
+          },
+          enumerable: true, configurable: true
+        }
+      });
+      //Get a local reference to the sprite so that we can
+      //change the circle properties later using the getters/setters
+      o._sprite = sprite;
 
       //Return the sprite
       return sprite;
@@ -32182,72 +32371,99 @@ var SpriteUtilities = (function () {
       var by = arguments[5] === undefined ? 32 : arguments[5];
 
       //Create the line object
-      var line = new this.Graphics();
+      var o = new this.Graphics();
 
-      //Add properties
-      line._ax = ax;
-      line._ay = ay;
-      line._bx = bx;
-      line._by = by;
-      line.strokeStyle = strokeStyle;
-      line.lineWidth = lineWidth;
+      //Private properties
+      o._strokeStyle = this.color(strokeStyle);
+      o._width = lineWidth;
+      o._ax = ax;
+      o._ay = ay;
+      o._bx = bx;
+      o._by = by;
 
       //A helper function that draws the line
-      line.draw = function () {
-        line.clear();
-        line.lineStyle(lineWidth, strokeStyle, 1);
-        line.moveTo(line._ax, line._ay);
-        line.lineTo(line._bx, line._by);
+      var draw = function draw(strokeStyle, lineWidth, ax, ay, bx, by) {
+        o.clear();
+        o.lineStyle(lineWidth, strokeStyle, 1);
+        o.moveTo(ax, ay);
+        o.lineTo(bx, by);
       };
-      line.draw();
+
+      //Draw the line
+      draw(o._strokeStyle, o._width, o._ax, o._ay, o._bx, o._by);
 
       //Define getters and setters that redefine the line's start and
       //end points and re-draws it if they change
-      Object.defineProperties(line, {
+      var self = this;
+      Object.defineProperties(o, {
         "ax": {
           get: function get() {
-            return this._ax;
+            return o._ax;
           },
           set: function set(value) {
-            this._ax = value;
-            this.draw();
+            o._ax = value;
+            draw(o._strokeStyle, o._width, o._ax, o._ay, o._bx, o._by);
           },
           enumerable: true, configurable: true
         },
         "ay": {
           get: function get() {
-            return this._ay;
+            return o._ay;
           },
           set: function set(value) {
-            this._ay = value;
-            this.draw();
+            o._ay = value;
+            draw(o._strokeStyle, o._width, o._ax, o._ay, o._bx, o._by);
           },
           enumerable: true, configurable: true
         },
         "bx": {
           get: function get() {
-            return this._bx;
+            return o._bx;
           },
           set: function set(value) {
-            this._bx = value;
-            this.draw();
+            o._bx = value;
+            draw(o._strokeStyle, o._width, o._ax, o._ay, o._bx, o._by);
           },
           enumerable: true, configurable: true
         },
         "by": {
           get: function get() {
-            return this._by;
+            return o._by;
           },
           set: function set(value) {
-            this._by = value;
-            this.draw();
+            o._by = value;
+            draw(o._strokeStyle, o._width, o._ax, o._ay, o._bx, o._by);
+          },
+          enumerable: true, configurable: true
+        },
+        "strokeStyle": {
+          get: function get() {
+            return o._strokeStyle;
+          },
+          set: function set(value) {
+            o._strokeStyle = self.color(value);
+
+            //Draw the line
+            draw(o._strokeStyle, o._width, o._ax, o._ay, o._bx, o._by);
+          },
+          enumerable: true, configurable: true
+        },
+        "width": {
+          get: function get() {
+            return o._width;
+          },
+          set: function set(value) {
+            o._width = value;
+
+            //Draw the line
+            draw(o._strokeStyle, o._width, o._ax, o._ay, o._bx, o._by);
           },
           enumerable: true, configurable: true
         }
       });
 
       //Return the line
-      return line;
+      return o;
     }
   }, {
     key: "grid",
@@ -32380,6 +32596,98 @@ var SpriteUtilities = (function () {
         }
       }
     }
+  }, {
+    key: "colorToRGBA",
+
+    /* Color conversion */
+    //From: http://stackoverflow.com/questions/1573053/javascript-function-to-convert-color-names-to-hex-codes
+    //Utilities to convert HTML color string names to hexadecimal codes
+
+    value: function colorToRGBA(color) {
+      // Returns the color as an array of [r, g, b, a] -- all range from 0 - 255
+      // color must be a valid canvas fillStyle. This will cover most anything
+      // you'd want to use.
+      // Examples:
+      // colorToRGBA('red')  # [255, 0, 0, 255]
+      // colorToRGBA('#f00') # [255, 0, 0, 255]
+      var cvs, ctx;
+      cvs = document.createElement("canvas");
+      cvs.height = 1;
+      cvs.width = 1;
+      ctx = cvs.getContext("2d");
+      ctx.fillStyle = color;
+      ctx.fillRect(0, 0, 1, 1);
+      var data = ctx.getImageData(0, 0, 1, 1).data;
+      return data;
+    }
+  }, {
+    key: "byteToHex",
+    value: function byteToHex(num) {
+      // Turns a number (0-255) into a 2-character hex number (00-ff)
+      return ("0" + num.toString(16)).slice(-2);
+    }
+  }, {
+    key: "colorToHex",
+    value: function colorToHex(color) {
+      var _this2 = this;
+
+      // Convert any CSS color to a hex representation
+      // Examples:
+      // colorToHex('red')            # '#ff0000'
+      // colorToHex('rgb(255, 0, 0)') # '#ff0000'
+      var rgba, hex;
+      rgba = this.colorToRGBA(color);
+      hex = [0, 1, 2].map(function (idx) {
+        return _this2.byteToHex(rgba[idx]);
+      }).join("");
+      return "0x" + hex;
+    }
+  }, {
+    key: "color",
+
+    //A function to find out if the user entered a number (a hex color
+    //code) or a string (an HTML color string)
+    value: function color(value) {
+
+      //Check if it's a number
+      if (!isNaN(value)) {
+        console.log("It's a number");
+
+        //Yes, it is a number, so just return it
+        return value;
+      }
+
+      //No it's not a number, so it must be a string   
+      else {
+
+        return this.colorToHex(value);
+        /*
+         //Find out what kind of color string it is.
+        //Let's first grab the first character of the string
+        let firstCharacter = value.charAt(0);
+         //If the first character is a "#" or a number, then
+        //we know it must be a RGBA color
+        if (firstCharacter === "#") {
+          console.log("first character: " + value.charAt(0))
+        }
+        */
+      }
+
+      /*
+      //Find out if the first character in the string is a number
+      if (!isNaN(parseInt(string.charAt(0)))) {
+        
+        //It's not, so convert it to a hex code
+        return colorToHex(string);
+        
+      //The use input a number, so it must be a hex code. Just return it
+      } else {
+      
+        return string;
+      }
+      
+      */
+    }
   }]);
 
   return SpriteUtilities;
@@ -32410,8 +32718,8 @@ var GameUtilities = (function () {
      */
 
     value: function distance(s1, s2) {
-      var vx = s2.x + s2.width / 2 - (s1.x + s1.width / 2),
-          vy = s2.y + s2.height / 2 - (s1.y + s1.height / 2);
+      var vx = s2.x + this._getCenter(s2, s2.width, "x") - (s1.x + this._getCenter(s1, s1.width, "x")),
+          vy = s2.y + this._getCenter(s2, s2.height, "y") - (s1.y + this._getCenter(s1, s1.height, "y"));
       return Math.sqrt(vx * vx + vy * vy);
     }
   }, {
@@ -32432,8 +32740,14 @@ var GameUtilities = (function () {
     value: function followEase(follower, leader, speed) {
 
       //Figure out the distance between the sprites
-      var vx = leader.x + leader.width / 2 - (follower.x + follower.width / 2),
-          vy = leader.x + leader.width / 2 - (follower.x + follower.width / 2),
+      /*
+      let vx = (leader.x + leader.width / 2) - (follower.x + follower.width / 2),
+          vy = (leader.y + leader.height / 2) - (follower.y + follower.height / 2),
+          distance = Math.sqrt(vx * vx + vy * vy);
+      */
+
+      var vx = leader.x + this._getCenter(leader, leader.width, "x") - (follower.x + this._getCenter(follower, follower.width, "x")),
+          vy = leader.y + this._getCenter(leader, leader.height, "y") - (follower.y + this._getCenter(follower, follower.height, "y")),
           distance = Math.sqrt(vx * vx + vy * vy);
 
       //Move the follower if it's more than 1 pixel
@@ -32460,8 +32774,8 @@ var GameUtilities = (function () {
     value: function followConstant(follower, leader, speed) {
 
       //Figure out the distance between the sprites
-      var vx = leader.x + leader.width / 2 - (follower.x + follower.width / 2),
-          vy = leader.x + leader.width / 2 - (follower.x + follower.width / 2),
+      var vx = leader.x + this._getCenter(leader, leader.width, "x") - (follower.x + this._getCenter(follower, follower.width, "x")),
+          vy = leader.y + this._getCenter(leader, leader.height, "y") - (follower.y + this._getCenter(follower, follower.height, "y")),
           distance = Math.sqrt(vx * vx + vy * vy);
 
       //Move the follower if it's more than 1 move
@@ -32486,7 +32800,35 @@ var GameUtilities = (function () {
      */
 
     value: function angle(s1, s2) {
-      return Math.atan2(s2.y + s2.height / 2 - (s1.y + s1.height / 2), s2.x + s2.width / 2 - (s1.x + s1.width / 2));
+      return Math.atan2(
+      /*
+      (s2.y + s2.height / 2) - (s1.y + s1.height / 2),
+      (s2.x + s2.width / 2) - (s1.x + s1.width / 2)
+      */
+      s2.y + this._getCenter(s2, s2.height, "y") - (s1.y + this._getCenter(s1, s1.height, "y")), s2.x + this._getCenter(s2, s2.width, "x") - (s1.x + this._getCenter(s1, s1.width, "x")));
+    }
+  }, {
+    key: "_getCenter",
+
+    /*
+    _getCenter
+    ----------
+     A utility that finds the center point of the sprite. If it's anchor point is the
+    sprite's top left corner, then the center is calculated from that point.
+    If the anchor point has been shifted, then the anchor x/y point is used as the sprite's center
+    */
+
+    value: function _getCenter(o, dimension, axis) {
+      if (o.anchor !== undefined) {
+        if (o.anchor[axis] !== 0) {
+          return 0;
+        } else {
+          //console.log(o.anchor[axis])
+          return dimension / 2;
+        }
+      } else {
+        return dimension;
+      }
     }
   }, {
     key: "rotateAroundSprite",
@@ -32505,9 +32847,9 @@ var GameUtilities = (function () {
     */
 
     value: function rotateAroundSprite(rotatingSprite, centerSprite, distance, angle) {
-      rotatingSprite.x = centerSprite.x + centerSprite.width / 2 - rotatingSprite.parent.x + distance * Math.cos(angle) - rotatingSprite.width / 2;
+      rotatingSprite.x = centerSprite.x + this._getCenter(centerSprite, centerSprite.width, "x") - rotatingSprite.parent.x + distance * Math.cos(angle) - this._getCenter(rotatingSprite, rotatingSprite.width, "x");
 
-      rotatingSprite.y = centerSprite.y + centerSprite.height / 2 - rotatingSprite.parent.y + distance * Math.sin(angle) - rotatingSprite.width / 2;
+      rotatingSprite.y = centerSprite.y + (centerSprite, centerSprite.height, "y") - rotatingSprite.parent.y + distance * Math.sin(angle) - this._getCenter(rotatingSprite, rotatingSprite.width, "y");
     }
   }, {
     key: "rotateAroundPoint",
@@ -33228,7 +33570,7 @@ var Hexi = (function () {
 
     //Set the canvas's optional background color and border style
     if (o.backgroundColor) {
-      this.renderer.backgroundColor = o.backgroundColor;
+      this.renderer.backgroundColor = this.color(o.backgroundColor);
     } else {
       this.renderer.backgroundColor = 16777215;
     }
@@ -33571,7 +33913,10 @@ var Hexi = (function () {
           //Get the sound file name.
           soundSprite.name = _this3.loader.resources[resource].name;
 
-          //Add the sound object to Hexi's `soundObjects` object
+          //Add the sound object to Hexi's `soundObjects` object.
+          //You'll be able to access them in your application through
+          //Hexi's higher-level `sound` method, like this:
+          //`hexi.sound("soundFileName.wav");`
           _this3.soundObjects[soundSprite.name] = soundSprite;
         }
       });
@@ -33674,6 +34019,18 @@ var Hexi = (function () {
       };
       this.frameSeries = function (startNumber, endNumber, baseName, extension) {
         return _this4.spriteUtilities.frames(startNumber, endNumber, baseName, extension);
+      };
+      this.colorToRGBA = function (value) {
+        return _this4.spriteUtilities.colorToRGBA(value);
+      };
+      this.colorToHex = function (value) {
+        return _this4.spriteUtilities.colorToHex(value);
+      };
+      this.byteToHex = function (value) {
+        return _this4.spriteUtilities.byteToHex(value);
+      };
+      this.color = function (value) {
+        return _this4.spriteUtilities.color(value);
       };
 
       //Charm - Tweening
@@ -33835,11 +34192,21 @@ var Hexi = (function () {
       };
 
       //GameUtilities - Useful utilities
-      this.distance = this.gameUtilities.distance;
-      this.followEase = this.gameUtilities.followEase;
-      this.followConstant = this.gameUtilities.followConstant;
-      this.angle = this.gameUtilities.angle;
-      this.rotateAroundSprite = this.gameUtilities.rotateAroundSprite;
+      this.distance = function (s1, s2) {
+        return _this4.gameUtilities.distance(s1, s2);
+      };
+      this.followEase = function (follower, leader, speed) {
+        return _this4.gameUtilities.followEase(follower, leader, speed);
+      };
+      this.followConstant = function (follower, leader, speed) {
+        return _this4.gameUtilities.followConstant(follower, leader, speed);
+      };
+      this.angle = function (s1, s2) {
+        return _this4.gameUtilities.angle(s1, s2);
+      };
+      this.rotateAroundSprite = function (rotatingSprite, centerSprite, distance, angle) {
+        return _this4.gameUtilities.rotateAroundSprite(rotatingSprite, centerSprite, distance, angle);
+      };
       this.rotateAroundPoint = this.gameUtilities.rotateAroundPoint;
       this.randomInt = this.gameUtilities.randomInt;
       this.randomFloat = this.gameUtilities.randomFloat;
@@ -34030,6 +34397,10 @@ var Hexi = (function () {
       //and `diameter`
       o._circular = false;
 
+      //Is the sprite interative? Setting this to `true` makes the
+      //sprite behave like a button
+      o._interact = false;
+
       //Swap the depth layer positions of two child sprites
       o.swapChildren = function (child1, child2) {
         var index1 = o.children.indexOf(child1),
@@ -34083,6 +34454,34 @@ var Hexi = (function () {
       //easier to read
       var a = o;
 
+      var nudgeAnchor = function nudgeAnchor(o, value, axis) {
+        if (o.anchor !== undefined) {
+          if (o.anchor.axis !== 0) {
+            return value * (1 - o.anchor[axis] - o.anchor[axis]);
+          } else {
+            return value;
+          }
+        } else {
+          return value;
+        }
+      };
+
+      var compensateForAnchor = function compensateForAnchor(o, value, axis) {
+        if (o.anchor !== undefined) {
+          if (o.anchor.axis !== 0) {
+            return value * o.anchor[axis];
+          } else {
+            return value;
+          }
+        } else {
+          return value;
+        }
+      };
+
+      var compensateForAnchors = function compensateForAnchors(a, b, property1, property2) {
+        return compensateForAnchor(a, a[property1], property2) + compensateForAnchor(b, b[property1], property2);
+      };
+
       //Center a sprite inside this sprite. `xOffset` and `yOffset`
       //arguments determine by how much the other sprite's position
       //should be offset from the center. These methods use the
@@ -34097,53 +34496,9 @@ var Hexi = (function () {
         if (o._stage) a = _this5.compensateForStageSize(o);
         xOffset = xOffset || 0;
         yOffset = yOffset || 0;
-        b.x = a.x + a.halfWidth - b.halfWidth + xOffset;
-        b.y = a.y + a.halfHeight - b.halfHeight + yOffset;
-
-        //Compensate for the parent's position
-        if (!o._stage) o.compensateForParentPosition(a, b);
-      };
-
-      //Position `b` above `a`.
-      o.putTop = function (b) {
-        var xOffset = arguments[1] === undefined ? 0 : arguments[1];
-        var yOffset = arguments[2] === undefined ? 0 : arguments[2];
-
-        if (o._stage) a = _this5.compensateForStageSize(o);
-        xOffset = xOffset || 0;
-        yOffset = yOffset || 0;
-        b.x = a.x + a.halfWidth - b.halfWidth + xOffset;
-        b.y = a.x - b.height + yOffset;
-
-        //Compensate for the parent's position
-        if (!o._stage) o.compensateForParentPosition(a, b);
-      };
-
-      //Position `b` to the right of `a`.
-      o.putRight = function (b) {
-        var xOffset = arguments[1] === undefined ? 0 : arguments[1];
-        var yOffset = arguments[2] === undefined ? 0 : arguments[2];
-
-        if (o._stage) a = _this5.compensateForStageSize(o);
-        xOffset = xOffset || 0;
-        yOffset = yOffset || 0;
-        b.x = a.x + a.width + xOffset;
-        b.y = a.y + a.halfHeight - b.halfHeight + yOffset;
-
-        //Compensate for the parent's position
-        if (!o._stage) o.compensateForParentPosition(a, b);
-      };
-
-      //Position `b` below `a`.
-      o.putBottom = function (b) {
-        var xOffset = arguments[1] === undefined ? 0 : arguments[1];
-        var yOffset = arguments[2] === undefined ? 0 : arguments[2];
-
-        if (o._stage) a = _this5.compensateForStageSize(o);
-        xOffset = xOffset || 0;
-        yOffset = yOffset || 0;
-        b.x = a.x + a.halfWidth - b.halfWidth + xOffset;
-        b.y = a.y + a.height + yOffset;
+        //b.x = (a.x + a.halfWidth - (b.halfWidth * ((1 - b.anchor.x) - b.anchor.x))) + xOffset;
+        b.x = a.x + nudgeAnchor(a, a.halfWidth, "x") - nudgeAnchor(b, b.halfWidth, "x") + xOffset;
+        b.y = a.y + nudgeAnchor(a, a.halfHeight, "y") - nudgeAnchor(b, b.halfHeight, "y") + yOffset;
 
         //Compensate for the parent's position
         if (!o._stage) o.compensateForParentPosition(a, b);
@@ -34157,8 +34512,57 @@ var Hexi = (function () {
         if (o._stage) a = _this5.compensateForStageSize(o);
         xOffset = xOffset || 0;
         yOffset = yOffset || 0;
-        b.x = a.x - b.width + xOffset;
-        b.y = a.y + a.halfHeight - b.halfHeight + yOffset;
+        b.x = a.x - nudgeAnchor(b, b.width, "x") + xOffset - compensateForAnchors(a, b, "width", "x");
+        b.y = a.y + nudgeAnchor(a, a.halfHeight, "y") - nudgeAnchor(b, b.halfHeight, "y") + yOffset;
+
+        //Compensate for the parent's position
+        if (!o._stage) o.compensateForParentPosition(a, b);
+      };
+
+      //Position `b` above `a`.
+      o.putTop = function (b) {
+        var xOffset = arguments[1] === undefined ? 0 : arguments[1];
+        var yOffset = arguments[2] === undefined ? 0 : arguments[2];
+
+        if (o._stage) a = _this5.compensateForStageSize(o);
+        xOffset = xOffset || 0;
+        yOffset = yOffset || 0;
+        b.x = a.x + nudgeAnchor(a, a.halfWidth, "x") - nudgeAnchor(b, b.halfWidth, "x") + xOffset;
+        b.y = a.y - nudgeAnchor(b, b.height, "y") + yOffset - compensateForAnchors(a, b, "height", "y");
+
+        //Compensate for the parent's position
+        if (!o._stage) o.compensateForParentPosition(a, b);
+      };
+
+      //Position `b` to the right of `a`.
+      o.putRight = function (b) {
+        var xOffset = arguments[1] === undefined ? 0 : arguments[1];
+        var yOffset = arguments[2] === undefined ? 0 : arguments[2];
+
+        if (o._stage) a = _this5.compensateForStageSize(o);
+        xOffset = xOffset || 0;
+        yOffset = yOffset || 0;
+        b.x = a.x + nudgeAnchor(a, a.width, "x") - xOffset + compensateForAnchors(a, b, "width", "x");
+        b.y = a.y + nudgeAnchor(a, a.halfHeight, "y") - nudgeAnchor(b, b.halfHeight, "y") + yOffset;
+        //b.x = (a.x + a.width) + xOffset;
+        //b.y = (a.y + a.halfHeight - b.halfHeight) + yOffset;
+
+        //Compensate for the parent's position
+        if (!o._stage) o.compensateForParentPosition(a, b);
+      };
+
+      //Position `b` below `a`.
+      o.putBottom = function (b) {
+        var xOffset = arguments[1] === undefined ? 0 : arguments[1];
+        var yOffset = arguments[2] === undefined ? 0 : arguments[2];
+
+        if (o._stage) a = _this5.compensateForStageSize(o);
+        xOffset = xOffset || 0;
+        yOffset = yOffset || 0;
+        //b.x = (a.x + a.halfWidth - b.halfWidth) + xOffset;
+        b.x = a.x + nudgeAnchor(a, a.halfWidth, "x") - nudgeAnchor(b, b.halfWidth, "x") + yOffset;
+        //b.y = (a.y + a.height) + yOffset;
+        b.y = a.y + nudgeAnchor(a, a.height, "y") - xOffset + compensateForAnchors(a, b, "height", "y");
 
         //Compensate for the parent's position
         if (!o._stage) o.compensateForParentPosition(a, b);
@@ -34174,6 +34578,7 @@ var Hexi = (function () {
         }
       };
 
+      var self = this;
       Object.defineProperties(o, {
         "gx": {
           get: function get() {
@@ -34211,6 +34616,20 @@ var Hexi = (function () {
           },
           enumerable: true, configurable: true
         },
+        "scaleModeNearest": {
+          set: function set(value) {
+            if (o.texture.baseTexture) {
+              if (value) {
+                o.texture.baseTexture.scaleMode = PIXI.SCALE_MODES.NEAREST;
+              } else {
+                o.texture.baseTexture.scaleMode = PIXI.SCALE_MODES.LINEAR;
+              }
+            } else {
+              throw new Error("The scale mode of " + o + " cannot be modified");
+            }
+          },
+          enumerable: true, configurable: true
+        },
         "pivotX": {
           get: function get() {
             return o.anchor.x;
@@ -34241,6 +34660,24 @@ var Hexi = (function () {
           },
           enumerable: true, configurable: true
         },
+        "scaleX": {
+          get: function get() {
+            return o.scale.x;
+          },
+          set: function set(value) {
+            o.scale.x = value;
+          },
+          enumerable: true, configurable: true
+        },
+        "scaleY": {
+          get: function get() {
+            return o.scale.y;
+          },
+          set: function set(value) {
+            o.scale.y = value;
+          },
+          enumerable: true, configurable: true
+        },
 
         //Depth layer
         "layer": {
@@ -34256,6 +34693,27 @@ var Hexi = (function () {
               o.parent.children.sort(function (a, b) {
                 return a.layer - b.layer;
               });
+            }
+          },
+          enumerable: true, configurable: true
+        },
+
+        //Interactivity
+        "interact": {
+          get: function get() {
+            return o._interact;
+          },
+          set: function set(value) {
+            if (value === true) {
+              if (!o._interact) {
+                self.makeInteractive(o);
+                o._interact = true;
+              }
+            } else {
+              if (self.tink.buttons.indexOf(o) !== -1) {
+                self.tink.buttons.splice(self.tink.buttons.indexOf(o), 1);
+                o._interact = false;
+              }
             }
           },
           enumerable: true, configurable: true
@@ -34384,9 +34842,17 @@ var Hexi = (function () {
       }
     }
   }, {
-    key: "makeProgressBar",
+    key: "log",
 
     /* Utilities */
+
+    //`log` is a shortcut for `console.log`, so that you have less to
+    //type when you're debugging
+    value: function log(value) {
+      return console.log(value);
+    }
+  }, {
+    key: "makeProgressBar",
 
     //The `makeProgressBar` method creates a `progressBar` object with
     //`create`, `update` and `remove` methods. It's called by the
@@ -34514,10 +34980,43 @@ var Hexi = (function () {
     }
   }, {
     key: "image",
-    value: function image(imageFileName) {}
+
+    //High level functions for accessing the loaded resources and custom parsed
+    //objects, like sounds.
+    value: function image(imageFileName) {
+      if (this.TextureCache[imageFileName]) {
+        return this.TextureCache[imageFileName];
+      } else {
+        throw new Error("" + imageFileName + " does not appear to be an image");
+      }
+    }
+  }, {
+    key: "id",
+    value: function id(textureAtlasFrameId) {
+      if (this.TextureCache[textureAtlasFrameId]) {
+        return this.TextureCache[textureAtlasFrameId];
+      } else {
+        throw new Error("" + textureAtlasFrameId + " does not appear to be a texture atlas frame id");
+      }
+    }
   }, {
     key: "json",
-    value: function json(jsonFileName) {}
+    value: function json(jsonFileName) {
+      if (this.loader.resources[jsonFileName].data) {
+        return this.loader.resources[jsonFileName].data;
+      } else {
+        throw new Error("" + jsonFileName + " does not appear to be a JSON data file");
+      }
+    }
+  }, {
+    key: "xml",
+    value: function xml(xmlFileName) {
+      if (this.loader.resources[xmlFileName].data) {
+        return this.loader.resources[xmlFileName].data;
+      } else {
+        throw new Error("" + xmlFileName + " does not appear to be a XML data file");
+      }
+    }
   }, {
     key: "sound",
     value: function sound(soundFileName) {
@@ -34568,6 +35067,14 @@ var Hexi = (function () {
     //The `border` property lets you set the border style on the canvas
     set: function (value) {
       this.canvas.style.border = value;
+    }
+  }, {
+    key: "backgroundColor",
+
+    //The `backgroundColor` property lets you set the background color
+    //of the renderer
+    set: function (value) {
+      this.renderer.backgroundColor = this.color(value);
     }
   }]);
 
