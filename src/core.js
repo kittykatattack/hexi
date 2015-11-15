@@ -61,7 +61,7 @@ class Hexi{
 
   `assets`: Array of assets (files) that should be loaded
   `load`: A function that should run while Hexi is loading asssets
-  `renderer`: The tpe of renderer to use: "auto" (the default), "canvas" or "webgl"
+  `renderer`: The type of renderer to use: "auto" (the default), "canvas" or "webgl"
   `backgroundColor`: Hexadecimal color code that defines the canvas color
   `border`: The canvas border style as a CSS border string, such as "1px dashed black"
   `scaleToWindow`: A Boolean that determines whether the canvas should scale to maximum window size
@@ -324,7 +324,7 @@ class Hexi{
 
         //Trick the browser into loading the font file by 
         //displaying an invisible element
-        var span = document.createElement("span");
+        let span = document.createElement("span");
         span.style.fontFamily = fontFamily;
         document.body.appendChild(span);
         span.innerHTML = "?";
@@ -517,8 +517,29 @@ class Hexi{
     //Pixi - Rendering
     this.Container = PIXI.Container;
     this.loader = PIXI.loader;
-    this.resources = PIXI.loader.resources;
     this.TextureCache = PIXI.utils.TextureCache;
+    this.filters = PIXI.filters;
+    //Filters
+    this.dropShadowFilter = () => new this.filters.DropShadowFilter();
+    this.asciiFilter = () => new this.filters.AsciiFilter();
+    this.alphaMaskFilter = () => new this.filters.AlphaMaskFilter();
+    this.bloomFilter = () => new this.filters.BloomFilter();
+    this.blurDirFilter = () => new this.filters.BlurDirFilter();
+    this.blurFilter = () => new this.filters.BlurFilter();
+    this.colorMatrixFilter = () => new this.filters.ColorMatrixFilter();
+    this.colorStepFilter = () => new this.filters.ColorStepFilter();
+    this.crossHatchFilter = () => new this.filters.CrossHatchFilter();
+    this.displacementFilter = () => new this.filters.DisplacementFilter();
+    this.dotScreenFilter = () => new this.filters.DotScreenFilter();
+    this.grayFilter = () => new this.filters.GrayFilter();
+    this.invertFilter = () => new this.filters.InvertFilter();
+    this.pixelateFilter = () => new this.filters.PixelateFilter();
+    this.sepiaFilter = () => new this.filters.SepiaFilter();
+    this.shockwaveFilter = () => new this.filters.ShockwaveFilter();
+    this.twistFilter = () => new this.filters.TwistFilter();
+    this.rgbSplitFilter = () => new this.filters.RGBSplitFilter();
+    this.smartBlurFilter = () => new this.filters.SmartBlurFilter();
+    this.tiltShiftFilter = () => new this.filters.TiltShiftFilter();
 
     //Tink - Interactivity
     this.draggableSprites = this.tink.draggableSprites;
@@ -530,6 +551,14 @@ class Hexi{
     this.makeInteractive = (o) => this.tink.makeInteractive(o);
     this.button = (source, x = 0, y = 0) => this.tink.button(source, x, y);
     this.keyboard = this.tink.keyboard;
+    this.arrowControl = (sprite, speed) => this.tink.arrowControl(sprite, speed);
+
+    //Add the arrow key objects
+    this.upArrow = this.keyboard(38);
+    this.rightArrow = this.keyboard(39);
+    this.downArrow = this.keyboard(40);
+    this.leftArrow = this.keyboard(37);
+    this.spaceBar = this.keyboard(32);
 
     //SpriteUtilities - Sprite creation tools
     this.filmstrip = (texture, frameWidth, frameHeight, spacing) => this.spriteUtilities.filmstrip(texture, frameWidth, frameHeight, spacing);
@@ -593,6 +622,19 @@ class Hexi{
     this.circlePointCollision = (c1, point, bounce = false, global = false) => this.bump.circlePointCollision(c1, point, bounce, global);
     this.bounceOffSurface = (o, s) => this.bump.bounceOffSurface(o, s);
     this.hit = (a, b, react = false, bounce = false, global, extra = undefined) => this.bump.hit(a, b, react, bounce, global, extra);
+    //this.contain = (sprite, container, bounce = false, extra = undefined) => this.bump.contain(sprite, container, bounce, extra);
+
+    //Intercept the Bump library's `contain` method to make sure that
+    //the stage `width` and `height` match the canvas width and height
+    this.contain = (sprite, container, bounce = false, extra = undefined) => {
+      let o = {};
+      if (container._stage) {
+        o = this.compensateForStageSize(container);
+      } else {
+        o = container
+      }
+      return this.bump.contain(sprite, o, bounce, extra);
+    };
 
     //GameUtilities - Useful utilities
     this.distance = (s1, s2) => this.gameUtilities.distance(s1, s2);
@@ -606,6 +648,8 @@ class Hexi{
     this.move = this.gameUtilities.move;
     this.wait = this.gameUtilities.wait;
   }
+
+  get resources() {return this.loader.resources}
 
   //Add Smoothie getters and setters to access the `fps`,
   //`properties`, `renderFps` and `interpolate` properties
@@ -628,17 +672,6 @@ class Hexi{
   //of the renderer
   set backgroundColor(value) {this.renderer.backgroundColor = this.color(value);}
 
-  //Intercept the Bump library's `contain` method to make sure that
-  //the stage `width` and `height` match the canvas width and height
-  contain(sprite, container) {
-    let o = {};
-    if (container._stage) {
-      o = this.compensateForStageSize(container);
-    } else {
-      o = container
-    }
-    return this.bump.contain(sprite, o);
-  }
 
   /* Sprite creation methods */
 
@@ -649,10 +682,10 @@ class Hexi{
   //extra, useful properties and methods to sprites with the
   //`addProperties` method
   sprite(source, x = 0, y = 0, tiling = false, width, height){
-    let sprite = this.spriteUtilities.sprite(source, x, y, tiling, width, height);
-    this.addProperties(sprite);
-    this.stage.addChild(sprite);
-    return sprite;
+    let o = this.spriteUtilities.sprite(source, x, y, tiling, width, height);
+    this.addProperties(o);
+    this.stage.addChild(o);
+    return o;
   }
 
   //Hexi's `text` method is a quick way to create a Pixi Text sprite
@@ -674,45 +707,47 @@ class Hexi{
 
   //Make a rectangle and add it to the stage
   rectangle(width = 32, height = 32,  fillStyle = 0xFF3300, strokeStyle = 0x0033CC, lineWidth = 0, x = 0, y = 0) {
-    let rectangle = this.spriteUtilities.rectangle(width, height, fillStyle, strokeStyle, lineWidth, x, y);
-    this.addProperties(rectangle);
-    this.stage.addChild(rectangle);
-    return rectangle;
+    let o = this.spriteUtilities.rectangle(width, height, fillStyle, strokeStyle, lineWidth, x, y);
+    this.addProperties(o);
+    this.stage.addChild(o);
+    return o;
   }
 
   //Make a circle and add it to the stage
   circle(diameter = 32, fillStyle = 0xFF3300, strokeStyle = 0x0033CC, lineWidth = 0, x = 0, y = 0) {
-    let circle = this.spriteUtilities.circle( diameter, fillStyle, strokeStyle, lineWidth, x, y);
-    this.addProperties(circle);
+    let o = this.spriteUtilities.circle(diameter, fillStyle, strokeStyle, lineWidth, x, y);
+    this.addProperties(o);
     
     //Add diameter and radius properties to the circle
-    circle.circular = true;
-    this.stage.addChild(circle);
-    return circle;
+    o.circular = true;
+    this.stage.addChild(o);
+    return o;
   }
 
   //Draw and line
   line(strokeStyle = 0x000000, lineWidth = 1, ax = 0, ay = 0, bx = 32, by = 32) {
-    let line = this.spriteUtilities.line(strokeStyle, lineWidth, ax, ay, bx, by);
-    this.addProperties(line);
-    this.stage.addChild(line);
-    return line;
+    let o = this.spriteUtilities.line(strokeStyle, lineWidth, ax, ay, bx, by);
+    this.addProperties(o);
+    this.stage.addChild(o);
+    return o;
   }
+
+  //Display utilities
 
   //Use `group` to create a Container
   group(...sprites) {
-    let group = this.spriteUtilities.group(...sprites);
-    this.addProperties(group);
-    this.stage.addChild(group);
-    return group;
+    let o = this.spriteUtilities.group(...sprites);
+    this.addProperties(o);
+    this.stage.addChild(o);
+    return o;
   }
 
   //`batch` creates a Pixi ParticleContainer
   batch(size, options) {
-    let batch = this.spriteUtilities.batch(size, options);
-    this.addProperties(batch);
-    this.stage.addChild(batch);
-    return batch;
+    let o = this.spriteUtilities.batch(size, options);
+    this.addProperties(o);
+    this.stage.addChild(o);
+    return o;
   }
 
   //Use `remove` to remove a sprite from its parent. You can supply a 
@@ -721,6 +756,102 @@ class Hexi{
     this.spriteUtilities.remove(...sprites);
   }
 
+  //The flow methods: `flowRight`, `flowDown`, `flowLeft` and
+  //`flowUp`.
+  //Use them to easily align a row of sprites horizontally or
+  //vertically. The flow methods take two arguments: the padding (in
+  //pixels) between the sprites, and list of sprites (or an array
+  //containing sprites) that you want to align.
+  //(This feature was inspired by the Elm programming language)
+
+  //flowRight
+  flowRight(padding, ...sprites) {
+
+    //A function to flow the sprites
+    let flowSprites = (spritesToFlow) => {
+      if (spritesToFlow.length > 0) {
+        for (let i = 0; i < spritesToFlow.length - 1; i++) {
+          let sprite = spritesToFlow[i];
+          sprite.putRight(spritesToFlow[i + 1], +padding);
+        }
+      }
+    };
+
+    //Check if `sprites` is a an array of sprites, or an 
+    //array containing sprite objects
+    if (!(sprites[0] instanceof Array)) {
+
+      //It's an array of sprites
+      flowSprites(sprites);
+    } 
+    
+    else {
+
+      //It's an array containing sprite objects
+      let spritesArray = sprites[0];
+      flowSprites(spritesArray);
+    }
+  }
+
+  //flowDown
+  flowDown(padding, ...sprites) {
+    let flowSprites = (spritesToFlow) => {
+      if (spritesToFlow.length > 0) {
+        for (let i = 0; i < spritesToFlow.length - 1; i++) {
+          let sprite = spritesToFlow[i];
+          sprite.putBottom(spritesToFlow[i + 1], 0, +padding);
+        }
+      }
+    };
+    if (!(sprites[0] instanceof Array)) {
+      flowSprites(sprites);
+    } 
+    
+    else {
+      let spritesArray = sprites[0];
+      flowSprites(spritesArray);
+    }
+  }
+
+  //flowLeft
+  flowLeft(padding, ...sprites) {
+    let flowSprites = (spritesToFlow) => {
+      if (spritesToFlow.length > 0) {
+        for (let i = 0; i < spritesToFlow.length - 1; i++) {
+          let sprite = spritesToFlow[i];
+          sprite.putLeft(spritesToFlow[i + 1], -padding);
+        }
+      }
+    };
+    if (!(sprites[0] instanceof Array)) {
+      flowSprites(sprites);
+    } 
+    
+    else {
+      let spritesArray = sprites[0];
+      flowSprites(spritesArray);
+    }
+  }
+
+  //flowLeft
+  flowUp(padding, ...sprites) {
+    let flowSprites = (spritesToFlow) => {
+      if (spritesToFlow.length > 0) {
+        for (let i = 0; i < spritesToFlow.length - 1; i++) {
+          let sprite = spritesToFlow[i];
+          sprite.putTop(spritesToFlow[i + 1], 0, -padding);
+        }
+      }
+    };
+    if (!(sprites[0] instanceof Array)) {
+      flowSprites(sprites);
+    } 
+    
+    else {
+      let spritesArray = sprites[0];
+      flowSprites(spritesArray);
+    }
+  }
 
   /* Hexi's sprite properties */
 
@@ -741,7 +872,7 @@ class Hexi{
     //and `diameter`
     o._circular = false;
 
-    //Is the sprite interative? Setting this to `true` makes the
+    //Is the sprite interactive? Setting this to `true` makes the
     //sprite behave like a button
     o._interact = false;
 
@@ -788,7 +919,7 @@ class Hexi{
 
     let nudgeAnchor = (o, value, axis) => {
       if (o.anchor !== undefined) {
-        if (o.anchor.axis !== 0) {
+        if (o.anchor[axis] !== 0) {
           return value * ((1 - o.anchor[axis]) - o.anchor[axis]);
         } else {
           return value;
@@ -800,13 +931,13 @@ class Hexi{
 
     let compensateForAnchor = (o, value, axis) => {
       if (o.anchor !== undefined) {
-        if (o.anchor.axis !== 0) {
+        if (o.anchor[axis] !== 0) {
           return value * o.anchor[axis];
         } else {
-          return value;
+          return 0;
         }
       } else {
-        return value; 
+        return 0; 
       }
     };
 
@@ -823,8 +954,6 @@ class Hexi{
     //Center `b` inside `a`.
     o.putCenter = (b, xOffset = 0, yOffset = 0) => {
       if (o._stage) a = this.compensateForStageSize(o);
-      xOffset = xOffset || 0;
-      yOffset = yOffset || 0;
       //b.x = (a.x + a.halfWidth - (b.halfWidth * ((1 - b.anchor.x) - b.anchor.x))) + xOffset;
       b.x = (a.x + nudgeAnchor(a, a.halfWidth, "x") - nudgeAnchor(b, b.halfWidth, "x")) + xOffset;
       b.y = (a.y + nudgeAnchor(a, a.halfHeight, "y") - nudgeAnchor(b, b.halfHeight, "y")) + yOffset;
@@ -836,8 +965,6 @@ class Hexi{
     //Position `b` to the left of `a`.
     o.putLeft = (b, xOffset = 0, yOffset = 0) => {
       if (o._stage) a = this.compensateForStageSize(o);
-      xOffset = xOffset || 0;
-      yOffset = yOffset || 0;
       b.x = (a.x - nudgeAnchor(b, b.width, "x")) + xOffset - compensateForAnchors(a, b, "width", "x");
       b.y = (a.y + nudgeAnchor(a, a.halfHeight, "y") - nudgeAnchor(b, b.halfHeight, "y")) + yOffset;
 
@@ -848,8 +975,6 @@ class Hexi{
     //Position `b` above `a`.
     o.putTop = (b, xOffset = 0, yOffset = 0) => {
       if (o._stage) a = this.compensateForStageSize(o);
-      xOffset = xOffset || 0;
-      yOffset = yOffset || 0;
       b.x = (a.x + nudgeAnchor(a, a.halfWidth, "x") - nudgeAnchor(b, b.halfWidth, "x")) + xOffset;
       b.y = (a.y - nudgeAnchor(b, b.height, "y")) + yOffset - compensateForAnchors(a, b, "height", "y");
 
@@ -860,9 +985,7 @@ class Hexi{
     //Position `b` to the right of `a`.
     o.putRight = (b, xOffset = 0, yOffset = 0) => {
       if (o._stage) a = this.compensateForStageSize(o);
-      xOffset = xOffset || 0;
-      yOffset = yOffset || 0;
-      b.x = (a.x + nudgeAnchor(a, a.width, "x")) - xOffset + compensateForAnchors(a, b, "width", "x");
+      b.x = (a.x + nudgeAnchor(a, a.width, "x")) + xOffset + compensateForAnchors(a, b, "width", "x");
       b.y = (a.y + nudgeAnchor(a, a.halfHeight, "y") - nudgeAnchor(b, b.halfHeight, "y")) + yOffset;
       //b.x = (a.x + a.width) + xOffset;
       //b.y = (a.y + a.halfHeight - b.halfHeight) + yOffset;
@@ -874,18 +997,16 @@ class Hexi{
     //Position `b` below `a`.
     o.putBottom = (b, xOffset = 0, yOffset = 0) => {
       if (o._stage) a = this.compensateForStageSize(o);
-      xOffset = xOffset || 0;
-      yOffset = yOffset || 0;
       //b.x = (a.x + a.halfWidth - b.halfWidth) + xOffset;
-      b.x = (a.x + nudgeAnchor(a, a.halfWidth, "x") - nudgeAnchor(b, b.halfWidth, "x")) + yOffset;
+      b.x = (a.x + nudgeAnchor(a, a.halfWidth, "x") - nudgeAnchor(b, b.halfWidth, "x")) + xOffset;
       //b.y = (a.y + a.height) + yOffset;
-      b.y = (a.y + nudgeAnchor(a, a.height, "y")) - xOffset + compensateForAnchors(a, b, "height", "y");
+      b.y = (a.y + nudgeAnchor(a, a.height, "y")) + yOffset + compensateForAnchors(a, b, "height", "y");
 
       //Compensate for the parent's position
       if(!o._stage) o.compensateForParentPosition(a, b);
     };
 
-    //`compensateForParentPosition` is a helper funtion for the above
+    //`compensateForParentPosition` is a helper function for the above
     //`put` methods that subracts the parent's global position from
     //the nested child's position.
     o.compensateForParentPosition = (a, b) => {
@@ -1243,6 +1364,7 @@ class Hexi{
     }
   }
 
+
   //Hexi's root `stage` object will have a width and height equal to
   //its contents, not the size of the canvas. So, let's use the more
   //useful canvas width and height for relative positioning instead 
@@ -1277,14 +1399,14 @@ class Hexi{
   }
   json(jsonFileName) {
     if (this.loader.resources[jsonFileName].data) {
-      return this.loader.resources[jsonFileName].data;
+      return this.resources[jsonFileName].data;
     } else {
       throw new Error(`${jsonFileName} does not appear to be a JSON data file`);
     }
   }
   xml(xmlFileName) {
     if (this.loader.resources[xmlFileName].data) {
-      return this.loader.resources[xmlFileName].data;
+      return this.resources[xmlFileName].data;
     } else {
       throw new Error(`${xmlFileName} does not appear to be a XML data file`);
     }

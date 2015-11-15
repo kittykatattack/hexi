@@ -7,6 +7,9 @@ g.start();
 function setup() {
   console.log("setup");
 
+  //Add some text
+  g.text("Hello World!");
+
   //Change the state to `play`
   g.state = play;  
 }

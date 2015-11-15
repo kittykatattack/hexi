@@ -1,3 +1,5 @@
+"use strict";
+
 /*
 Hexi Quick Start
 ================
@@ -30,8 +32,6 @@ Take a look at the code ahead to see how it all works.
 //any files, you can leave this out. Hexi lets you load a wide variety
 //of files: images, texture atlases, bitmap fonts, ordinary font files, and
 //sounds
-"use strict";
-
 var thingsToLoad = ["images/cat.png", "fonts/puzzler.otf", "fonts/disko.xml", "sounds/music.wav"];
 
 //Initialize Hexi with the `hexi` function. It has 5 arguments,
@@ -235,23 +235,15 @@ function play() {
   cats.children.forEach(function (cat) {
 
     //Check for a collision between the cat and the stage boundaries
-    //using Hexi's `contain` method
-    var collision = g.contain(cat, g.stage);
+    //using Hexi's `contain` method. Setting `true` as the third
+    //argument will make the cat bounce when it hits the stage
+    //boundaries
+    var collision = g.contain(cat, g.stage, true);
 
-    //If the value of `collision` isn't
-    //`undefined` then you know the sprite hit a boundary 
-    if (collision) {
-
-      //Reverse the sprite's `vx` value if it hits the left or right
-      if (collision.has("left") || collision.has("right")) {
-        cat.vx = -cat.vx;
-      }
-
-      //Reverse the sprite's `vy` value if it hits the top or bottom
-      if (collision.has("top") || collision.has("bottom")) {
-        cat.vy = -cat.vy;
-      }
-    }
+    //If there's no collision, the `collision` variable will be
+    //`undefined`. But if there is a collision, it will have any of
+    //the string values "left", "right", "top", or "bottom", depending
+    //on which side of the stage the cat hit
 
     //Move the cat with the `move` method. The `move` method updates
     //the sprite's position by it' `vx` and `vy` velocity values. (All Hexi

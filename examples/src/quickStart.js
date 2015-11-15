@@ -240,24 +240,16 @@ function play() {
   cats.children.forEach(cat => {
 
     //Check for a collision between the cat and the stage boundaries
-    //using Hexi's `contain` method
-    let collision = g.contain(cat, g.stage);
+    //using Hexi's `contain` method. Setting `true` as the third
+    //argument will make the cat bounce when it hits the stage
+    //boundaries
+    let collision = g.contain(cat, g.stage, true);
     
-    //If the value of `collision` isn't
-    //`undefined` then you know the sprite hit a boundary  
-    if (collision) {
+    //If there's no collision, the `collision` variable will be
+    //`undefined`. But if there is a collision, it will have any of
+    //the string values "left", "right", "top", or "bottom", depending
+    //on which side of the stage the cat hit
 
-      //Reverse the sprite's `vx` value if it hits the left or right
-      if (collision.has("left") || collision.has("right")) {
-        cat.vx = -cat.vx;
-      }
-
-      //Reverse the sprite's `vy` value if it hits the top or bottom
-      if (collision.has("top") || collision.has("bottom")) {
-        cat.vy = -cat.vy;
-      }
-    }
-  
     //Move the cat with the `move` method. The `move` method updates
     //the sprite's position by it' `vx` and `vy` velocity values. (All Hexi
     //sprites have `vx` and `vy` values, which are initialized to

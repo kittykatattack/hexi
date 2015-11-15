@@ -1,11 +1,11 @@
+"use strict";
+
 /*
-Learn all the basics you need to know to get
-started quickly using Ga.
+Most of what you need to know to display 
+images, text, access the pointer and do animation
 */
 
 //Create an array of files you want to load
-"use strict";
-
 var thingsToLoad = ["images/star.png", //An image file
 "images/rocket.png", //An image file
 "fonts/puzzler.otf", //A font file
@@ -42,6 +42,11 @@ later in your application:
 6. A XML data file
 
    g.xml("fonts/disko.xml");
+
+Hexi uses Pixi's resource loader to load and manage files.
+You can access the loader's `resources` object through Hexi's 
+`resources` property. You can access Pixi's `loader` object
+though Hexi's `loader` property
     
 */
 
@@ -53,7 +58,7 @@ g.start();
 
 //Set an optional fps for the game.
 //The frame rate will default to 60 fps if you don't set it
-//g.fps = 12;
+//g.fps = 30;
 
 //Set the background color
 g.backgroundColor = "grey";
@@ -176,7 +181,6 @@ function setup() {
 
   //Create a star sprite from an image
   star = g.sprite("images/star.png");
-  //star.setPivot(0.5, 0.5);
 
   //You can add `radius` and `diameter` properties
   //to a sprite by setting its `circular` property
@@ -188,6 +192,7 @@ function setup() {
   //If you ever have texture-bleed problems with a
   //sprite, set `scaleModeNearest` to `true`
   //star.scaleModeNearest = true;
+  //Setting it back to `false` returns the scale mode to `linear`
 
   //Set `circular` back to `false` if you want to remove
   //the `radius` and `diameter` properties.
@@ -234,6 +239,15 @@ function setup() {
   //to help us do this. Both are initialized to 0
   line.angleA = 0;
   line.angleB = 0;
+
+  //Depth layering
+  //If you want a sprite to appear stacked above other sprites,
+  //set its `layer` property. Sprites appear stacked in the order
+  //that they are created, but those with higher `layer` values
+  //will appear above those with lower values. To make sure the
+  //sprites stack the way you expect them to,
+  //set the `layer` values after you've created all your sprites
+  star.layer = 1;
 
   //Change the game state to `play`
   g.state = play;

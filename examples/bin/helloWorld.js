@@ -1,6 +1,6 @@
-//Create a new Hexi instance, and start it.
 "use strict";
 
+//Create a new Hexi instance, and start it.
 var g = hexi(256, 256, setup);
 g.start();
 
@@ -8,6 +8,9 @@ g.start();
 //Use it for initialization tasks
 function setup() {
   console.log("setup");
+
+  //Add some text
+  g.text("Hello World!");
 
   //Change the state to `play`
   g.state = play;

@@ -1,3 +1,5 @@
+"use strict";
+
 /*
 This example demonstrates how to use Hexi's sprite positioning methods
 to easily position sprites relative to each other. All these
@@ -17,8 +19,6 @@ methods in practise.
 */
 
 //The file you want to load
-"use strict";
-
 var thingsToLoad = ["images/rocket.png", "images/animals.json", "images/star.png"];
 
 //Create a new Hexi instance, and start it.

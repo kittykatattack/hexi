@@ -2104,14 +2104,22 @@ var Bump = (function () {
     -------
     `contain` can be used to contain a sprite with `x` and
     `y` properties inside a rectangular area.
-     The `contain` function takes two arguments: a sprite with `x` and `y`
-    properties, and an object literal with `x`, `y`, `width` and `height` properties.
+     The `contain` function takes four arguments: a sprite with `x` and `y`
+    properties, an object literal with `x`, `y`, `width` and `height` properties. The 
+    third argument is a Boolean (true/false) value that determines if the sprite
+    should bounce when it hits the edge of the container. The fourth argument
+    is an extra user-defined callback function that you can call when the
+    sprite hits the container
     ```js
-    contain(anySprite, {x: 0, y: 0, width: 512, height: 512});
+    contain(anySprite, {x: 0, y: 0, width: 512, height: 512}, true, callbackFunction);
     ```
     The code above will contain the sprite's position inside the 512 by
-    512 pixel area defined by the object. For example, you could contain
-    the a sprite inside a 512 by 512 area like this:
+    512 pixel area defined by the object. If the sprite hits the edges of
+    the container, it will bounce. The `callBackFunction` will run if 
+    there's a collision.
+     An additional feature of the `contain` method is that if the sprite
+    has a `mass` property, it will be used to dampen the sprite's bounce
+    in a natural looking way.
      If the sprite bumps into any of the containing object's boundaries,
     the `contain` function will return a value that tells you which side
     the sprite bumped into: “left”, “top”, “right” or “bottom”. Here's how
@@ -2133,40 +2141,114 @@ var Bump = (function () {
     */
 
     value: function contain(sprite, container) {
+      var bounce = arguments[2] === undefined ? false : arguments[2];
+      var extra = arguments[3] === undefined ? undefined : arguments[3];
 
+      //Helper methods that compensate for any possible shift the the
+      //sprites' anchor points
+      var nudgeAnchor = function nudgeAnchor(o, value, axis) {
+        if (o.anchor !== undefined) {
+          if (o.anchor[axis] !== 0) {
+            return value * (1 - o.anchor[axis] - o.anchor[axis]);
+          } else {
+            return value;
+          }
+        } else {
+          return value;
+        }
+      };
+
+      var compensateForAnchor = function compensateForAnchor(o, value, axis) {
+        if (o.anchor !== undefined) {
+          if (o.anchor[axis] !== 0) {
+            return value * o.anchor[axis];
+          } else {
+            return 0;
+          }
+        } else {
+          return 0;
+        }
+      };
+
+      var compensateForAnchors = function compensateForAnchors(a, b, property1, property2) {
+        return compensateForAnchor(a, a[property1], property2) + compensateForAnchor(b, b[property1], property2);
+      };
       //Create a set called `collision` to keep track of the
       //boundaries with which the sprite is colliding
       var collision = new Set();
 
       //Left
-      if (sprite.x < container.x) {
-        sprite.x = container.x;
+      if (sprite.x - compensateForAnchor(sprite, sprite.width, "x") < container.x - sprite.parent.gx - compensateForAnchor(container, container.width, "x")) {
+        //Bounce the sprite if `bounce` is true
+        if (bounce) sprite.vx *= -1;
+
+        //If the sprite has `mass`, let the mass
+        //affect the sprite's velocity
+        if (sprite.mass) sprite.vx /= sprite.mass;
+
+        //Keep the sprite inside the container
+        sprite.x = container.x - sprite.parent.gx + compensateForAnchor(sprite, sprite.width, "x") - compensateForAnchor(container, container.width, "x");
+
+        //Add "left" to the collision set
         collision.add("left");
       }
 
       //Top
-      if (sprite.y < container.y) {
-        sprite.y = container.y;
+      if (sprite.y - compensateForAnchor(sprite, sprite.height, "y") < container.y - sprite.parent.gy - compensateForAnchor(container, container.height, "y")) {
+        if (bounce) sprite.vy *= -1;
+        if (sprite.mass) sprite.vy /= sprite.mass;
+        sprite.y = container.x - sprite.parent.gy + compensateForAnchor(sprite, sprite.height, "y") - compensateForAnchor(container, container.height, "y");
         collision.add("top");
       }
 
       //Right
-      if (sprite.x + sprite.width > container.width) {
-        sprite.x = container.width - sprite.width;
+      if (sprite.x - compensateForAnchor(sprite, sprite.width, "x") + sprite.width > container.width - compensateForAnchor(container, container.width, "x")) {
+        if (bounce) sprite.vx *= -1;
+        if (sprite.mass) sprite.vx /= sprite.mass;
+        sprite.x = container.width - sprite.width + compensateForAnchor(sprite, sprite.width, "x") - compensateForAnchor(container, container.width, "x");
         collision.add("right");
       }
 
       //Bottom
-      if (sprite.y + sprite.height > container.height) {
-        sprite.y = container.height - sprite.height;
+      if (sprite.y - compensateForAnchor(sprite, sprite.height, "y") + sprite.height > container.height - compensateForAnchor(container, container.height, "y")) {
+        if (bounce) sprite.vy *= -1;
+        if (sprite.mass) sprite.vy /= sprite.mass;
+        sprite.y = container.height - sprite.height + compensateForAnchor(sprite, sprite.height, "y") - compensateForAnchor(container, container.height, "y");
         collision.add("bottom");
       }
 
       //If there were no collisions, set `collision` to `undefined`
       if (collision.size === 0) collision = undefined;
 
+      //The `extra` function runs if there was a collision
+      //and `extra` has been defined
+      if (collision && extra) extra(collision);
+
       //Return the `collision` value
       return collision;
+    }
+  }, {
+    key: "_getCenter",
+
+    /*
+    _getCenter
+    ----------
+     A utility that finds the center point of the sprite. If it's anchor point is the
+    sprite's top left corner, then the center is calculated from that point.
+    If the anchor point has been shifted, then the anchor x/y point is used as the sprite's center
+    */
+
+    value: function _getCenter(o, dimension, axis) {
+      if (o.anchor !== undefined) {
+        if (o.anchor[axis] !== 0) {
+          return 0;
+        } else {
+          //console.log(o.anchor[axis])
+          return dimension / 2;
+        }
+      } else {
+        return dimension;
+      }
     }
   }, {
     key: "hit",
@@ -3280,14 +3362,6 @@ var Tink = (function () {
         //is visible
         _visible: true,
 
-        //Methods to hide and show the pointer
-        hide: function hide() {
-          this.hidden = true;
-        },
-        show: function show() {
-          this.hidden = false;
-        },
-
         //The pointer's mouse `moveHandler`
         moveHandler: function moveHandler(event) {
 
@@ -3940,6 +4014,66 @@ var Tink = (function () {
 
       //Return the key object
       return key;
+    }
+  }, {
+    key: "arrowControl",
+
+    //`arrowControl` is a convenience method for updating a sprite's velocity
+    //for 4-way movement using the arrow directional keys. Supply it
+    //with the sprite you want to control and the speed per frame, in
+    //pixels, that you want to update the sprite's velocity
+    value: function arrowControl(sprite, speed) {
+
+      if (speed === undefined) {
+        throw new Error("Please supply the arrowControl method with the speed at which you want the sprite to move");
+      }
+
+      var upArrow = this.keyboard(38),
+          rightArrow = this.keyboard(39),
+          downArrow = this.keyboard(40),
+          leftArrow = this.keyboard(37);
+
+      //Assign key `press` methods
+      leftArrow.press = function () {
+        //Change the sprite's velocity when the key is pressed
+        sprite.vx = -speed;
+        sprite.vy = 0;
+      };
+      leftArrow.release = function () {
+        //If the left arrow has been released, and the right arrow isn't down,
+        //and the sprite isn't moving vertically:
+        //Stop the sprite
+        if (!rightArrow.isDown && sprite.vy === 0) {
+          sprite.vx = 0;
+        }
+      };
+      upArrow.press = function () {
+        sprite.vy = -speed;
+        sprite.vx = 0;
+      };
+      upArrow.release = function () {
+        if (!downArrow.isDown && sprite.vx === 0) {
+          sprite.vy = 0;
+        }
+      };
+      rightArrow.press = function () {
+        sprite.vx = speed;
+        sprite.vy = 0;
+      };
+      rightArrow.release = function () {
+        if (!leftArrow.isDown && sprite.vy === 0) {
+          sprite.vx = 0;
+        }
+      };
+      downArrow.press = function () {
+        sprite.vy = speed;
+        sprite.vx = 0;
+      };
+      downArrow.release = function () {
+        if (!upArrow.isDown && sprite.vx === 0) {
+          sprite.vy = 0;
+        }
+      };
     }
   }]);
 
@@ -5362,7 +5496,7 @@ var GameUtilities = (function () {
     value: function rotateAroundSprite(rotatingSprite, centerSprite, distance, angle) {
       rotatingSprite.x = centerSprite.x + this._getCenter(centerSprite, centerSprite.width, "x") - rotatingSprite.parent.x + distance * Math.cos(angle) - this._getCenter(rotatingSprite, rotatingSprite.width, "x");
 
-      rotatingSprite.y = centerSprite.y + (centerSprite, centerSprite.height, "y") - rotatingSprite.parent.y + distance * Math.sin(angle) - this._getCenter(rotatingSprite, rotatingSprite.width, "y");
+      rotatingSprite.y = centerSprite.y + this._getCenter(centerSprite, centerSprite.height, "y") - rotatingSprite.parent.y + distance * Math.sin(angle) - this._getCenter(rotatingSprite, rotatingSprite.height, "y");
     }
   }, {
     key: "rotateAroundPoint",
