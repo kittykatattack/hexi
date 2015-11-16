@@ -649,6 +649,14 @@ var Hexi = (function () {
       this.leftArrow = this.keyboard(37);
       this.spaceBar = this.keyboard(32);
 
+      //Dust - Particle effects
+      this.createParticles = function (x, y, spriteFunction, container, numberOfParticles, gravity, randomSpacing, minAngle, maxAngle, minSize, maxSize, minSpeed, maxSpeed, minScaleSpeed, maxScaleSpeed, minAlphaSpeed, maxAlphaSpeed, minRotationSpeed, maxRotationSpeed) {
+        return _this4.dust.create(x, y, spriteFunction, container, numberOfParticles, gravity, randomSpacing, minAngle, maxAngle, minSize, maxSize, minSpeed, maxSpeed, minScaleSpeed, maxScaleSpeed, minAlphaSpeed, maxAlphaSpeed, minRotationSpeed, maxRotationSpeed);
+      };
+      this.particleEmitter = function (interval, particleFunction) {
+        return _this4.dust.emitter(interval, particleFunction);
+      };
+
       //SpriteUtilities - Sprite creation tools
       this.filmstrip = function (texture, frameWidth, frameHeight, spacing) {
         return _this4.spriteUtilities.filmstrip(texture, frameWidth, frameHeight, spacing);

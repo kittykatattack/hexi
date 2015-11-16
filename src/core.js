@@ -560,6 +560,16 @@ class Hexi{
     this.leftArrow = this.keyboard(37);
     this.spaceBar = this.keyboard(32);
 
+    //Dust - Particle effects
+    this.createParticles = (
+      x, y, spriteFunction, container, numberOfParticles, gravity, randomSpacing, minAngle, maxAngle, minSize, maxSize,
+      minSpeed, maxSpeed, minScaleSpeed, maxScaleSpeed, minAlphaSpeed, maxAlphaSpeed, minRotationSpeed, maxRotationSpeed
+    ) => this.dust.create(
+      x, y, spriteFunction, container, numberOfParticles, gravity, randomSpacing, minAngle, maxAngle, minSize, maxSize,
+      minSpeed, maxSpeed, minScaleSpeed, maxScaleSpeed, minAlphaSpeed, maxAlphaSpeed, minRotationSpeed, maxRotationSpeed
+    );
+    this.particleEmitter = (interval, particleFunction) => this.dust.emitter(interval, particleFunction);
+
     //SpriteUtilities - Sprite creation tools
     this.filmstrip = (texture, frameWidth, frameHeight, spacing) => this.spriteUtilities.filmstrip(texture, frameWidth, frameHeight, spacing);
     this.frame = (source, x, y, width, height) => this.spriteUtilities.frame(source, x, y, width, height);

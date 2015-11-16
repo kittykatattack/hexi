@@ -4343,7 +4343,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 var SpriteUtilities = (function () {
   function SpriteUtilities() {
-    var renderingEngine = arguments[0] === undefined ? PIXI : arguments[0];
+    var renderingEngine = arguments.length <= 0 || arguments[0] === undefined ? PIXI : arguments[0];
 
     _classCallCheck(this, SpriteUtilities);
 
@@ -4371,10 +4371,12 @@ var SpriteUtilities = (function () {
 
   _createClass(SpriteUtilities, [{
     key: "sprite",
-    value: function sprite(source, x, y, tiling, width, height) {
-      if (x === undefined) x = 0;
-      if (y === undefined) y = 0;
-      if (tiling === undefined) tiling = false;
+    value: function sprite(source) {
+      var x = arguments.length <= 1 || arguments[1] === undefined ? 0 : arguments[1];
+      var y = arguments.length <= 2 || arguments[2] === undefined ? 0 : arguments[2];
+      var tiling = arguments.length <= 3 || arguments[3] === undefined ? false : arguments[3];
+      var width = arguments[4];
+      var height = arguments[5];
 
       var o = undefined,
           texture = undefined;
@@ -4389,8 +4391,8 @@ var SpriteUtilities = (function () {
 
         //If it's not is the cache, load it from the source file
         else {
-          texture = this.Texture.fromImage(source);
-        }
+            texture = this.Texture.fromImage(source);
+          }
 
         //If the texture was created, make the o
         if (texture) {
@@ -4402,54 +4404,54 @@ var SpriteUtilities = (function () {
 
           //If `tiling` is `true` make a `TilingSprite`
           else {
-            o = new this.TilingSprite(texture, width, height);
-          }
+              o = new this.TilingSprite(texture, width, height);
+            }
         }
         //But if the source still can't be found, alert the user
         else {
-          console.log("" + source + " cannot be found");
-        }
+            console.log(source + " cannot be found");
+          }
       }
 
       //Create a o if the `source` is a texture
       else if (source instanceof this.Texture) {
-        if (!tiling) {
-          o = new this.Sprite(source);
-        } else {
-          o = new this.TilingSprite(source, width, height);
-        }
-      }
-
-      //Create a `MovieClip` o if the `source` is an array
-      else if (source instanceof Array) {
-
-        //Is it an array of frame ids or textures?
-        if (typeof source[0] === "string") {
-
-          //They're strings, but are they pre-existing texture or
-          //paths to image files?
-          //Check to see if the first element matches a texture in the
-          //cache
-          if (this.TextureCache[source[0]]) {
-
-            //It does, so it's an array of frame ids
-            o = this.MovieClip.fromFrames(source);
+          if (!tiling) {
+            o = new this.Sprite(source);
           } else {
-
-            //It's not already in the cache, so let's load it
-            o = this.MovieClip.fromImages(source);
+            o = new this.TilingSprite(source, width, height);
           }
         }
 
-        //If the `source` isn't an array of strings, check whether
-        //it's an array of textures
-        else if (source[0] instanceof this.Texture) {
+        //Create a `MovieClip` o if the `source` is an array
+        else if (source instanceof Array) {
 
-          //Yes, it's an array of textures.
-          //Use them to make a MovieClip o
-          o = new this.MovieClip(source);
-        }
-      }
+            //Is it an array of frame ids or textures?
+            if (typeof source[0] === "string") {
+
+              //They're strings, but are they pre-existing texture or
+              //paths to image files?
+              //Check to see if the first element matches a texture in the
+              //cache
+              if (this.TextureCache[source[0]]) {
+
+                //It does, so it's an array of frame ids
+                o = this.MovieClip.fromFrames(source);
+              } else {
+
+                //It's not already in the cache, so let's load it
+                o = this.MovieClip.fromImages(source);
+              }
+            }
+
+            //If the `source` isn't an array of strings, check whether
+            //it's an array of textures
+            else if (source[0] instanceof this.Texture) {
+
+                //Yes, it's an array of textures.
+                //Use them to make a MovieClip o
+                o = new this.MovieClip(source);
+              }
+          }
 
       //If the sprite was successfully created, intialize it
       if (o) {
@@ -4566,11 +4568,11 @@ var SpriteUtilities = (function () {
           //If we've reached the last frame and `loop`
           //is `true`, then start from the first frame again
         } else {
-          if (sprite.loop) {
-            sprite.gotoAndStop(startFrame);
-            frameCounter = 1;
+            if (sprite.loop) {
+              sprite.gotoAndStop(startFrame);
+              frameCounter = 1;
+            }
           }
-        }
       }
 
       function reset() {
@@ -4594,7 +4596,7 @@ var SpriteUtilities = (function () {
   }, {
     key: "filmstrip",
     value: function filmstrip(texture, frameWidth, frameHeight) {
-      var spacing = arguments[3] === undefined ? 0 : arguments[3];
+      var spacing = arguments.length <= 3 || arguments[3] === undefined ? 0 : arguments[3];
 
       //An array to store the x/y positions of the frames
       var positions = [];
@@ -4628,15 +4630,15 @@ var SpriteUtilities = (function () {
         //Add the x and y value of each frame to the `positions` array
         positions.push([x, y]);
       }
-      console.log(positions);
 
       //Return the frames
       return this.frames(texture, positions, frameWidth, frameHeight);
     }
-  }, {
-    key: "frame",
 
     //Make a texture from a frame in another texture or image
+
+  }, {
+    key: "frame",
     value: function frame(source, x, y, width, height) {
 
       var texture = undefined,
@@ -4652,10 +4654,10 @@ var SpriteUtilities = (function () {
 
       //If the `source` is a texture,  use it
       else if (source instanceof this.Texture) {
-        texture = new this.Texture(source);
-      }
+          texture = new this.Texture(source);
+        }
       if (!texture) {
-        console.log("Please load the " + source + " texture into the cache.");
+        throw new Error("Please load the " + source + " texture into the cache.");
       } else {
 
         //Make a rectangle the size of the sub-image
@@ -4664,11 +4666,12 @@ var SpriteUtilities = (function () {
         return texture;
       }
     }
-  }, {
-    key: "frames",
 
     //Make an array of textures from a 2D array of frame x and y coordinates in
     //texture
+
+  }, {
+    key: "frames",
     value: function frames(source, coordinates, frameWidth, frameHeight) {
       var _this = this;
 
@@ -4684,10 +4687,10 @@ var SpriteUtilities = (function () {
       }
       //If the `source` is a texture,  use it
       else if (source instanceof this.Texture) {
-        baseTexture = new this.Texture(source);
-      }
+          baseTexture = new this.Texture(source);
+        }
       if (!baseTexture) {
-        console.log("Please load the " + source + " texture into the cache.");
+        throw new Error("Please load the " + source + " texture into the cache.");
       } else {
         var _textures = coordinates.map(function (position) {
           var x = position[0],
@@ -4703,10 +4706,10 @@ var SpriteUtilities = (function () {
   }, {
     key: "frameSeries",
     value: function frameSeries() {
-      var startNumber = arguments[0] === undefined ? 0 : arguments[0];
-      var endNumber = arguments[1] === undefined ? 1 : arguments[1];
-      var baseName = arguments[2] === undefined ? "" : arguments[2];
-      var extension = arguments[3] === undefined ? "" : arguments[3];
+      var startNumber = arguments.length <= 0 || arguments[0] === undefined ? 0 : arguments[0];
+      var endNumber = arguments.length <= 1 || arguments[1] === undefined ? 1 : arguments[1];
+      var baseName = arguments.length <= 2 || arguments[2] === undefined ? "" : arguments[2];
+      var extension = arguments.length <= 3 || arguments[3] === undefined ? "" : arguments[3];
 
       //Create an array to store the frame names
       var frames = [];
@@ -4717,18 +4720,19 @@ var SpriteUtilities = (function () {
       }
       return frames;
     }
-  }, {
-    key: "text",
 
     /* Text creation */
 
     //The`text` method is a quick way to create a Pixi Text sprite
+
+  }, {
+    key: "text",
     value: function text() {
-      var content = arguments[0] === undefined ? "message" : arguments[0];
-      var font = arguments[1] === undefined ? "16px sans" : arguments[1];
-      var fillStyle = arguments[2] === undefined ? "red" : arguments[2];
-      var x = arguments[3] === undefined ? 0 : arguments[3];
-      var y = arguments[4] === undefined ? 0 : arguments[4];
+      var content = arguments.length <= 0 || arguments[0] === undefined ? "message" : arguments[0];
+      var font = arguments.length <= 1 || arguments[1] === undefined ? "16px sans" : arguments[1];
+      var fillStyle = arguments.length <= 2 || arguments[2] === undefined ? "red" : arguments[2];
+      var x = arguments.length <= 3 || arguments[3] === undefined ? 0 : arguments[3];
+      var y = arguments.length <= 4 || arguments[4] === undefined ? 0 : arguments[4];
 
       //Create a Pixi Sprite object
       var message = new this.Text(content, { font: font, fill: fillStyle });
@@ -4745,20 +4749,25 @@ var SpriteUtilities = (function () {
           this._content = value;
           this.text = value;
         },
+
         enumerable: true, configurable: true
       });
 
       //Return the text object
       return message;
     }
-  }, {
-    key: "bitmapText",
 
     //The`bitmapText` method lets you create bitmap text
-    value: function bitmapText(content, font, align, tint) {
-      if (content === undefined) content = "message";
-      var x = arguments[4] === undefined ? 0 : arguments[4];
-      var y = arguments[5] === undefined ? 0 : arguments[5];
+
+  }, {
+    key: "bitmapText",
+    value: function bitmapText() {
+      var content = arguments.length <= 0 || arguments[0] === undefined ? "message" : arguments[0];
+      var font = arguments[1];
+      var align = arguments[2];
+      var tint = arguments[3];
+      var x = arguments.length <= 4 || arguments[4] === undefined ? 0 : arguments[4];
+      var y = arguments.length <= 5 || arguments[5] === undefined ? 0 : arguments[5];
 
       //Create a Pixi Sprite object
       var message = new this.BitmapText(content, { font: font, align: align, tint: tint });
@@ -4775,26 +4784,28 @@ var SpriteUtilities = (function () {
           this._content = value;
           this.text = value;
         },
+
         enumerable: true, configurable: true
       });
 
       //Return the text object
       return message;
     }
-  }, {
-    key: "rectangle",
 
     /* Shapes and lines */
 
     //Rectangle
+
+  }, {
+    key: "rectangle",
     value: function rectangle() {
-      var width = arguments[0] === undefined ? 32 : arguments[0];
-      var height = arguments[1] === undefined ? 32 : arguments[1];
-      var fillStyle = arguments[2] === undefined ? 16724736 : arguments[2];
-      var strokeStyle = arguments[3] === undefined ? 13260 : arguments[3];
-      var lineWidth = arguments[4] === undefined ? 0 : arguments[4];
-      var x = arguments[5] === undefined ? 0 : arguments[5];
-      var y = arguments[6] === undefined ? 0 : arguments[6];
+      var width = arguments.length <= 0 || arguments[0] === undefined ? 32 : arguments[0];
+      var height = arguments.length <= 1 || arguments[1] === undefined ? 32 : arguments[1];
+      var fillStyle = arguments.length <= 2 || arguments[2] === undefined ? 0xFF3300 : arguments[2];
+      var strokeStyle = arguments.length <= 3 || arguments[3] === undefined ? 0x0033CC : arguments[3];
+      var lineWidth = arguments.length <= 4 || arguments[4] === undefined ? 0 : arguments[4];
+      var x = arguments.length <= 5 || arguments[5] === undefined ? 0 : arguments[5];
+      var y = arguments.length <= 6 || arguments[6] === undefined ? 0 : arguments[6];
 
       var o = new this.Graphics();
       o._sprite = undefined;
@@ -4846,6 +4857,7 @@ var SpriteUtilities = (function () {
             var texture = o.generateTexture();
             o._sprite.texture = texture;
           },
+
           enumerable: true, configurable: true
         },
         "strokeStyle": {
@@ -4862,6 +4874,7 @@ var SpriteUtilities = (function () {
             var texture = o.generateTexture();
             o._sprite.texture = texture;
           },
+
           enumerable: true, configurable: true
         },
         "lineWidth": {
@@ -4878,6 +4891,7 @@ var SpriteUtilities = (function () {
             var texture = o.generateTexture();
             o._sprite.texture = texture;
           },
+
           enumerable: true, configurable: true
         }
       });
@@ -4889,17 +4903,18 @@ var SpriteUtilities = (function () {
       //Return the sprite
       return sprite;
     }
-  }, {
-    key: "circle",
 
     //Circle
+
+  }, {
+    key: "circle",
     value: function circle() {
-      var diameter = arguments[0] === undefined ? 32 : arguments[0];
-      var fillStyle = arguments[1] === undefined ? 16724736 : arguments[1];
-      var strokeStyle = arguments[2] === undefined ? 13260 : arguments[2];
-      var lineWidth = arguments[3] === undefined ? 0 : arguments[3];
-      var x = arguments[4] === undefined ? 0 : arguments[4];
-      var y = arguments[5] === undefined ? 0 : arguments[5];
+      var diameter = arguments.length <= 0 || arguments[0] === undefined ? 32 : arguments[0];
+      var fillStyle = arguments.length <= 1 || arguments[1] === undefined ? 0xFF3300 : arguments[1];
+      var strokeStyle = arguments.length <= 2 || arguments[2] === undefined ? 0x0033CC : arguments[2];
+      var lineWidth = arguments.length <= 3 || arguments[3] === undefined ? 0 : arguments[3];
+      var x = arguments.length <= 4 || arguments[4] === undefined ? 0 : arguments[4];
+      var y = arguments.length <= 5 || arguments[5] === undefined ? 0 : arguments[5];
 
       var o = new this.Graphics();
       o._diameter = diameter;
@@ -4948,6 +4963,7 @@ var SpriteUtilities = (function () {
             var texture = o.generateTexture();
             o._sprite.texture = texture;
           },
+
           enumerable: true, configurable: true
         },
         "strokeStyle": {
@@ -4964,6 +4980,7 @@ var SpriteUtilities = (function () {
             var texture = o.generateTexture();
             o._sprite.texture = texture;
           },
+
           enumerable: true, configurable: true
         },
         "diameter": {
@@ -4980,6 +4997,7 @@ var SpriteUtilities = (function () {
             var texture = o.generateTexture();
             o._sprite.texture = texture;
           },
+
           enumerable: true, configurable: true
         },
         "radius": {
@@ -4995,6 +5013,7 @@ var SpriteUtilities = (function () {
             var texture = o.generateTexture();
             o._sprite.texture = texture;
           },
+
           enumerable: true, configurable: true
         }
       });
@@ -5005,17 +5024,18 @@ var SpriteUtilities = (function () {
       //Return the sprite
       return sprite;
     }
-  }, {
-    key: "line",
 
     //Line
+
+  }, {
+    key: "line",
     value: function line() {
-      var strokeStyle = arguments[0] === undefined ? 0 : arguments[0];
-      var lineWidth = arguments[1] === undefined ? 1 : arguments[1];
-      var ax = arguments[2] === undefined ? 0 : arguments[2];
-      var ay = arguments[3] === undefined ? 0 : arguments[3];
-      var bx = arguments[4] === undefined ? 32 : arguments[4];
-      var by = arguments[5] === undefined ? 32 : arguments[5];
+      var strokeStyle = arguments.length <= 0 || arguments[0] === undefined ? 0x000000 : arguments[0];
+      var lineWidth = arguments.length <= 1 || arguments[1] === undefined ? 1 : arguments[1];
+      var ax = arguments.length <= 2 || arguments[2] === undefined ? 0 : arguments[2];
+      var ay = arguments.length <= 3 || arguments[3] === undefined ? 0 : arguments[3];
+      var bx = arguments.length <= 4 || arguments[4] === undefined ? 32 : arguments[4];
+      var by = arguments.length <= 5 || arguments[5] === undefined ? 32 : arguments[5];
 
       //Create the line object
       var o = new this.Graphics();
@@ -5051,6 +5071,7 @@ var SpriteUtilities = (function () {
             o._ax = value;
             draw(o._strokeStyle, o._width, o._ax, o._ay, o._bx, o._by);
           },
+
           enumerable: true, configurable: true
         },
         "ay": {
@@ -5061,6 +5082,7 @@ var SpriteUtilities = (function () {
             o._ay = value;
             draw(o._strokeStyle, o._width, o._ax, o._ay, o._bx, o._by);
           },
+
           enumerable: true, configurable: true
         },
         "bx": {
@@ -5071,6 +5093,7 @@ var SpriteUtilities = (function () {
             o._bx = value;
             draw(o._strokeStyle, o._width, o._ax, o._ay, o._bx, o._by);
           },
+
           enumerable: true, configurable: true
         },
         "by": {
@@ -5081,6 +5104,7 @@ var SpriteUtilities = (function () {
             o._by = value;
             draw(o._strokeStyle, o._width, o._ax, o._ay, o._bx, o._by);
           },
+
           enumerable: true, configurable: true
         },
         "strokeStyle": {
@@ -5093,6 +5117,7 @@ var SpriteUtilities = (function () {
             //Draw the line
             draw(o._strokeStyle, o._width, o._ax, o._ay, o._bx, o._by);
           },
+
           enumerable: true, configurable: true
         },
         "width": {
@@ -5105,6 +5130,7 @@ var SpriteUtilities = (function () {
             //Draw the line
             draw(o._strokeStyle, o._width, o._ax, o._ay, o._bx, o._by);
           },
+
           enumerable: true, configurable: true
         }
       });
@@ -5112,22 +5138,23 @@ var SpriteUtilities = (function () {
       //Return the line
       return o;
     }
-  }, {
-    key: "grid",
 
     /* Compound sprites */
 
     //Use `grid` to create a grid of sprites
+
+  }, {
+    key: "grid",
     value: function grid() {
-      var columns = arguments[0] === undefined ? 0 : arguments[0];
-      var rows = arguments[1] === undefined ? 0 : arguments[1];
-      var cellWidth = arguments[2] === undefined ? 32 : arguments[2];
-      var cellHeight = arguments[3] === undefined ? 32 : arguments[3];
-      var centerCell = arguments[4] === undefined ? false : arguments[4];
-      var xOffset = arguments[5] === undefined ? 0 : arguments[5];
-      var yOffset = arguments[6] === undefined ? 0 : arguments[6];
-      var makeSprite = arguments[7] === undefined ? undefined : arguments[7];
-      var extra = arguments[8] === undefined ? undefined : arguments[8];
+      var columns = arguments.length <= 0 || arguments[0] === undefined ? 0 : arguments[0];
+      var rows = arguments.length <= 1 || arguments[1] === undefined ? 0 : arguments[1];
+      var cellWidth = arguments.length <= 2 || arguments[2] === undefined ? 32 : arguments[2];
+      var cellHeight = arguments.length <= 3 || arguments[3] === undefined ? 32 : arguments[3];
+      var centerCell = arguments.length <= 4 || arguments[4] === undefined ? false : arguments[4];
+      var xOffset = arguments.length <= 5 || arguments[5] === undefined ? 0 : arguments[5];
+      var yOffset = arguments.length <= 6 || arguments[6] === undefined ? 0 : arguments[6];
+      var makeSprite = arguments.length <= 7 || arguments[7] === undefined ? undefined : arguments[7];
+      var extra = arguments.length <= 8 || arguments[8] === undefined ? undefined : arguments[8];
 
       //Create an empty group called `container`. This `container`
       //group is what the function returns back to the main program.
@@ -5166,9 +5193,9 @@ var SpriteUtilities = (function () {
 
           //Yes, it should be centered
           else {
-            sprite.x = x + cellWidth / 2 - sprite.width / 2 + xOffset;
-            sprite.y = y + cellHeight / 2 - sprite.width / 2 + yOffset;
-          }
+              sprite.x = x + cellWidth / 2 - sprite.width / 2 + xOffset;
+              sprite.y = y + cellHeight / 2 - sprite.width / 2 + yOffset;
+            }
 
           //Run any optional extra code. This calls the
           //`extra` function supplied by the constructor
@@ -5182,43 +5209,44 @@ var SpriteUtilities = (function () {
       //Return the `container` group back to the main program
       return container;
     }
-  }, {
-    key: "group",
 
     /* Groups */
 
     //Group sprites into a container
+
+  }, {
+    key: "group",
     value: function group() {
+      var container = new this.Container();
+
       for (var _len = arguments.length, sprites = Array(_len), _key = 0; _key < _len; _key++) {
         sprites[_key] = arguments[_key];
       }
 
-      var container = new this.Container();
       sprites.forEach(function (sprite) {
         container.addChild(sprite);
       });
       return container;
     }
-  }, {
-    key: "batch",
 
     //Use the `batch` method to create a ParticleContainer
-    value: function batch() {
-      var size = arguments[0] === undefined ? 15000 : arguments[0];
-      var options = arguments[1] === undefined ? { rotation: true, alpha: true, scale: true, uvs: true } : arguments[1];
 
-      var batch = new this.ParticleContainer(size, options);
-      return batch;
-    }
   }, {
-    key: "remove",
+    key: "batch",
+    value: function batch() {
+      var size = arguments.length <= 0 || arguments[0] === undefined ? 15000 : arguments[0];
+      var options = arguments.length <= 1 || arguments[1] === undefined ? { rotation: true, alpha: true, scale: true, uvs: true } : arguments[1];
+
+      var o = new this.ParticleContainer(size, options);
+      return o;
+    }
 
     //`remove` is a global convenience method that will
     //remove any sprite, or an argument list of sprites, from its parent.
+
+  }, {
+    key: "remove",
     value: function remove() {
-      for (var _len2 = arguments.length, spritesToRemove = Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
-        spritesToRemove[_key2] = arguments[_key2];
-      }
 
       //Remove sprites that's aren't in an array
       if (!(sprites[0] instanceof Array)) {
@@ -5233,23 +5261,23 @@ var SpriteUtilities = (function () {
 
       //Remove sprites in an array of sprites
       else {
-        var spritesArray = sprites[0];
-        if (spritesArray.length > 0) {
-          for (var i = spritesArray.length - 1; i >= 0; i--) {
-            var sprite = spritesArray[i];
-            sprite.parent.removeChild(sprite);
-            spritesArray.splice(spritesArray.indexOf(sprite), 1);
+          var spritesArray = sprites[0];
+          if (spritesArray.length > 0) {
+            for (var i = spritesArray.length - 1; i >= 0; i--) {
+              var sprite = spritesArray[i];
+              sprite.parent.removeChild(sprite);
+              spritesArray.splice(spritesArray.indexOf(sprite), 1);
+            }
           }
         }
-      }
     }
-  }, {
-    key: "colorToRGBA",
 
     /* Color conversion */
     //From: http://stackoverflow.com/questions/1573053/javascript-function-to-convert-color-names-to-hex-codes
     //Utilities to convert HTML color string names to hexadecimal codes
 
+  }, {
+    key: "colorToRGBA",
     value: function colorToRGBA(color) {
       // Returns the color as an array of [r, g, b, a] -- all range from 0 - 255
       // color must be a valid canvas fillStyle. This will cover most anything
@@ -5258,10 +5286,10 @@ var SpriteUtilities = (function () {
       // colorToRGBA('red')  # [255, 0, 0, 255]
       // colorToRGBA('#f00') # [255, 0, 0, 255]
       var cvs, ctx;
-      cvs = document.createElement("canvas");
+      cvs = document.createElement('canvas');
       cvs.height = 1;
       cvs.width = 1;
-      ctx = cvs.getContext("2d");
+      ctx = cvs.getContext('2d');
       ctx.fillStyle = color;
       ctx.fillRect(0, 0, 1, 1);
       var data = ctx.getImageData(0, 0, 1, 1).data;
@@ -5271,7 +5299,7 @@ var SpriteUtilities = (function () {
     key: "byteToHex",
     value: function byteToHex(num) {
       // Turns a number (0-255) into a 2-character hex number (00-ff)
-      return ("0" + num.toString(16)).slice(-2);
+      return ('0' + num.toString(16)).slice(-2);
     }
   }, {
     key: "colorToHex",
@@ -5286,19 +5314,19 @@ var SpriteUtilities = (function () {
       rgba = this.colorToRGBA(color);
       hex = [0, 1, 2].map(function (idx) {
         return _this2.byteToHex(rgba[idx]);
-      }).join("");
+      }).join('');
       return "0x" + hex;
     }
-  }, {
-    key: "color",
 
     //A function to find out if the user entered a number (a hex color
     //code) or a string (an HTML color string)
+
+  }, {
+    key: "color",
     value: function color(value) {
 
       //Check if it's a number
       if (!isNaN(value)) {
-        console.log("It's a number");
 
         //Yes, it is a number, so just return it
         return value;
@@ -5307,18 +5335,18 @@ var SpriteUtilities = (function () {
       //No it's not a number, so it must be a string   
       else {
 
-        return this.colorToHex(value);
-        /*
-         //Find out what kind of color string it is.
-        //Let's first grab the first character of the string
-        let firstCharacter = value.charAt(0);
-         //If the first character is a "#" or a number, then
-        //we know it must be a RGBA color
-        if (firstCharacter === "#") {
-          console.log("first character: " + value.charAt(0))
+          return this.colorToHex(value);
+          /*
+           //Find out what kind of color string it is.
+          //Let's first grab the first character of the string
+          let firstCharacter = value.charAt(0);
+           //If the first character is a "#" or a number, then
+          //we know it must be a RGBA color
+          if (firstCharacter === "#") {
+            console.log("first character: " + value.charAt(0))
+          }
+          */
         }
-        */
-      }
 
       /*
       //Find out if the first character in the string is a number
@@ -5350,27 +5378,24 @@ var GameUtilities = (function () {
     _classCallCheck(this, GameUtilities);
   }
 
+  /*
+  distance
+  ----------------
+   Find the distance in pixels between two sprites.
+  Parameters: 
+  a. A sprite object. 
+  b. A sprite object. 
+  The function returns the number of pixels distance between the sprites.
+      let distanceBetweenSprites = gu.distance(spriteA, spriteB);
+   */
+
   _createClass(GameUtilities, [{
     key: "distance",
-
-    /*
-    distance
-    ----------------
-     Find the distance in pixels between two sprites.
-    Parameters: 
-    a. A sprite object. 
-    b. A sprite object. 
-    The function returns the number of pixels distance between the sprites.
-        let distanceBetweenSprites = gu.distance(spriteA, spriteB);
-     */
-
     value: function distance(s1, s2) {
       var vx = s2.x + this._getCenter(s2, s2.width, "x") - (s1.x + this._getCenter(s1, s1.width, "x")),
           vy = s2.y + this._getCenter(s2, s2.height, "y") - (s1.y + this._getCenter(s1, s1.height, "y"));
       return Math.sqrt(vx * vx + vy * vy);
     }
-  }, {
-    key: "followEase",
 
     /*
     followEase
@@ -5384,6 +5409,8 @@ var GameUtilities = (function () {
      Use it inside a game loop.
     */
 
+  }, {
+    key: "followEase",
     value: function followEase(follower, leader, speed) {
 
       //Figure out the distance between the sprites
@@ -5404,8 +5431,6 @@ var GameUtilities = (function () {
         follower.y += vy * speed;
       }
     }
-  }, {
-    key: "followConstant",
 
     /*
     followConstant
@@ -5418,6 +5443,8 @@ var GameUtilities = (function () {
         gu.followConstant(follower, leader, speed);
      */
 
+  }, {
+    key: "followConstant",
     value: function followConstant(follower, leader, speed) {
 
       //Figure out the distance between the sprites
@@ -5432,8 +5459,6 @@ var GameUtilities = (function () {
         follower.y += vy / distance * speed;
       }
     }
-  }, {
-    key: "angle",
 
     /*
     angle
@@ -5446,16 +5471,19 @@ var GameUtilities = (function () {
          box.rotation = angle(box, pointer);
      */
 
+  }, {
+    key: "angle",
     value: function angle(s1, s2) {
       return Math.atan2(
+      //This is the code you need if you don't want to compensate
+      //for a possible shift in the sprites' x/y anchor points
       /*
       (s2.y + s2.height / 2) - (s1.y + s1.height / 2),
       (s2.x + s2.width / 2) - (s1.x + s1.width / 2)
       */
+      //This code adapts to a shifted anchor point
       s2.y + this._getCenter(s2, s2.height, "y") - (s1.y + this._getCenter(s1, s1.height, "y")), s2.x + this._getCenter(s2, s2.width, "x") - (s1.x + this._getCenter(s1, s1.width, "x")));
     }
-  }, {
-    key: "_getCenter",
 
     /*
     _getCenter
@@ -5465,6 +5493,8 @@ var GameUtilities = (function () {
     If the anchor point has been shifted, then the anchor x/y point is used as the sprite's center
     */
 
+  }, {
+    key: "_getCenter",
     value: function _getCenter(o, dimension, axis) {
       if (o.anchor !== undefined) {
         if (o.anchor[axis] !== 0) {
@@ -5477,8 +5507,6 @@ var GameUtilities = (function () {
         return dimension;
       }
     }
-  }, {
-    key: "rotateAroundSprite",
 
     /*
     rotateAroundSprite
@@ -5493,13 +5521,13 @@ var GameUtilities = (function () {
      Use it inside a game loop, and make sure you update the angle value (the 4th argument) each frame.
     */
 
+  }, {
+    key: "rotateAroundSprite",
     value: function rotateAroundSprite(rotatingSprite, centerSprite, distance, angle) {
       rotatingSprite.x = centerSprite.x + this._getCenter(centerSprite, centerSprite.width, "x") - rotatingSprite.parent.x + distance * Math.cos(angle) - this._getCenter(rotatingSprite, rotatingSprite.width, "x");
 
       rotatingSprite.y = centerSprite.y + this._getCenter(centerSprite, centerSprite.height, "y") - rotatingSprite.parent.y + distance * Math.sin(angle) - this._getCenter(rotatingSprite, rotatingSprite.height, "y");
     }
-  }, {
-    key: "rotateAroundPoint",
 
     /*
     rotateAroundPoint
@@ -5514,14 +5542,14 @@ var GameUtilities = (function () {
      Use it inside a game loop, and make sure you update the angle value (the 4th argument) each frame.
      */
 
+  }, {
+    key: "rotateAroundPoint",
     value: function rotateAroundPoint(pointX, pointY, distanceX, distanceY, angle) {
       var point = {};
       point.x = pointX + Math.cos(angle) * distanceX;
       point.y = pointY + Math.sin(angle) * distanceY;
       return point;
     }
-  }, {
-    key: "randomInt",
 
     /*
     randomInt
@@ -5534,11 +5562,11 @@ var GameUtilities = (function () {
         let number = gu.randomInt(1, 10);
      */
 
+  }, {
+    key: "randomInt",
     value: function randomInt(min, max) {
       return Math.floor(Math.random() * (max - min + 1)) + min;
     }
-  }, {
-    key: "randomFloat",
 
     /*
     randomFloat
@@ -5551,11 +5579,11 @@ var GameUtilities = (function () {
          let number = gu.randomFloat(1, 10);
      */
 
+  }, {
+    key: "randomFloat",
     value: function randomFloat(min, max) {
       return min + Math.random() * (max - min);
     }
-  }, {
-    key: "wait",
 
     /*
     Wait
@@ -5569,15 +5597,15 @@ var GameUtilities = (function () {
           .then(() => console.log("Three"))
      */
 
+  }, {
+    key: "wait",
     value: function wait() {
-      var duration = arguments[0] === undefined ? 0 : arguments[0];
+      var duration = arguments.length <= 0 || arguments[0] === undefined ? 0 : arguments[0];
 
       return new Promise(function (resolve, reject) {
         setTimeout(resolve, duration);
       });
     }
-  }, {
-    key: "move",
 
     /*
     Move
@@ -5588,6 +5616,8 @@ var GameUtilities = (function () {
          move(sprite);
     */
 
+  }, {
+    key: "move",
     value: function move() {
       for (var _len = arguments.length, sprites = Array(_len), _key = 0; _key < _len; _key++) {
         sprites[_key] = arguments[_key];
