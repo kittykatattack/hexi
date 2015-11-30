@@ -101,6 +101,7 @@ var Hexi = (function () {
     this.modulesToUpdate.push(this.charm);
     this.modulesToUpdate.push(this.dust);
     this.modulesToUpdate.push(this.tink);
+    this.modulesToUpdate.push(this.spriteUtilities);
 
     //Create local alias for the important methods and properties of
     //these libraries, including the most useful Pixi properties
@@ -213,7 +214,8 @@ var Hexi = (function () {
       properties: o.interpolationProperties,
       interpolate: o.interpolate,
       fps: o.fps,
-      renderFps: o.renderFps
+      renderFps: o.renderFps,
+      properties: { position: true, scale: true, tile: true }
     });
   }
 
@@ -632,11 +634,6 @@ var Hexi = (function () {
       this.makeInteractive = function (o) {
         return _this4.tink.makeInteractive(o);
       };
-      this.button = function (source) {
-        var x = arguments.length <= 1 || arguments[1] === undefined ? 0 : arguments[1];
-        var y = arguments.length <= 2 || arguments[2] === undefined ? 0 : arguments[2];
-        return _this4.tink.button(source, x, y);
-      };
       this.keyboard = this.tink.keyboard;
       this.arrowControl = function (sprite, speed) {
         return _this4.tink.arrowControl(sprite, speed);
@@ -681,6 +678,16 @@ var Hexi = (function () {
       };
       this.color = function (value) {
         return _this4.spriteUtilities.color(value);
+      };
+      this.shoot = function (shooter, angle, x, y, container, bulletSpeed, bulletArray, bulletSprite) {
+        return _this4.spriteUtilities.shoot(shooter, angle, x, y, container, bulletSpeed, bulletArray, bulletSprite);
+      };
+      this.shake = function (sprite) {
+        var magnitude = arguments.length <= 1 || arguments[1] === undefined ? 16 : arguments[1];
+        var angular = arguments.length <= 2 || arguments[2] === undefined ? false : arguments[2];
+
+        console.log("shake");
+        return _this4.spriteUtilities.shake(sprite, magnitude, angular);
       };
 
       //Charm - Tweening
@@ -728,7 +735,7 @@ var Hexi = (function () {
         var yoyo = arguments.length <= 5 || arguments[5] === undefined ? true : arguments[5];
         var delayBeforeRepeat = arguments.length <= 6 || arguments[6] === undefined ? 0 : arguments[6];
 
-        return _this4.strobe(sprite, scaleFactor, startMagnitude, endMagnitude, frames, yoyo, delayBeforeRepeat);
+        return _this4.charm.strobe(sprite, scaleFactor, startMagnitude, endMagnitude, frames, yoyo, delayBeforeRepeat);
       };
       this.wobble = function (sprite) {
         var scaleFactorX = arguments.length <= 1 || arguments[1] === undefined ? 1.2 : arguments[1];
@@ -767,7 +774,7 @@ var Hexi = (function () {
         var yoyo = arguments.length <= 5 || arguments[5] === undefined ? false : arguments[5];
         var delayBeforeContinue = arguments.length <= 6 || arguments[6] === undefined ? 0 : arguments[6];
 
-        return _this4.walkCurve(sprite, pathArray, totalFrames, type, loop, yoyo, delayBeforeContinue);
+        return _this4.charm.walkCurve(sprite, pathArray, totalFrames, type, loop, yoyo, delayBeforeContinue);
       };
       this.removeTween = function (tweenObject) {
         return _this4.charm.removeTween(tweenObject);
@@ -811,7 +818,7 @@ var Hexi = (function () {
       };
       this.hitTestRectangle = function (r1, r2) {
         var global = arguments.length <= 2 || arguments[2] === undefined ? false : arguments[2];
-        return _this4.hitTestRectangle(r1, r2, global);
+        return _this4.bump.hitTestRectangle(r1, r2, global);
       };
       this.hitTestCircleRectangle = function (c1, r1) {
         var global = arguments.length <= 2 || arguments[2] === undefined ? false : arguments[2];
@@ -819,7 +826,7 @@ var Hexi = (function () {
       };
       this.hitTestCirclePoint = function (c1, point) {
         var global = arguments.length <= 2 || arguments[2] === undefined ? false : arguments[2];
-        return hitTestCirclePoint(c1, point, global);
+        return _this4.bump.hitTestCirclePoint(c1, point, global);
       };
       this.circleRectangleCollision = function (c1, r1) {
         var bounce = arguments.length <= 2 || arguments[2] === undefined ? false : arguments[2];
@@ -841,6 +848,7 @@ var Hexi = (function () {
         var extra = arguments.length <= 5 || arguments[5] === undefined ? undefined : arguments[5];
         return _this4.bump.hit(a, b, react, bounce, global, extra);
       };
+      //this.outsideBounds = this.bump.outsideBounds;
       //this.contain = (sprite, container, bounce = false, extra = undefined) => this.bump.contain(sprite, container, bounce, extra);
 
       //Intercept the Bump library's `contain` method to make sure that
@@ -856,6 +864,18 @@ var Hexi = (function () {
           o = container;
         }
         return _this4.bump.contain(sprite, o, bounce, extra);
+      };
+
+      this.outsideBounds = function (sprite, container) {
+        var extra = arguments.length <= 2 || arguments[2] === undefined ? undefined : arguments[2];
+
+        var o = {};
+        if (container._stage) {
+          o = _this4.compensateForStageSize(container);
+        } else {
+          o = container;
+        }
+        return _this4.bump.outsideBounds(sprite, o, extra);
       };
 
       //GameUtilities - Useful utilities
@@ -879,6 +899,11 @@ var Hexi = (function () {
       this.randomFloat = this.gameUtilities.randomFloat;
       this.move = this.gameUtilities.move;
       this.wait = this.gameUtilities.wait;
+
+      //Sound.js - Sound
+      this.soundEffect = function (frequencyValue, attack, decay, type, volumeValue, panValue, wait, pitchBendAmount, reverse, randomValue, dissonance, echo, reverb) {
+        return soundEffect(frequencyValue, attack, decay, type, volumeValue, panValue, wait, pitchBendAmount, reverse, randomValue, dissonance, echo, reverb);
+      };
     }
   }, {
     key: "sprite",
@@ -899,6 +924,17 @@ var Hexi = (function () {
       var height = arguments[5];
 
       var o = this.spriteUtilities.sprite(source, x, y, tiling, width, height);
+      this.addProperties(o);
+      this.stage.addChild(o);
+      return o;
+    }
+  }, {
+    key: "tilingSprite",
+    value: function tilingSprite(source, width, height) {
+      var x = arguments.length <= 3 || arguments[3] === undefined ? 0 : arguments[3];
+      var y = arguments.length <= 4 || arguments[4] === undefined ? 0 : arguments[4];
+
+      var o = this.spriteUtilities.tilingSprite(source, width, height, x, y);
       this.addProperties(o);
       this.stage.addChild(o);
       return o;
@@ -980,7 +1016,7 @@ var Hexi = (function () {
       return o;
     }
 
-    //Draw and line
+    //Draw a line
 
   }, {
     key: "line",
@@ -998,6 +1034,17 @@ var Hexi = (function () {
       return o;
     }
 
+    //Make a button and add it to the stage
+
+  }, {
+    key: "button",
+    value: function button(source, x, y) {
+      var o = this.tink.button(source, x, y);
+      this.addProperties(o);
+      this.stage.addChild(o);
+      return o;
+    }
+
     //Display utilities
 
     //Use `group` to create a Container
@@ -1008,6 +1055,27 @@ var Hexi = (function () {
       var _spriteUtilities;
 
       var o = (_spriteUtilities = this.spriteUtilities).group.apply(_spriteUtilities, arguments);
+      this.addProperties(o);
+      this.stage.addChild(o);
+      return o;
+    }
+
+    //Create a grid of sprite
+
+  }, {
+    key: "grid",
+    value: function grid() {
+      var columns = arguments.length <= 0 || arguments[0] === undefined ? 0 : arguments[0];
+      var rows = arguments.length <= 1 || arguments[1] === undefined ? 0 : arguments[1];
+      var cellWidth = arguments.length <= 2 || arguments[2] === undefined ? 32 : arguments[2];
+      var cellHeight = arguments.length <= 3 || arguments[3] === undefined ? 32 : arguments[3];
+      var centerCell = arguments.length <= 4 || arguments[4] === undefined ? false : arguments[4];
+      var xOffset = arguments.length <= 5 || arguments[5] === undefined ? 0 : arguments[5];
+      var yOffset = arguments.length <= 6 || arguments[6] === undefined ? 0 : arguments[6];
+      var makeSprite = arguments.length <= 7 || arguments[7] === undefined ? undefined : arguments[7];
+      var extra = arguments.length <= 8 || arguments[8] === undefined ? undefined : arguments[8];
+
+      var o = this.spriteUtilities.grid(columns, rows, cellWidth, cellHeight, centerCell, xOffset, yOffset, makeSprite, extra);
       this.addProperties(o);
       this.stage.addChild(o);
       return o;
@@ -1181,6 +1249,13 @@ var Hexi = (function () {
       //Is the sprite interactive? Setting this to `true` makes the
       //sprite behave like a button
       o._interact = false;
+
+      //Is the sprite draggable?
+      o._draggable = false;
+
+      //Flag this object for compatiblity with the Bump collision
+      //library
+      o._bumpPropertiesAdded = true;
 
       //Swap the depth layer positions of two child sprites
       o.swapChildren = function (child1, child2) {
@@ -1367,14 +1442,14 @@ var Hexi = (function () {
         },
         "centerX": {
           get: function get() {
-            return o.x + o.width / 2;
+            return o.x + o.width / 2 - o.xAnchorOffset;
           },
 
           enumerable: true, configurable: true
         },
         "centerY": {
           get: function get() {
-            return o.y + o.height / 2;
+            return o.y + o.height / 2 - o.yAnchorOffset;
           },
 
           enumerable: true, configurable: true
@@ -1413,6 +1488,9 @@ var Hexi = (function () {
             return o.anchor.x;
           },
           set: function set(value) {
+            if (o.anchor === undefined) {
+              throw new Error(o + " does not have a PivotX value");
+            }
             o.anchor.x = value;
             if (!o._previousPivotX) {
               o.x += value * o.width;
@@ -1429,6 +1507,9 @@ var Hexi = (function () {
             return o.anchor.y;
           },
           set: function set(value) {
+            if (o.anchor === undefined) {
+              throw new Error(o + " does not have a PivotY value");
+            }
             o.anchor.y = value;
             if (!o._previousPivotY) {
               o.y += value * o.height;
@@ -1436,6 +1517,28 @@ var Hexi = (function () {
               o.y += (value - o._previousPivotY) * o.height;
             }
             o._previousPivotY = value;
+          },
+
+          enumerable: true, configurable: true
+        },
+        "xAnchorOffset": {
+          get: function get() {
+            if (o.anchor !== undefined) {
+              return o.height * o.anchor.x;
+            } else {
+              return 0;
+            }
+          },
+
+          enumerable: true, configurable: true
+        },
+        "yAnchorOffset": {
+          get: function get() {
+            if (o.anchor !== undefined) {
+              return o.width * o.anchor.y;
+            } else {
+              return 0;
+            }
           },
 
           enumerable: true, configurable: true
@@ -1503,6 +1606,25 @@ var Hexi = (function () {
           enumerable: true, configurable: true
         },
 
+        //Drag and drop
+        "draggable": {
+          get: function get() {
+            return o._draggable;
+          },
+          set: function set(value) {
+            if (value === true) {
+              if (!o._draggable) {
+                self.makeDraggable(o);
+                o._draggable = true;
+              }
+            } else {
+              self.makeUndraggable(o);
+              o._draggable = false;
+            }
+          },
+
+          enumerable: true, configurable: true
+        },
         //The `localBounds` and `globalBounds` methods return an object
         //with `x`, `y`, `width`, and `height` properties that define
         //the dimensions and position of the sprite. This is a convenience
@@ -1769,6 +1891,8 @@ var Hexi = (function () {
         a.height = this.canvas.height;
         a.halfWidth = this.canvas.width / 2;
         a.halfHeight = this.canvas.height / 2;
+        a.xAnchorOffset = 0;
+        a.yAnchorOffset = 0;
         return a;
       }
     }

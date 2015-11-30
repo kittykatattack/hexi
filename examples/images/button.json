@@ -1,0 +1,39 @@
+{"frames": {
+
+"down.png":
+{
+	"frame": {"x":2,"y":2,"w":192,"h":96},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":192,"h":96},
+	"sourceSize": {"w":192,"h":96},
+	"pivot": {"x":0.5,"y":0.5}
+},
+"over.png":
+{
+	"frame": {"x":196,"y":2,"w":192,"h":96},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":192,"h":96},
+	"sourceSize": {"w":192,"h":96},
+	"pivot": {"x":0.5,"y":0.5}
+},
+"up.png":
+{
+	"frame": {"x":390,"y":2,"w":192,"h":96},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":192,"h":96},
+	"sourceSize": {"w":192,"h":96},
+	"pivot": {"x":0.5,"y":0.5}
+}},
+"meta": {
+	"app": "http://www.codeandweb.com/texturepacker",
+	"version": "1.0",
+	"image": "button.png",
+	"format": "RGBA8888",
+	"size": {"w":584,"h":100},
+	"scale": "1",
+	"smartupdate": "$TexturePacker:SmartUpdate:11c74cd442a4b677289f3ad399b87054:879e99d58591d2495b4355ec40d3e079:c39245c3a59c1712d97d26c862b4cbc5$"
+}
+}

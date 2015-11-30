@@ -192,11 +192,9 @@ function setup() {
   };
 
   //Play an optional loaded sound file.
-  /*
-  let music = g.sound("sounds/music.wav");
+  var music = g.sound("sounds/music.wav");
   music.loop = true;
   music.play();
-  */
 
   //Set the game state to play. This is very important! Whatever
   //function you assign to Hexi's `state` property will be run by

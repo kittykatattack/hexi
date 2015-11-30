@@ -96,6 +96,7 @@ class Hexi{
     this.modulesToUpdate.push(this.charm);
     this.modulesToUpdate.push(this.dust);
     this.modulesToUpdate.push(this.tink);
+    this.modulesToUpdate.push(this.spriteUtilities);
 
     //Create local alias for the important methods and properties of
     //these libraries, including the most useful Pixi properties
@@ -217,7 +218,8 @@ class Hexi{
       properties: o.interpolationProperties,
       interpolate: o.interpolate,
       fps: o.fps,
-      renderFps: o.renderFps
+      renderFps: o.renderFps,
+      properties: {position: true, scale: true, tile: true}
     });
   }
 
@@ -549,7 +551,6 @@ class Hexi{
     this.makeDraggable = (...sprites) => this.tink.makeDraggable(...sprites);
     this.makeUndraggable = (...sprites) => this.tink.makeUndraggable(...sprites);
     this.makeInteractive = (o) => this.tink.makeInteractive(o);
-    this.button = (source, x = 0, y = 0) => this.tink.button(source, x, y);
     this.keyboard = this.tink.keyboard;
     this.arrowControl = (sprite, speed) => this.tink.arrowControl(sprite, speed);
 
@@ -579,6 +580,13 @@ class Hexi{
     this.colorToHex = value => this.spriteUtilities.colorToHex(value);
     this.byteToHex = value => this.spriteUtilities.byteToHex(value);
     this.color = value => this.spriteUtilities.color(value);
+    this.shoot = (shooter, angle, x, y, container, bulletSpeed, bulletArray, bulletSprite) => {
+      return this.spriteUtilities.shoot(shooter, angle, x, y, container, bulletSpeed, bulletArray, bulletSprite)
+    };
+    this.shake = (sprite, magnitude = 16, angular = false) => {
+      console.log("shake")
+      return this.spriteUtilities.shake(sprite, magnitude, angular);
+    }
 
     //Charm - Tweening
     this.fadeOut = (sprite, frames = 60) => this.charm.fadeOut(sprite, frames);
@@ -592,7 +600,7 @@ class Hexi{
     };
     this.scale = (sprite, endScaleX = 0.5, endScaleY = 0.5, frames = 60) => this.charm.scale(sprite, endScaleX, endScaleY, frames);
     this.strobe = (sprite, scaleFactor = 1.3, startMagnitude = 10, endMagnitude = 20, frames = 10, yoyo = true, delayBeforeRepeat = 0) => {
-      return this.strobe(sprite, scaleFactor, startMagnitude, endMagnitude, frames, yoyo, delayBeforeRepeat);
+      return this.charm.strobe(sprite, scaleFactor, startMagnitude, endMagnitude, frames, yoyo, delayBeforeRepeat);
     };
     this.wobble = (
       sprite, scaleFactorX = 1.2, scaleFactorY = 1.2, frames = 10, xStartMagnitude = 10, xEndMagnitude = 10, 
@@ -610,7 +618,7 @@ class Hexi{
       return this.charm.walkPath(sprite, originalPathArray, totalFrames, type, loop, yoyo, delayBetweenSections);
     };
     this.walkCurve = (sprite, pathArray, totalFrames = 300, type = "smoothstep", loop = false, yoyo = false, delayBeforeContinue = 0) => {
-      return this.walkCurve(sprite, pathArray, totalFrames, type, loop, yoyo, delayBeforeContinue);
+      return this.charm.walkCurve(sprite, pathArray, totalFrames, type, loop, yoyo, delayBeforeContinue);
     };
     this.removeTween = (tweenObject) => this.charm.removeTween(tweenObject);
     this.makeTween = (tweensToAdd) => this.charm.makeTween(tweensToAdd);
@@ -625,13 +633,14 @@ class Hexi{
     this.movingCircleCollision = (c1, c2, global = false) => this.bump.movingCircleCollision(c1, c2, global);
     this.multipleCircleCollision = (arrayOfCircles, global = false) => this.bump.multipleCircleCollision(arrayOfCircles, global);
     this.rectangleCollision = (r1, r2, bounce = false, global = true) => this.bump.rectangleCollision( r1, r2, bounce, global);
-    this.hitTestRectangle = (r1, r2, global = false) => this.hitTestRectangle(r1, r2, global);
+    this.hitTestRectangle = (r1, r2, global = false) => this.bump.hitTestRectangle(r1, r2, global);
     this.hitTestCircleRectangle = (c1, r1, global = false) => this.bump.hitTestCircleRectangle(c1, r1, global);
-    this.hitTestCirclePoint = (c1, point, global = false) => hitTestCirclePoint(c1, point, global);
+    this.hitTestCirclePoint = (c1, point, global = false) => this.bump.hitTestCirclePoint(c1, point, global);
     this.circleRectangleCollision = (c1, r1, bounce = false, global = false) => this.bump.circleRectangleCollision(c1, r1, bounce, global);
     this.circlePointCollision = (c1, point, bounce = false, global = false) => this.bump.circlePointCollision(c1, point, bounce, global);
     this.bounceOffSurface = (o, s) => this.bump.bounceOffSurface(o, s);
     this.hit = (a, b, react = false, bounce = false, global, extra = undefined) => this.bump.hit(a, b, react, bounce, global, extra);
+    //this.outsideBounds = this.bump.outsideBounds;
     //this.contain = (sprite, container, bounce = false, extra = undefined) => this.bump.contain(sprite, container, bounce, extra);
 
     //Intercept the Bump library's `contain` method to make sure that
@@ -646,6 +655,16 @@ class Hexi{
       return this.bump.contain(sprite, o, bounce, extra);
     };
 
+    this.outsideBounds = (sprite, container, extra = undefined) => {
+      let o = {};
+      if (container._stage) {
+        o = this.compensateForStageSize(container);
+      } else {
+        o = container
+      }
+      return this.bump.outsideBounds(sprite, o, extra);
+    };
+
     //GameUtilities - Useful utilities
     this.distance = (s1, s2) => this.gameUtilities.distance(s1, s2);
     this.followEase = (follower, leader, speed) => this.gameUtilities.followEase(follower, leader, speed);
@@ -657,6 +676,17 @@ class Hexi{
     this.randomFloat = this.gameUtilities.randomFloat;
     this.move = this.gameUtilities.move;
     this.wait = this.gameUtilities.wait;
+
+    //Sound.js - Sound
+    this.soundEffect = (
+      frequencyValue, attack, decay, type, volumeValue, panValue, wait, pitchBendAmount, reverse,
+      randomValue, dissonance, echo, reverb
+    ) => {
+      return soundEffect(
+        frequencyValue, attack, decay, type, volumeValue, panValue, wait, pitchBendAmount, reverse,
+        randomValue, dissonance, echo, reverb
+      );
+    };
   }
 
   get resources() {return this.loader.resources}
@@ -698,6 +728,13 @@ class Hexi{
     return o;
   }
 
+  tilingSprite(source, width, height, x = 0, y = 0){
+    let o = this.spriteUtilities.tilingSprite(source, width, height, x, y);
+    this.addProperties(o);
+    this.stage.addChild(o);
+    return o;
+  }
+
   //Hexi's `text` method is a quick way to create a Pixi Text sprite
   //and add it to the stage
   text(content = "message", font = "16px sans", fillStyle = "red", x = 0, y = 0) {
@@ -734,9 +771,17 @@ class Hexi{
     return o;
   }
 
-  //Draw and line
+  //Draw a line
   line(strokeStyle = 0x000000, lineWidth = 1, ax = 0, ay = 0, bx = 32, by = 32) {
     let o = this.spriteUtilities.line(strokeStyle, lineWidth, ax, ay, bx, by);
+    this.addProperties(o);
+    this.stage.addChild(o);
+    return o;
+  }
+
+  //Make a button and add it to the stage
+  button(source, x, y) {
+    let o = this.tink.button(source, x, y);
     this.addProperties(o);
     this.stage.addChild(o);
     return o;
@@ -747,6 +792,23 @@ class Hexi{
   //Use `group` to create a Container
   group(...sprites) {
     let o = this.spriteUtilities.group(...sprites);
+    this.addProperties(o);
+    this.stage.addChild(o);
+    return o;
+  }
+
+  //Create a grid of sprite
+  grid(
+    columns = 0, rows = 0, cellWidth = 32, cellHeight = 32,
+    centerCell = false, xOffset = 0, yOffset = 0,
+    makeSprite = undefined,
+    extra = undefined  
+  ) {
+  
+    let o = this.spriteUtilities.grid(
+      columns, rows, cellWidth, cellHeight,
+      centerCell, xOffset, yOffset, makeSprite, extra
+    );
     this.addProperties(o);
     this.stage.addChild(o);
     return o;
@@ -886,6 +948,13 @@ class Hexi{
     //sprite behave like a button
     o._interact = false;
 
+    //Is the sprite draggable?
+    o._draggable = false;
+
+    //Flag this object for compatiblity with the Bump collision
+    //library
+    o._bumpPropertiesAdded = true;
+    
     //Swap the depth layer positions of two child sprites
     o.swapChildren = (child1, child2) => {
       let index1 = o.children.indexOf(child1),
@@ -1037,11 +1106,11 @@ class Hexi{
         enumerable: true, configurable: true
       },
       "centerX": {
-        get(){return o.x + o.width / 2},
+        get(){return o.x + (o.width / 2) - o.xAnchorOffset},
         enumerable: true, configurable: true
       },
       "centerY": {
-        get(){return o.y + o.height / 2},
+        get(){return o.y + (o.height / 2) - o.yAnchorOffset},
         enumerable: true, configurable: true
       },
       "halfWidth": {
@@ -1069,6 +1138,9 @@ class Hexi{
       "pivotX": {
         get(){return o.anchor.x},
         set(value) {
+          if (o.anchor === undefined) {
+            throw new Error(`${o} does not have a PivotX value`);
+          }
           o.anchor.x = value;
           if (!o._previousPivotX) {
             o.x += value * o.width; 
@@ -1082,6 +1154,9 @@ class Hexi{
       "pivotY": {
         get(){return o.anchor.y},
         set(value) {
+          if (o.anchor === undefined) {
+            throw new Error(`${o} does not have a PivotY value`);
+          }
           o.anchor.y = value;
           if (!o._previousPivotY) {
             o.y += value * o.height; 
@@ -1089,6 +1164,26 @@ class Hexi{
             o.y += (value - o._previousPivotY) * o.height; 
           }
           o._previousPivotY = value;
+        },
+        enumerable: true, configurable: true
+      },
+      "xAnchorOffset": {
+        get(){
+          if (o.anchor !== undefined) {
+            return o.height * o.anchor.x;
+          } else {
+            return 0;
+          }
+        },
+        enumerable: true, configurable: true
+      },
+      "yAnchorOffset": {
+        get(){
+          if (o.anchor !== undefined) {
+            return o.width * o.anchor.y;
+          } else {
+            return 0;
+          }
         },
         enumerable: true, configurable: true
       },
@@ -1141,6 +1236,22 @@ class Hexi{
         enumerable: true, configurable: true
       },
 
+      //Drag and drop
+      "draggable": {
+        get() {return o._draggable},
+        set(value) {
+          if (value === true) {
+            if (!o._draggable) {
+              self.makeDraggable(o);
+              o._draggable = true;
+            }
+          }else{
+            self.makeUndraggable(o)  
+            o._draggable = false;
+          }
+        },
+        enumerable: true, configurable: true
+      },
       //The `localBounds` and `globalBounds` methods return an object
       //with `x`, `y`, `width`, and `height` properties that define
       //the dimensions and position of the sprite. This is a convenience
@@ -1387,6 +1498,8 @@ class Hexi{
       a.height = this.canvas.height;
       a.halfWidth = this.canvas.width / 2;
       a.halfHeight = this.canvas.height / 2;
+      a.xAnchorOffset = 0;
+      a.yAnchorOffset = 0;
       return a;
     }
   }
