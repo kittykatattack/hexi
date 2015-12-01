@@ -28,3 +28,6 @@
 [submodule "src/modules/gameUtilities"]
 	path = src/modules/gameUtilities
 	url = git@github.com:kittykatattack/gameUtilities.git
+[submodule "src/modules/fullScreen"]
+	path = src/modules/fullScreen
+	url = git@github.com:kittykatattack/fullScreen.git
