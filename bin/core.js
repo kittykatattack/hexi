@@ -143,6 +143,15 @@ var Hexi = (function () {
       }
     });
 
+    //A Boolean to flag wether the canvas has been scaled
+    this.canvas.scaled = false;
+
+    //Add the FullScreen module and supply it with the canvas element
+    this.fullScreen = new FullScreen(this.canvas);
+
+    //Note: Hexi's update function checks whether we're in full screen
+    //mode and updates the global scale value accordingly
+
     //Set the canvas's optional background color and border style
     if (o.backgroundColor) {
       this.renderer.backgroundColor = this.color(o.backgroundColor);
@@ -259,6 +268,9 @@ var Hexi = (function () {
         _this.scale = scaleToWindow(_this.canvas, scaleBorderColor);
         _this.pointer.scale = _this.scale;
       });
+
+      //Flag that the canvas has been scaled
+      this.canvas.scaled = true;
     })
 
     //The `start` method must be called by the user after Hexi has been
@@ -516,6 +528,18 @@ var Hexi = (function () {
       this.modulesToUpdate.forEach(function (module) {
         return module.update();
       });
+
+      //If the application is in full screen mode, make sure that Hexi
+      //is using the correct scale value
+      if (document.fullscreenEnabled) {
+        this.scale = this.fullScreen.fullscreenScale;
+        this.pointer.scale = this.fullScreen.fullscreenScale;
+      } else {
+        if (!this.canvas.scaled) {
+          this.scale = 1;
+          this.pointer.scale = 1;
+        }
+      }
 
       //Run the current game `state` function if it's been defined and
       //the game isn't `paused`
@@ -903,6 +927,11 @@ var Hexi = (function () {
       //Sound.js - Sound
       this.soundEffect = function (frequencyValue, attack, decay, type, volumeValue, panValue, wait, pitchBendAmount, reverse, randomValue, dissonance, echo, reverb) {
         return soundEffect(frequencyValue, attack, decay, type, volumeValue, panValue, wait, pitchBendAmount, reverse, randomValue, dissonance, echo, reverb);
+      };
+
+      //FullScreen
+      this.enableFullScreen = function (exitKeyCodes) {
+        return _this4.fullScreen.enableFullScreen(exitKeyCodes);
       };
     }
   }, {
