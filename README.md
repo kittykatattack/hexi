@@ -1,4 +1,4 @@
-![Hexi](/tutorials/screenshots/hexiLogoAndIllustration.png)
+![Hexi](/tutorials/screenshots/logoAndIllustration.png)
 
 Hexi
 ====
