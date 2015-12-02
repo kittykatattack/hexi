@@ -1,3 +1,5 @@
+![Hexi](/tutorials/screenshots/hexiLogo_256x256.png)
+
 Hexi
 ====
 
