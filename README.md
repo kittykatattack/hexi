@@ -324,12 +324,25 @@ You can list as many game assets as you like here, including images,
 fonts, and JSON files. Hexi will load all these assets for you before
 running any of the game code.
 
+Hexi just implement's [Pixi's superb resource loader](https://github.com/englercj/resource-loader)
+under-the-hood.  You can access the loader directly through Hexi's `loader`
+property, and you can access the resources through the `resources` property. Or, just use `PIXI.loader` directly, if you want to. You can
+find out more about [how Pixi's loader works here](https://github.com/kittykatattack/learningPixi#loading).
+
 We want the game canvas to scale to
 the maximum size of the browser window, so that it displays as large
 as possible. We can use a useful method called `scaleToWindow` to do
 this for us.
 ```js
 g.scaleToWindow();
+```
+`scaleToWindow` will center your game for the best fit. Long, wide
+game screens are centered vertically. Tall or square screens are
+centered horizontally. If you want to specify your own browser
+background color that borders the game, supply it in `scaleToWindow`'s
+arguments, like this:
+```
+g.scaleToWindow("seaGreen");
 ```
 The last thing you need to do is call Hexi's `start` method. 
 ```js
@@ -1296,57 +1309,41 @@ all the images in the tutorials' `images` sub-folder.
 ![Treasure Hunter](/tutorials/screenshots/10.png)
 
 Before you can use them to make sprites, you need to pre-load them into
-Ga's `assets`. The easiest way to do this is to list the image names,
+Hexi's `assets`. The easiest way to do this is to list the image names,
 with their full file paths, in Hexi's assets array when you first
-initialize the engine.
-```
-var g = ga(
-  512, 512, setup,
-  [
-    "images/explorer.png",
-    "images/dungeon.png",
-    "images/blob.png",
-    "images/treasure.png",
-    "images/door.png",
-    "sounds/chimes.wav"
-  ]
-);
+initialize the engine. Create an array called `thingsToLoad`, list the
+file names, as strings, that you want to load. Then supply that array
+as the `hexi` method's fourth argument. Here's how:
+```js
+//An array that contains all the files you want to load
+let thingsToLoad = [
+  "images/explorer.png",
+  "images/dungeon.png",
+  "images/blob.png",
+  "images/treasure.png",
+  "images/door.png",
+  "sounds/chimes.wav"
+];
+
+//Create a new Hexi instance, and start it
+let g = hexi(512, 512, setup, thingsToLoad);
+
+//Start Hexi
 g.start();
 ```
 (If you open up the JavaScript console in the web browser, you can
 monitor the loading progress of these assets.)
 
 Now you can access any of these images in your game code like this:
-
-    g.image("images/blob.png")
-
-This is just a short-cut for accessing the image directly in the
-`assets` object like this:
-
-    g.assets["images/blob.png"]
-
-You can use whichever style you prefer. In any case, the image file
-is just an ordinary JavaScript `Image` object, so you can use
-it the same way you would any other `Image` object. 
-
+```js
+g.image("images/blob.png")
+```
 Although pre-loading the images and other assets is the simplest way
 to get them into your game, you can also load assets at any other time
-using the `assets` object's `load` method. Just supply an array of strings
-that list the asset names and their file paths.
-```
-g.assets.load([
-  "images/imageOne.png", 
-  "images/imageTwo.png",
-  "sounds/chimes.wav"
-]);
-```
-Next, assign a callback function called `whenLoaded` that will run when the assets have
-loaded. 
-```
-g.assets.whenLoaded = function() {
-  //Do something when the assets have loaded
-};
-```
+using the `loader` object and its methods. As I mentioned earlier,
+the `loader` is just an alias for Pixi's loader that's running
+under-the-hood, and you can [learn more about how to use it here](https://github.com/kittykatattack/learningPixi#loading).
+
 Now that you've loaded the images into the game, let's find out how to
 use them to make sprites.
 
@@ -1356,9 +1353,9 @@ use them to make sprites.
 Create an image sprite using the `sprite` method using the same format you learnt
 earlier. Here's how to create a sprite using the `dungeon.png` image.
 (`dungeon.png` is a 512 by 512 pixel background image.)
-
-    dungeon = g.sprite("images/dungeon.png");
-
+```js
+dungeon = g.sprite("images/dungeon.png");
+```
 That's all! Now instead of displaying as a simple colored rectangle,
 the sprite will be displayed as a 512 by 512 image. There's no need
 to specify the width or height, because Hexi figures that our for you
@@ -1369,7 +1366,7 @@ would with ordinary rectangle sprites.
 Here's the code from the `setup` function that creates the dungeon
 background, exit door, player and treasure, and adds them all to the
 `gameScene` group. 
-```
+```js
 //The dungeon background
 dungeon = g.sprite("images/dungeon.png");
 
@@ -1386,14 +1383,13 @@ player.y = g.canvas.height / 2 - player.halfWidth;
 treasure = g.sprite("images/treasure.png");
 
 //Position it next to the left edge of the canvas
-treasure.x = g.canvas.width - treasure.width - 32;
-treasure.y = g.canvas.height / 2 - treasure.halfHeight;
+//g.stage.putCenter(treasure, 208, 0);
 
 //Create a `pickedUp` property on the treasure to help us Figure
 //out whether or not the treasure has been picked up by the player
 treasure.pickedUp = false;
 
-//Create the `gameScene` group and add all the sprites
+//Create the `gameScene` group and add the sprites
 gameScene = g.group(dungeon, exit, player, treasure);
 ```
 (As a slightly more efficient improvement to the
@@ -1411,15 +1407,14 @@ game can remain as-is.
 
 One small improvement that was made to this new version Treasure
 Hunter is the new way that the sprites are contained inside the walls of the
-dungeon. They're contained in such a way that naturally matches the 2.5D perspective of the
-artwork, as shown by the green square in this screen shot:
+dungeon. They're contained in such a way that naturally matches the 2.5D perspective of the artwork, as shown by the green square in this screen shot:
 
 ![Treasure Hunter](/tutorials/screenshots/11.png)
 
 This is a very easy modification to make. All you need to do is supply
 the `contain` method with a custom object that defines the size and
 position of the containing rectangle. Here's how:
-```
+```js
 g.contain(
   player,
   {
@@ -1457,10 +1452,8 @@ images correctly. If you’re going to be making anything bigger than a
 very small game, you’ll definitely want to use a texture atlas.
 
 The de-facto standard for tileset JSON data is the format that is
-output by a popular software tool called [Texture Packer](https://www.codeandweb.com/texturepacker) (Texture
-Packer's "Essential" license is free ). Even if you
-don’t use Texture Packer, similar tools like [Shoebox](http://renderhjs.net/shoebox/) output JSON files
-in the same format. Let’s find out how to use it to make a texture
+output by a popular software tool called [Texture Packer](https://www.codeandweb.com/texturepacker) (Texture Packer's "Essential" license is free ). Even if you
+don’t use Texture Packer, similar tools like [Shoebox](http://renderhjs.net/shoebox/) output JSON files in the same format. Let’s find out how to use it to make a texture
 atlas with Texture Packer, and how to load it into a game.
 
 <a id='preparingimages'></a>
@@ -1468,7 +1461,7 @@ atlas with Texture Packer, and how to load it into a game.
 
 You first need individual PNG images for each image in your game.
 You've already got them for Treasure Hunter, so you're all set. Open Texture
-Packer and choose the {JS} configuration option. Drag your game images
+Packer and choose the **{JS}** configuration option. Drag your game images
 into its workspace. You can also point Texture Packer to any folder that contains
 your images. Texture Packer will automatically arrange the images on a
 single tileset image, and give them names that match their original
@@ -1490,30 +1483,36 @@ this example my file names are `treasureHunter.json` and
 your life easier, just keep both files in your project’s `images`
 folder. (Think of the JSON file as extra metadata for the image file.)
 
+Texture Packer can often be a pain to use, because you need to get all
+these settings just right for it to publish properly without telling
+you there are errors. And, it will try to trick you into upgrading to
+the paid version by using default settings not supported by the free
+version. So you need to explicitly turn these off (as I've described
+above) for it to work without errors. Still, it's worth the effort in
+the end - so keep trying and post an issue in this repository if you
+get impossibly stuck!
+
 <a id='loadingatlas'></a>
 ##### loading the texture atlas
 
 To load the texture atlas into your game, just include the JSON file
 in Hexi's assets array when you initialize the game.
-
-```
-var g = ga(
-  512, 512, setup,
-  [
-    "images/treasureHunter.json",
-    "sounds/chimes.wav"
-  ]
-);
+```js
+let thingsToLoad = [
+  "images/treasureHunter.json",
+  "sounds/chimes.wav"
+];
+let g = hexi(512, 512, setup, thingsToLoad);
+g.scaleToWindow();
 g.start();
 ```
 That's all! You don't have to load the PNG file - Hexi does that
 automatically in the background. The JSON file is all you need to tell
-Ga which tileset frame (sub-image) to display.
+Hexi which tileset frame (sub-image) to display.
 
 Now if you want to use a frame from the texture atlas to make a
 sprite, you can do it like this:
-
-```
+```js
 anySprite = g.sprite("frameName.png");
 ```
 Ga will create the sprite and display the correct image from the
@@ -1521,8 +1520,8 @@ texture atlas's tileset.
 
 Here's how to you could create the sprites in Treasure Hunter using
 texture atlas frames:
-```
-//The dungeon background image
+```js
+//The dungeon background
 dungeon = g.sprite("dungeon.png");
 
 //The exit door
@@ -1534,18 +1533,18 @@ player = g.sprite("explorer.png");
 player.x = 68;
 player.y = g.canvas.height / 2 - player.halfWidth;
 
-//The treasure
+//Create the treasure
 treasure = g.sprite("treasure.png");
 ```
-That's all! Hexi knows that those are texture atlas frame names, not individual
+Hexi knows that those are texture atlas frame names, not individual
 images, and it displays them directly from the tileset.
 
 If you ever need to access the texture atlas's JSON file in your game,
 you can get it like this:
-```
+```js
 jsonFile = g.json("jsonFileName.json");
 ```
-Take a look at `treasureHunterAtlas.html` file in the `tutorials` folder
+Take a look at `treasureHunterAtlas.js` file in the `tutorials` folder
 to see a working example of how to load a texture atlas and use it to
 make sprites.
 
@@ -1556,7 +1555,7 @@ The next example game in this series of tutorials is Alien Armada. Can you
 destroy 60 aliens before one of them lands and destroys the Earth? Click the
 image link below to play the game:
 
-[![Alien Armada](/tutorials/screenshots/13.png)](https://cdn.rawgit.com/kittykatattack/ga/master/tutorials/04_alienArmada.html)
+[![Alien Armada](/tutorials/screenshots/13.png)](https://gitcdn.xyz/repo/kittykatattack/hexi/master/tutorials/04_alienArmada.html)
 
 Use the arrow keys to move and press the space bar to shoot. The
 aliens descend from the top of the screen with
@@ -1568,7 +1567,6 @@ Alien Armada illustrates some new techniques that you'll definitely want
 to use in your games:
 
 - Load and use custom fonts.
-- Automatically scale and center the game to the browser window. 
 - Display a loading progress bar while the game assets load.
 - Shoot bullets.
 - Create sprites with multiple image states.
@@ -1590,92 +1588,25 @@ Alien Armada uses a custom font called `emulogic.ttf` to display the
 score at the top right corner of the screen. The font file is
 preloaded with the rest of the asset files (sounds and images) in the assets array that
 initializes the game. 
-```
-var g = ga(
-  480, 320, setup,
-  [
-    "images/alienArmada.json",
-    "sounds/explosion.mp3",
-    "sounds/music.mp3",
-    "sounds/shoot.mp3",
-    "fonts/emulogic.ttf"  //<- The custom font.
-  ],
-  load
-);
+```js
+let thingsToLoad = [
+  "images/alienArmada.json",
+  "sounds/explosion.mp3",
+  "sounds/music.mp3",
+  "sounds/shoot.mp3",
+  "fonts/emulogic.ttf" //<- The custom font
+];
+let g = hexi(480, 320, setup, thingsToLoad, load);
+g.scaleToWindow();
+g.start();
 ```
 To use the font, create a `text` sprite in the game's `setup`
 function. The `text` method's second argument is a
 string that describes the font's point size and name: "20px emulogic".  
-```
+```js
 scoreDisplay = g.text("0", "20px emulogic", "#00FF00", 400, 10);
 ```
 You can and load and use any fonts in TTF, OTF, TTC or WOFF format.
-
-<a id='scalebrowser'></a>
-#### Scale and center the game in the browser
-
-You'll notice that when you play Alien Armada, the game is centered
-inside the browser window, and automatically fills to the window's maximum
-width and height.
-
-![Alien Armada gameplay](/tutorials/screenshots/15.png)
-
-The browser background that borders the game is set to a dark gray
-color. This
-is thanks to one of Hexi's built-in features: the
-`scaleToWindow` method. To use it, call `scaleToWindow` just after
-you call Hexi's `start` method, like this:
-```
-g.start();
-g.scaleToWindow();
-```
-`scaleToWindow` will center your game for the best fit. Long, wide
-game screens are centered vertically. Tall or square screens are
-centered horizontally. If you want to specify your own browser
-background color that borders the game, supply it in `scaleToWindow`'s
-arguments, like this:
-```
-g.scaleToWindow("seaGreen");
-```
-For best results, make sure you set the default margins and paddings
-on all your HTML elements to `0`. The following bit of CSS does the
-trick: 
-```
-<style> * {margin: 0; padding: 0;} </style>
-```
-Here's how this `<style>` tag is inserted into Alien Armada's HTML
-container page:
-```
-<!doctype html>
-<meta charset="utf-8">
-<title>Alien Armada</title>
-<style> * {margin: 0; padding: 0;} </style>
-```
-Optionally, if you want to make sure that your game dynamically
-re-sizes and re-centers itself if the user changes the browser window
-size, just drop in this bit of code: 
-```
-window.addEventListener("resize", function(event){ 
-  g.scaleToWindow();
-});
-```
-Add it just after you've
-called `scaleToWindow` the first time. Here's what all this code looks
-like in context:
-```
-//...Initialize Hexi...
-
-g.start();
-g.scaleToWindow();
-window.addEventListener("resize", function(event){ 
-  g.scaleToWindow();
-});
-
-//...The rest of your game code...
-
-```
-If you want to find out how it works, or you want to customize it further, you'll
-find the `scaleToWindow` method in Hexi's `plugins.js` file. 
 
 <a id='progressbar'></a>
 ####A loading progress bar
@@ -1693,7 +1624,7 @@ loaded so far.
 ![Loading progress bar](/tutorials/screenshots/16.png)
 
 This is a feature that's built into the Hexi engine. 
-Ga has a optional loading state that runs while game assets are being
+Hexi has a optional loading state that runs while game assets are being
 loaded. You can decide what you want to have happen during the loading
 state. All you need to do is write a function with code that should
 run while the assets are loading, and tell Hexi what the name of that
@@ -1701,50 +1632,27 @@ function is. Hexi's engine will automatically run that function in a
 loop until the assets have finished loading.
 
 Let's find out how this works in Alien Armada. The game code tells 
-Ga to use a function called `load` during the loading state. It does
+Hexi to use a function called `load` during the loading state. It does
 this by listing `load` as the final argument
 in Hexi's initialization constructor. (Look for `load` in the code below):
-```
-var g = ga(
-  480, 320, setup,
-  [
-    "images/alienArmada.json",
-    "sounds/explosion.mp3",
-    "sounds/music.mp3",
-    "sounds/shoot.mp3",
-    "fonts/emulogic.ttf"
-  ],
-  load  //<- This is the function that will run while loading.
-);
+```js
+let g = hexi(480, 320, setup, thingsToLoad, load); //<- It's here!
 ```
 This tells Hexi to run the `load` function in a loop while the assets
 are loading. 
 
-Here's the `load` function from Alien Armada. It creates a `progressBar` object, and then calls the progress bar's
-`update` method each frame. 
-```
+Here's the `load` function from Alien Armada. It implements a
+`loadingBar` object, which is what displays the expanding blue bar and
+the percentage of files loaded.
+```js
 function load(){
-
-    //Use Hexi's built in `progressBar` to display a loading progress
-    //percentage bar while the assets are loading.
-    g.progressBar.create(g.canvas, g.assets);
-
-    //Call the `progressBar`'s `update` method each frame. 
-    g.progressBar.update();
+  g.loadingBar();
 }
-```
-After the assets have loaded, the `setup` state runs automatically. The first
-thing it does is call the `progressBar`'s `remove` method to make the
-bar disappear:
-```
-function setup() {
 
-  g.progressBar.remove();
- 
-  //... the rest of the setup function...
-}
 ```
-You'll find the `progressBar` code in the `plugins.js` file. It's
+After the assets have loaded, the `setup` state runs automatically. 
+
+You'll find the `loadingBar` code in Hexi's the `core.js` file. It's
 meant to be a very simple example that you can use as the basis for
 writing your own custom loading animation, if you want to. You can run any code you
 like in the `load` function, so it's entirely up to you to decide what
@@ -1765,7 +1673,7 @@ game code removes it.
 
 To implement a bullet-firing system in your game, the first thing you
 need is an array to store the all the bullet sprites.
-```
+```js
 bullets = [];
 ```
 This `bullets` array is initialized in the game's `setup` function.
@@ -1773,63 +1681,65 @@ This `bullets` array is initialized in the game's `setup` function.
 You can then use Hexi's custom `shoot` method to make any sprite fire
 bullets in any direction. Here's the general format you can use to
 implement the `shoot` method.
-```
+```js
 g.shoot(
-  cannon,      //The shooting sprite
-  4.71,        //The angle, in radians, at which to shoot (4.71 is up)
-  16,          //The bullet's offset from the center of the sprite
-  7,           //The bullet's speed (pixels per frame)
-  bullets,     //The array used to store the bullets
+  cannon,            //The shooter
+  4.71,              //The angle at which to shoot (4.71 is up)
+  cannon.halfWidth,  //Bullet's x position on the cannon
+  0,                 //Bullet's y position on the canon
+  g.stage,           //The container to which the bullet should be added
+  7,                 //The bullet's speed (pixels per frame)
+  bullets,           //The array used to store the bullets
 
   //A function that returns the sprite that should
   //be used to make each bullet
-  function() {
-    return g.sprite("bullet.png");
-  }
+  () => g.sprite("bullet.png")
 );
-
 ```
 The second argument determines the angle, in radians, at which the
 bullet should travel. 4.71 radians, used in this example, is up. 0 is
-to the right, 1.57 is down, and 3.14 is to the left.
+to the right, 1.57 is down, and 3.14 is to the left. 
+
+The 3rd and 4th arguments are the bullet's start x and y position on
+the canon. The 5th argument is the container that the bullet should be
+added to, and the 6th is the array that the bullets should be put
+into.
 
 The last argument is a function that returns a sprite that should be
 used as the bullet. In this example the bullet is created using using the 
 "bullet.png" frame from the game's loaded texture atlas.
-```
-function() {
-  return g.sprite("bullet.png");
-}
+```js
+() => g.sprite("bullet.png")
 ```
 Replace this function with your own to create any kind of custom
 bullet you might need.
 
 When will your bullets be fired? You can call the `shoot` method
 whenever you want to make bullets, at any point in your code. In Alien
-Armada, bullets are fired when the player presses the space key. So
-the game implements this by calling `shoot` inside the space key's
+Armada, bullets are fired when the player presses the space bar. So
+the game implements this by calling `shoot` inside the space bar's
 `press` method. Here's how:
-```
-g.key.space.press = function() {
+```js
+g.spaceBar.press = () => {
 
+  //Shoot the bullet
   g.shoot(
-    cannon,      //The shooting sprite
-    4.71,        //The angle at which to shoot (4.71 is up)
-    16,          //The bullet's offset from the center
-    7,           //The bullet's speed (pixels per frame)
-    bullets,     //The array used to store the bullets
+    cannon,            //The shooter
+    4.71,              //The angle at which to shoot (4.71 is up)
+    cannon.halfWidth,  //Bullet's x position on the cannon
+    0,                 //Bullet's y position on the canon
+    g.stage,           //The container to which the bullet should be added
+    7,                 //The bullet's speed (pixels per frame)
+    bullets,           //The array used to store the bullets
 
     //A function that returns the sprite that should
     //be used to make each bullet
-    function() {
-      return g.sprite("bullet.png");
-    }
+    () => g.sprite("bullet.png")
   );
 
   //Play the shoot sound.
   shootSound.play();
 };
-
 ```
 You can see that the `press` method also makes the `shootSound` play.
 (The code above is initialized in the game's `setup` function.)
@@ -1837,9 +1747,8 @@ You can see that the `press` method also makes the `shootSound` play.
 There's one more thing you need to do: you have to make the bullets move.
 You can do this with some code inside the game's looping `play` function. Use Hexi's
 `move` method and supply the `bullets` array as an argument:
-```
+```js
 g.move(bullets);
-
 ```
 The `move` method automatically loops through all the sprites in the
 array and updates their x and y positions with the value of their `vx` and `vy` velocity values.
@@ -1866,18 +1775,18 @@ First, let's take a look at the Alien Armada tileset, shown here:
 You can see two image frames that define these two states: `alien.png`
 and `explosion.png`. Before you create the sprite, first create an
 array that lists these two frames: 
-```
-var alienFrames = [
+```js
+let alienFrames = [
   "alien.png", 
   "explosion.png"
 ];
 ```
 Next use the `alienFrames` array to initialize the `alien` sprite.
-```
+```js
 alien = g.sprite(alienFrames);
 ```
 If you prefer, you could combine these two steps into one, like this:
-```
+```js
 alien = g.sprite([
   "alien.png", 
   "explosion.png"
@@ -1889,7 +1798,7 @@ displayed by default by when the sprite is first created.
 
 You can use the sprite's `show` method to display any other frame number on the
 sprite, like this:
-```
+```js
 alien.show(1);
 ```
 The code above will set the alien to frame number one, which is the
@@ -1900,7 +1809,7 @@ your sprite's states in a special `states` object. Give each state a
 name, with a value that corresponds to that state's frame number.
 Here's how you could define two states on the alien: `normal` and
 `destroyed`:
-```
+```js
 alien.states = {
   normal: 0,
   destroyed: 1
@@ -1909,19 +1818,18 @@ alien.states = {
 `alien.states.normal` now has the value `0`, and
 `alien.states.destroyed` now has the value `1`. That means you could
 display the alien's `normal` state like this:
-```
+```js
 alien.show(alien.states.normal);
 ```
 And display the alien's `destroyed` state like this:
-```
+```js
 alien.show(alien.states.destroyed);
 ```
 This makes your code a little more readable because you can tell at a
 glance which sprite state is being displayed.
 
 (Note: Hexi also has a lower-level `gotoAndStop` method that does
-exactly the
-same thing as `show`. Although you're free use `gotoAndStop` in your
+exactly the same thing as `show`. Although you're free use `gotoAndStop` in your
 game code, by convention it's only used internally by Hexi's rendering
 engine.)
 
@@ -1930,10 +1838,7 @@ engine.)
 
 Alien Armada generates aliens at any 1 of 14 randomly chosen positions
 just above the top boundary of the stage. The aliens first appear
-infrequently, but gradually start to
-appear at an ever-increasing rate. This makes the game gradually more
-difficult as it
-progresses. Let's find out how these two features are implemented.
+infrequently, but gradually start to appear at an ever-increasing rate. This makes the game gradually more difficult as it progresses. Let's find out how these two features are implemented.
 
 <a id='timingaliens'></a>
 ##### Timing the aliens
@@ -1942,13 +1847,13 @@ When the game starts, the first new alien is generated after 100
 frames have elapsed. A variable called `alienFrequency`, initialized in
 the game's `setup` function is used to help track this. it's
 initialized to 100.
-```
+```js
 alienFrequency = 100;
 ```
 Another variable called `alienTimer` is used to count the number of
 of frames that have elapsed between the previously generated alien,
 and the next one. 
-```
+```js
 alienTimer = 0;
 ```
 `alienTimer` is updated by 1 each frame in the `play` function (the game loop).
@@ -1956,16 +1861,16 @@ When `alienTimer` reaches the value of `alienFrequency`, a new alien
 sprite is generated. Here's the code from the `play` function that
 does this. (This code omits the actual code that generates the alien
 sprite - we'll look at that ahead)
-```
-//Add one to the alienTimer.
+```js
+//Add one to the alienTimer
 alienTimer++;
 
-//Make a new alien if `alienTimer` equals the `alienFrequency`.
+//Make a new alien if `alienTimer` equals the `alienFrequency`
 if(alienTimer === alienFrequency) {
 
   //... Create the alien: see ahead for the missing code that does this...
 
-  //Set the `alienTimer` back to zero.
+  //Set the `alienTimer` back to zero
   alienTimer = 0;
 
   //Reduce `alienFrequency` by one to gradually increase
@@ -1988,7 +1893,7 @@ the next new alien.
 Before we generate any aliens, we need an array to store all the alien
 sprites. An empty array called `aliens` is initialized in the `setup`
 function for this purpose.
-```
+```js
 aliens = [];
 ```
 Each alien is then created in the `play` function, inside the same
@@ -2000,16 +1905,16 @@ Each alien is then created in the `play` function, inside the same
 - And, finally, it pushes the alien into the `aliens` array. 
 
 Here's the full code that does all this:
-```
-//Add one to the alienTimer.
+```js
+//Add one to the alienTimer
 alienTimer++;
 
-//Make a new alien if `alienTimer` equals the `alienFrequency`.
+//Make a new alien if `alienTimer` equals the `alienFrequency`
 if(alienTimer === alienFrequency) {
 
   //Create the alien.
   //Assign two frames from the texture atlas as the 
-  //alien's two states.
+  //alien's two states
   let alienFrames = [
     "alien.png", 
     "explosion.png"
@@ -2025,19 +1930,19 @@ if(alienTimer === alienFrequency) {
     destroyed: 1
   };
   
-  //Set its y position above the screen boundary.
+  //Set its y position above the screen boundary
   alien.y = 0 - alien.height;
   
-  //Assign the alien a random x position.
+  //Assign the alien a random x position
   alien.x = g.randomInt(0, 14) * alien.width;
   
-  //Set its speed.
+  //Set its speed
   alien.vy = 1;
   
-  //Push the alien into the `aliens` array.
+  //Push the alien into the `aliens` array
   aliens.push(alien);
 
-  //Set the `alienTimer` back to zero.
+  //Set the `alienTimer` back to zero
   alienTimer = 0;
 
   //Reduce `alienFrequency` by one to gradually increase
@@ -2047,13 +1952,13 @@ if(alienTimer === alienFrequency) {
   }
 }
 ```
-You can see in the code above that th alien's `y` position places it
+You can see in the code above that the alien's `y` position places it
 out of sight just above the stage's top boundary.
-```
+```js
 alien.y = 0 - alien.height;
 ```
 It's `x` position, however, is random. 
-``` 
+```js
 alien.x = g.randomInt(0, 14) * alien.width;
 ```
 This code places it in one of 15 possible random positions (0 to 14) above the
@@ -2063,7 +1968,7 @@ top of the stage. Here's an illustration of these positions:
 
 Finally, and very importantly, the code pushes the alien sprite into
 the `aliens` array.
-```
+```js
 aliens.push(alien);
 ```
 All this code starts pumping out aliens at a steadily increasing rate.
@@ -2074,7 +1979,7 @@ All this code starts pumping out aliens at a steadily increasing rate.
 How do we make the aliens move? In exactly the same way made the
 bullets move. You'll notice in the code above that
 each alien is initialized with a `vy` (vertical velocity) value of 1.
-```
+```js
 alien.vy = 1;
 ```
 When this value is applied to the alien's `y` position, it will make the alien move down, towards the bottom of the stage,
@@ -2083,15 +1988,15 @@ the `aliens` array. So to make all of them move you need to loop
 through each sprite in the `aliens` array each frame and add their
 `vy` values to their `y` positions. Some code like this in the `play`
 function would work:
-```
-aliens.forEach(function(alien){
+```js
+aliens.forEach(alien => {
   alien.y += alien.vy;
 });
 ```
 However, its easier just to use Hexi's convenient built-in `move` function. Just
 supply `move` with the array of sprites that you want to move, like
 this:
-```
+```js
 g.move(aliens);
 ```
 This updates the aliens positions with their velocities automatically.
@@ -2105,8 +2010,7 @@ from Alien Armada that shows you how to do this. Use `hitTestRectangle` to
 check for a collision between an alien and bullet. If a collision is detected,
 remove the bullet, show the alien's `destroyed` state, and then remove
 the alien after a delay of one second.
-
-```
+```js
 if (g.hitTestRectangle(alien, bullet)) {
 
   //Remove the bullet sprite.
@@ -2117,39 +2021,33 @@ if (g.hitTestRectangle(alien, bullet)) {
 
   //Wait for 1 second (1000 milliseconds) then 
   //remove the alien sprite.
-  g.wait(1000, function(){
-    g.remove(alien);
-  });
+  g.wait(1000, () => g.remove(alien));
 }
-
 ```
 You can use Hexi's universal `remove` function to remove any sprite from a
 a game, like this:
-```
+```js
 g.remove(anySprite);
 ```
 You can optionally use it to remove more than one sprite at a time by
 listing the sprites to remove in the arguments, like this:
-```
+```js
 g.remove(spriteOne, spriteTwo, spriteThree);
 ```
 You can even use it to remove all the sprites in an array of sprites. Just
 supply the sprite array as `remove`'s only argument:
-```
+```js
 g.remove(arrayOfSprites);
 ```
 This will both make the sprites disappear from the screen, and also
 empty them out of the array that they were in.
 
-Ga also has a convenient method called `wait` that will run a function
+Hexi also has a convenient method called `wait` that will run a function
 after any delay (in milliseconds) that you specify. The Alien Armada
 game code uses `wait` to remove the alien after a one second delay,
 like this:
-```
-g.wait(1000, function(){
-  g.remove(alien);
-});
-
+```js
+g.wait(1000, () => g.remove(alien));
 ```
 This allows the alien to display its `explosion` image state for one
 second before it disappears from the game.
@@ -2163,18 +2061,17 @@ collisions. The code also plays an explosion sound when a collision
 occurs, and updates the score by 1. Here's all the code from the
 game's `play` function that does this. (If you're new to JavaScript's
 `filter` loops, you can [read about how to use them here.](https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Array/filter))
-
-```
+```js
 //Check for a collision between the aliens and the bullets.
 //Filter through each alien in the `aliens` array.
-aliens = aliens.filter(function(alien) {
+aliens = aliens.filter(alien => {
 
   //A variable to help check if the alien is
   //alive or dead.
   let alienIsAlive = true;
 
   //Filter though all the bullets.
-  bullets = bullets.filter(function(bullet) {
+  bullets = bullets.filter(bullet => {
 
     //Check for a collision between an alien and bullet.
     if (g.hitTestRectangle(alien, bullet)) {
@@ -2201,9 +2098,7 @@ aliens = aliens.filter(function(alien) {
 
       //Wait for 1 second (1000 milliseconds) then 
       //remove the alien sprite.
-      g.wait(1000, function(){
-        g.remove(alien);
-      });
+      g.wait(1000, () => g.remove(alien));
 
       //Update the score.
       score += 1;
@@ -2242,18 +2137,18 @@ of the game screen increases by one. How does this work?
 
 Alien Armada initializes a `text` sprite called `scoreDisplay` in the
 game's `setup` function.
-```
+```js
 scoreDisplay = g.text("0", "20px emulogic", "#00FF00", 400, 10);
 ```
 You saw in the previous section
 that 1 is added to the game's `score` variable each time an alien is
 hit:
-```
+```js
 score += 1;
 ```
 To visibly update the score, all you need to do is set the `score`
 value as the `scoreDisplay`'s `content`, like this:
-```
+```js
 scoreDisplay.content = score;
 ```
 And that's all there is to it!
@@ -2268,7 +2163,7 @@ beyond the bottom edge of the stage, in which case the aliens win.
 A simple if statement in the `play` function checks for this. If
 either condition becomes `true`, the `winner` is set to either
 "player" or "aliens" and the game's `state` is changed to `end`.
-```
+```js
 //The player wins if the score matches the value
 //of `scoreNeededToWin`, which is 60
 if (score === scoreNeededToWin) {
@@ -2282,7 +2177,7 @@ if (score === scoreNeededToWin) {
 
 //The aliens win if one of them reaches the bottom of
 //the stage.
-aliens.forEach(function(alien){
+aliens.forEach(alien => {
 
   //Check to see if the `alien`'s `y` position is greater
   //than the `stage`'s `height`
@@ -2302,8 +2197,7 @@ Saved!" or "Earth Destroyed!", depending on the outcome. As an extra
 touch, the music `volume` is also set to 50%. Then after a
 delay of 3 seconds, a function named `reset` is called. Here's the
 complete `end` function that does all this:
-
-```
+```js
 function end() {
 
   //Pause the game loop.
@@ -2328,9 +2222,7 @@ function end() {
   }
 
   //Wait for 3 seconds then run the `reset` function.
-  g.wait(3000, function(){
-    reset(); 
-  });
+  g.wait(3000, () => reset());
 }
 ```
 The `reset` function resets all of the game variables back to their
@@ -2342,7 +2234,7 @@ remove the `gameOverMessage`, and the `cannon` sprite is re-centered
 at the bottom of the stage. Finally, the game `state` is set back to
 `play`, and the game loop is un-paused by calling Hexi's `resume`
 method.
-```
+```js
 function reset() {
 
   //Reset the game variables.
@@ -2376,5 +2268,10 @@ function reset() {
 And this is all the code needed to start the game again. You can play
 Alien Armada as many times as you like and it will reset and restart
 itself like this endlessly.
+
+<a id='flappyfairy'></a>
+### Flappy Fairy!
+
+Coming Soon!
 
 

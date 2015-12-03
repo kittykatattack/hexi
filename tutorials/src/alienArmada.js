@@ -8,7 +8,7 @@ let thingsToLoad = [
   "sounds/explosion.mp3",
   "sounds/music.mp3",
   "sounds/shoot.mp3",
-  "fonts/emulogic.ttf"
+  "fonts/emulogic.ttf" //<- The custom font
 ];
 
 //Create a new Hexi instance, and start it
@@ -41,9 +41,9 @@ let cannon,
 //loading. The `load` function runs in the game loop.
 function load(){
 
-    //Use Hexi's built in `progressBar` to display a loading progress
-    //percentage bar while the assets are loading.
-    g.loadingBar();
+  //Use Hexi's built in `loadingBar` to display a loading progress
+  //percentage bar while the assets are loading.
+  g.loadingBar();
 }
 
 //The `setup` function runs once and is used to initializes your game 

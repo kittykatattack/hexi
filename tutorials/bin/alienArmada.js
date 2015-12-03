@@ -5,7 +5,8 @@ Learn how to use Hexi to build a simple game prototype
 */
 
 //An array that contains all the files you want to load
-var thingsToLoad = ["images/alienArmada.json", "sounds/explosion.mp3", "sounds/music.mp3", "sounds/shoot.mp3", "fonts/emulogic.ttf"];
+var thingsToLoad = ["images/alienArmada.json", "sounds/explosion.mp3", "sounds/music.mp3", "sounds/shoot.mp3", "fonts/emulogic.ttf" //<- The custom font
+];
 
 //Create a new Hexi instance, and start it
 var g = hexi(480, 320, setup, thingsToLoad, load);
@@ -37,7 +38,7 @@ var cannon = undefined,
 //loading. The `load` function runs in the game loop.
 function load() {
 
-  //Use Hexi's built in `progressBar` to display a loading progress
+  //Use Hexi's built in `loadingBar` to display a loading progress
   //percentage bar while the assets are loading.
   g.loadingBar();
 }
