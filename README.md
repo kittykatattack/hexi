@@ -25,7 +25,8 @@ will run anywhere.
 
 ### Table of contents:
 1. [Features](#features)
-2. [Tutorials](#tutorials)
+2. [Modules](#modules)
+3. [Tutorials](#tutorials)
 
 <a id='features'></a>
 Features
@@ -131,6 +132,7 @@ Coming very soon:
 - Create a `worldCamera` that follows sprites around a scrolling game
   world.
 
+<a id='features'></a>
 ### Hexi's modules
 
 Hexi contains a collection of useful modules, and you use any of the
