@@ -3,11 +3,25 @@
 Hexi
 ====
 
-*Hexi* is a complete system for making HTML5 games or any other
-kind interactive media. Take a look at the feature list and the `examples` folder to get
-started. Keep scrolling, and you'll find a complete beginner's
-tutorial ahead. If you've never made a game before, the tutorials are
-the best place to start.
+*Hexi* is a fun and easy way to make HTML5 games or any other
+kind interactive media using pure JavaScript code (ES6/2015). Take a look at 
+the feature list and the [examples](https://github.com/kittykatattack/hexi/tree/master/examples) folder to get started. Keep scrolling, 
+and you'll find a complete beginner's tutorial ahead. If you've never
+made a game before, the tutorials are the best place to start.
+
+What's great about Hexi? You get all the power of WebGL rendering with
+a streamlined API that lets you write your code in a
+[minimalist](https://en.wikipedia.org/wiki/Haiku),
+[declarative](http://latentflip.com/imperative-vs-declarative/) way.
+It makes coding a game as easy and fun as writing poetry or drawing. Try it! If you
+need any help or have any question, post something in this
+repository's [Issues](https://github.com/kittykatattack/hexi/issues).
+
+You only need one file from this repository to get started using Hexi:
+`hexi.min.js`. [Link it to your HTML document with a `<scriptt>` tag](http://www.quackit.com/javascript/tutorial/external_javascript_file.cfm), and go for it! 
+Hexi has been written, from the ground up, in the latest version of
+JavaScript (ES6/7, 20015/6) but is compiled down to ES5 (using [Babel](https://babeljs.io)) so that it
+will run anywhere.
 
 ### Table of contents:
 1. [Features](#features)
@@ -98,7 +112,9 @@ Here's Hexi's core feature list:
 - A `createParticles` function for creating all kinds of particle
   effects for games. Use the `particleEmitter` function to create a constant
   stream of particles.
-- Use `scaleToWindow` to make the game automatically scale to its maximum size and align itself for the best fit inside the browser window. Use `enableFullscreen` to make the browser enter full screen mode.
+- Use `scaleToWindow` to make the game automatically scale to its maximum size and align itself 
+  for the best fit inside the browser window. Use `enableFullscreen` to make the 
+  browser enter full screen mode.
 
 Coming very soon:
 
@@ -114,6 +130,54 @@ Coming very soon:
   with moving sprites.
 - Create a `worldCamera` that follows sprites around a scrolling game
   world.
+
+### Hexi's modules
+
+Hexi contains a collection of useful modules, and you use any of the
+properties or methods of these modules in your high-level Hexi code. 
+
+- [Pixi](https://github.com/pixijs/pixi.js/): The fasted 2D WebGL renderer.
+- [Bump](https://github.com/kittykatattack/bump): A complete suite of 2D collision functions for games.
+- [Tink](https://github.com/kittykatattack/tink): Drag-and-drop, buttons, a universal pointer and other
+  helpful interactivity tools.
+- [Charm](https://github.com/kittykatattack/charm): Easy-to-use tweening animation effects for Pixi sprites.
+- [Dust](https://github.com/kittykatattack/dust): Particle effects for creating things like explosions, fire
+  and magic.
+- [Sprite Utilities](https://github.com/kittykatattack/spriteUtilities): Easier and more intuitive ways to
+  create and use Pixi sprites, as well adding a state machine and
+  animation player
+- [Game Utilities](https://github.com/kittykatattack/gameUtilities): A collection of useful methods for games.
+- [Sound.js](https://github.com/kittykatattack/sound.js): A micro-library for loading, controlling and generating
+  sound and music effects. Everything you need to add sound to games.
+- [Smoothie](https://github.com/kittykatattack/smoothie): Ultra-smooth sprite animation using 
+  true delta-time interpolation. It also lets you specify the fps (frames-per-second) at which 
+  your game or application runs, and completely separates your sprite rendering loop from your
+  application logic loop.
+
+Read the documents at code repositories for these modules to find out
+what you can do with them.
+
+Hexi lets you access most of these module methods and properties as
+top-level objects. For example, if you want to access the `hit` method
+from the Bump collision module, you can do it like this:
+```js
+g.hit(spriteOne, spriteTwo);
+```
+But you can also access the Bump module directly if you need to, like this:
+```js
+g.bump.hit(spriteOne, spriteTwo);
+```
+(This assumes that your Hexi instance is called `g`);
+
+Just refer to the module name using lowerCamelCase. That means you can
+access the Smoothie module as `smoothie` and the Sprite Utilities
+module as `spriteUtilities`.
+
+There are two exceptions to this convention. You can access the Pixi
+global object directly as `PIXI`. The functions in the Sound.js module
+are also only accessible as top-level global objects. This is was done
+to simplify the way these modules are integrated with Hexi, and
+maintain the widest possible cross-platform compatibility.
 
 <a id='tutorials'></a>
 Tutorials
@@ -195,8 +259,6 @@ JavaScript file that contains all the game code.
 <!-- Main application file -->
 <script src="bin/treasureHunter.js"></script>
 </body>
-
-
 ```
 This is the [minimum amount of HTML code you need for a valid HTML5
 document](http://stackoverflow.com/questions/9797046/whats-a-valid-html5-document).
@@ -239,7 +301,7 @@ name you want. `g` is just nice, short, and easy to remember; `g` =
 In this example Hexi creates a canvas element with a size of 512 by 512
 pixels. That's specified by the first two arguments:
 ```js 
-    512, 512, setup,
+512, 512, setup,
 ```
 The third argument, `setup`, means that as soon as Hexi is initialized,
 it should look for and run a function in your game code called `setup`.
@@ -724,7 +786,7 @@ to the arrow keys and space bar. Access them like this:
 `release` methods that you can define. Here's how you could optionally use these
 keyboard objects to help move the player character in
 Treasure Hunter. (You would define this code in the `setup` function.):
-```
+```js
 //Left arrow key `press` method
 g.leftArrow.press = () => {
   //Change the player's velocity when the key is pressed
@@ -899,7 +961,7 @@ the same width and height as the `canvas`.
 But you can alternatively supply the `contain` method with a custom 
 object to do the same thing. Here's how:
 
-```
+```js
 g.contain(
   player, 
   {
@@ -920,7 +982,7 @@ which edge it reached: "top", "right", "bottom", or "left". Here's how
 you could use this feature to find out which edge of the canvas the
 sprite is touching:
 
-```
+```js
 let playerHitsEdges = g.contain(player, g.stage);
 
 if(playerHitsEdges) {
@@ -960,7 +1022,7 @@ g.hitTestRectangle(spriteOne, spriteTwo);
 ```
 Here's how the code in the `play` function uses `hitTestRectangle` to
 check for a collision between any of the enemies and the player.
-```
+```js
 //Set `playerHit` to `false` before checking for a collision
 let playerHit = false;
 
