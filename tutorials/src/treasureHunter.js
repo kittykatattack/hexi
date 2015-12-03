@@ -42,12 +42,12 @@ function setup() {
   treasure = g.rectangle(16, 16, "gold");
 
   //Position it next to the left edge of the canvas
-  treasure.x = g.canvas.width - treasure.width - 10;
+  //treasure.x = g.canvas.width - treasure.width - 10;
   treasure.y = g.canvas.height / 2 - treasure.halfHeight;
 
   //Alternatively, you could use Ga's built in convience method
   //called `putCenter` to postion the sprite like this:
-  //g.stage.putCenter(treasure, 208, 0);
+  g.stage.putCenter(treasure, 208, 0);
 
   //Create a `pickedUp` property on the treasure to help us Figure
   //out whether or not the treasure has been picked up by the player
