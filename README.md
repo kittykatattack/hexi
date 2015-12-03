@@ -14,11 +14,11 @@ a streamlined API that lets you write your code in a
 [minimalist](https://en.wikipedia.org/wiki/Haiku),
 [declarative](http://latentflip.com/imperative-vs-declarative/) way.
 It makes coding a game as easy and fun as writing poetry or drawing. Try it! If you
-need any help or have any question, post something in this
+need any help or have any questions, post something in this
 repository's [Issues](https://github.com/kittykatattack/hexi/issues).
 
 You only need one file from this repository to get started using Hexi:
-`hexi.min.js`. [Link it to your HTML document with a `<scriptt>` tag](http://www.quackit.com/javascript/tutorial/external_javascript_file.cfm), and go for it! 
+[`hexi.min.js`](https://github.com/kittykatattack/hexi/blob/master/bin/hexi.min.js). [Link it to your HTML document with a `<script>` tag](http://www.quackit.com/javascript/tutorial/external_javascript_file.cfm), and go for it! 
 Hexi has been written, from the ground up, in the latest version of
 JavaScript (ES6/7, 20015/6) but is compiled down to ES5 (using [Babel](https://babeljs.io)) so that it
 will run anywhere.
