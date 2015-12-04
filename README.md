@@ -2369,7 +2369,7 @@ Buttons have special methods that you can define: `press`,
 these methods. For example, here's how you could change the game's
 state when the user releases the `playButton`:
 ```js
-goButton.release = function(){
+goButton.release = () => {
   g.state = setupGame;
 };
 ```
@@ -2706,7 +2706,7 @@ to use their positions relative to the canvas.
 If `fairyVsBlock` is `true`, and the fairy is currently visible, the 
 collision code runs. It makes the fairy invisible, creates the particle 
 explosion, and calls the game’s `reset` function after a delay of 3 seconds.
-```
+```js
 if (fairyVsBlock && fairy.visible) {
 
   //Make the fairy invisible
@@ -2741,7 +2741,7 @@ fixed intervals. That means instead of just calling the
 `createParticles` method once, the emitter calls it periodically.
 Hexi has a built-in `particleEmitter` method that let's you do this easily.
 Here’s how to use it:
-```
+```js
 let particleStream = g.particleEmitter(
   100,                                      //The interval
   () => g.createParticles(                  //The `particleEffect` function
@@ -2757,7 +2757,7 @@ The `particleEmitter` method returns an object with `play` and `stop` methods
 that you can use to control the particle stream. You can use them 
 just like the `play` and `stop` methods you use to control a sprite’s 
 animation.
-```
+```js
 particleStream.play();
 particleStream.stop();
 ```
@@ -2777,7 +2777,7 @@ The particle stream randomly emits pink, yellow, green, or violet
 particles, each of which is a separate frame on the texture atlas.
 
 Here's the code that creates this effect: 
-```
+```js
 dustFrames = [
   "pink.png",
   "yellow.png",
@@ -2835,7 +2835,7 @@ down to two on the right.
 
 All the blocks that make up the pillars are in a `group` called
 `blocks`.
-```
+```js
 blocks = g.group();
 ```
 A nested for loop creates each block and adds it to the `blocks` container. 
@@ -2843,7 +2843,7 @@ The outer loop runs 15 times; once to create each pillar. The inner loop
 runs eight times; once for each block in the pillar. The blocks are only 
 added if they’re not occupying the range that’s been randomly chosen for 
 the gap. Every fifth time the outer loop runs, the size of the gap narrows by one.
-```
+```js
 //What should the initial size of the gap be between the pillars?
 let gapSize = 4;
 
@@ -2889,7 +2889,7 @@ Flappy Fairy will see if she manages to make it through to the end.
 
 The game loop moves the group of blocks by 2 pixels to the right each 
 frame, but only while the finish sprite is off-screen:
-```
+```js
 if (finish.gx > 256) {
   blocks.x -= 2;
 }
