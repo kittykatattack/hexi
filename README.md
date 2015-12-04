@@ -3,7 +3,7 @@
 Hexi
 ====
 
-*Hexi* is a fun and easy way to make HTML5 games or any other
+**Hexi** is a fun and easy way to make HTML5 games or any other
 kind interactive media using pure JavaScript code (ES6/2015). Take a look at 
 the feature list and the [examples](https://github.com/kittykatattack/hexi/tree/master/examples) folder to get started. Keep scrolling, 
 and you'll find a complete beginner's tutorial ahead. If you've never
@@ -250,7 +250,7 @@ minimal HTML container page. The HTML page loads `hexi.min.js` which
 is the only file you need to use all of Hexi's
 features. It also load the `treasureHunter.js` file, which is the
 JavaScript file that contains all the game code. 
-```
+```js
 <!doctype html>
 <meta charset="utf-8">
 <title>Treasure hunter</title>
@@ -276,8 +276,7 @@ according to some parameters that you specify. This bit of
 code below initializes a game with a screen size of 512 by 512 pixels.
 It also pre-loads the `chimes.wav` sound file from the `sounds`
 folder.
-
-```
+```js
 //Initialize Hexi and load the chimes sound file
 let g = hexi(512, 512, setup, ["sounds/chimes.wav"]);
 
@@ -288,7 +287,6 @@ g.scaleToWindow();
 g.start();
 
 ```
-
 You can see that the result of the `hexi` function is being assigned to
 an variable called `g`. 
 ```js
@@ -534,7 +532,7 @@ left corner has `x` and `y` values of 0. That means any
 positive `x` and `y` values you assign to sprites will position them left (`x`) and down
 (`y`) relative to that corner point. For example, Here's the
 code that positions the `exit` door (the green square). 
-```
+```js
 exit.x = 8;
 exit.y = 8;
 ```
@@ -554,14 +552,14 @@ For example, here are the lines from the code above that
 position the treasure sprite (the gold box). The code places the
 treasure 26 pixels to the left of the
 canvas's right edge, and centers it vertically.
-```
+```js
 treasure.x = g.canvas.width - treasure.width - 10;
 treasure.y = g.canvas.height / 2 - treasure.halfHeight;
 ```
 That's a lot of complicated positioning code to write. Instead, you
 could use Hexi's built-in `putCenter` method to achieve the same effect
 like this:
-```
+```js
 g.stage.putCenter(treasure, 220, 0);
 ```
 What is the `stage`? It's the root container for all the sprites, and
@@ -571,13 +569,13 @@ all the sprites in your game, as well as any containers those sprites
 might be grouped in (Like the `gameScene`). `putCenter` works by
 centering the `treasure` inside the `stage`, and then offsetting its
 `x` position by 220 pixels. Here's the format for using `putCenter`:
-```
+```js
 anySprite.putCenter(anyOtherSprite, xOffset, yOffset);
 ```
 You can use the other `put` methods in the same way. For example, if
 you wanted to position a sprite directly to the left of another
 sprite, without any offset, you could use `putLeft`, like this:
-```
+```js
 spriteOne.putLeft(spriteTwo);
 ```
 This would place `spriteTwo` directly to the left of `spriteOne`, and
@@ -590,7 +588,7 @@ these tutorials.
 Before we continue, there's one small detail you need to notice. The
 code that creates the sprites also adds a `pickedUp` property to the
 `treasure` sprite:
-```
+```js
 treasure.pickedUp = false;
 ```
 You'll see how we're going to use `treasure.pickedUp` later in the game logic to help us determine the
@@ -603,8 +601,7 @@ There are 6 enemies sprites (red squares) in Treasure Hunter. They're
 spaced evenly horizontally but but have random initial vertical
 positions. All the enemies sprites are created in a `for` loop using
 this code in the `setup` function:
-
-```
+```js
 //Make the enemies
 let numberOfEnemies = 6,
     spacing = 48,
@@ -657,7 +654,7 @@ Here's what this code produces:
 The code gives each of the enemies a random `y` position with the help
 of Hexi's `randomInt` method:
 ```js
-var y = g.randomInt(0, g.canvas.height - enemy.height);
+let y = g.randomInt(0, g.canvas.height - enemy.height);
 ```
 `randomInt` will give you a random number between any two integers that you
 provide in the arguments. (If you need a random decimal number, use
@@ -1013,7 +1010,6 @@ if(playerHitsEdges) {
   //Display the result in a text sprite
   message.content = `The player hit the ${collisionSide} of the canvas`; 
 } 
-
 ```
 <a id='collisionenemy'></a>
 ##### Collision with the enemies
@@ -2272,6 +2268,648 @@ itself like this endlessly.
 <a id='flappyfairy'></a>
 ### Flappy Fairy!
 
-Coming Soon!
+Flappy Fairy is a homage to one of the most infamous games ever made: [Flappy
+Bird](http://en.wikipedia.org/wiki/Flappy_Bird). Click the
+image link below to play the game:
+
+[![FlappyFairy](/tutorials/screenshots/21.png)](https://gitcdn.xyz/repo/kittykatattack/hexi/master/tutorials/04_flappyFairy.html)
+
+Click the "Go" button, and game will launch in full screen mode. Tap
+anywhere on the screen to make the fairy fly, and help her navigate
+through the gaps in 15 pillars to reach the finish. A trail of multicolored 
+fairy dust follows the fairy as she flies through the maze. 
+If she hits one of the green blocks she explodes in a shower of dust. 
+But if she manages to navigate through the increasingly narrowing gaps between 
+all 15 pillars, she reaches a big floating “Finish” sign. 
+
+![Flappy Fairy gameplay](/tutorials/screenshots/22.png)
+
+If you can make a game like Flappy Fairy, you can make almost any
+other kind of 2D action game. In addition to using the all techniques you've
+already learnt, Flappy Fairy introduces some exciting new ones:
+
+- Launching a game in full screen mode.
+- Make a click-able button. 
+- Create an animated sprite.
+- Use a `tilingSprite` to make a scrolling background.
+- Use particle effects.
+
+You'll find the fully commented Flappy Fairy source code in the
+`tutorials` folder. Make sure to take a look at it so that you can see
+all of this code in its proper context. Its general structure is identical
+to the other games in this tutorial, with the addition of these new techniques. Let's
+find out how they were implemented.
+
+<a id='launchagameinfullscreenmode'></a>
+#### Launch a game in fullscreen mode
+
+When you start Flappy Fairy by clicking the "Go" button,
+the game expands to fill your entire screen. This is done with
+the help of a built-in method called `enableFullscreen`.
+```js
+g.enableFullsreen(listOfAsciiExitKeyCodes);
+```
+It's one optional argument is a list of Ascii key codes. They refer to keyboard
+keys that could be used to exit fullscreen mode. For example, if you
+want fullscreen mode to exit if a user presses upper-case "X" or
+lower-case "x", list their Ascii code values in the arguments like
+this:
+```js
+g.enableFullscreen(88, 120);
+```
+(88 is "X" and 120 is "x".) You can list as many key codes as you
+like. If you leave these arguments out, the default `esc` key will do the trick.
+
+`enableFullscreen`'s behaviour is very simple: it just launches fullscreen mode
+whenever the user releases the pointer (mouse or touch) over the
+canvas. Add it just below your game's `start` method, like this:
+```js
+let thingsToLoad = ["images/flappyFairy/flappyFairy.json"];
+let g = hexi(910, 512, setupTitleScreen, thingsToLoad);
+g.start();
+g.enableFullScreen(88, 120);
+```
+It's a quick and easy way to make any games run fullscreen.
+
+(Note: Fullscreen mode is different than `scaleToWindow` because it
+completely takes over the user's screen. And I mean completely: the
+browser disappears and the only thing on the screen is your game. That's cool, but many users will find it disorienting and become stressed or panicked if they
+can't figure out how to exit your game. So if you do decide to run your game in fullscreen mode, be confident that users will know how to exit it. Or, play it
+safe and just use `scaleToWindow`, which still looks great but doesn't
+take over the entire browser UI.)
+
+<a id='makeabutton'></a>
+#### Make a button
+
+The game starts when you press the "Go" button. The "Go" button is a special sprite
+called a `button`. `button` sprites have 3 image frame states: up, over and
+down. You can create a `button` with three states like this:
+```js
+goButton = g.button([
+  "up.png",
+  "over.png",
+  "down.png"
+]);
+```
+`up.png` is an image that shows what the button should look like when the it's not
+interacting with the pointer. `over.png` shows what the button looks
+like when the pointer is over it, and `down.png` is the image that is
+displayed when the pointer presses down on the button.
+
+![Button states](/tutorials/screenshots/23.png)
+
+(The `down.png` image is offset slightly down and to the right, so it
+looks like its being pressed down.) You can assign any images you like
+to these states, and the `button` will display them automatically based on how the pointer is interacting with it. 
+
+(Note: If your game is touch-only, you might have only two button states: up and down. In that case, just assign two image frames, and Hexi will assume they refer to the up and down states.)
+
+Buttons have special methods that you can define: `press`,
+`release`,`over`, `out` and `tap`. You can assign any code you like to
+these methods. For example, here's how you could change the game's
+state when the user releases the `playButton`:
+```js
+goButton.release = function(){
+  g.state = setupGame;
+};
+```
+Buttons also have a Boolean (true/false) property called `enabled`
+that you
+can set to `false` if you want to disable the button. (Set `enabled`
+to `true` to re-enable it.) You can also use the button's `state`
+property to find out if the button state is currently `"up"`, `"over"`
+or `"down"`. (These state values are strings.)
+
+Important! You can give **any** sprite the qualities of a button just by
+setting its `interact` property to `true`, like this:
+```js
+anySprite.interact = true;
+```
+This will give the sprite `press`, `release`, `over`, `out` and `tap`
+methods, and the same `state` property as ordinary buttons. This means
+that you can make any sprite click-able, which is really useful for a
+wide variety of interactive games.
+
+You can also make the `stage` object interactive, which turns the whole 
+game screen into an interactive button:
+```js
+g.stage.interact = true;
+```
+For more detail on how to use buttons, see the `buttons.html` file
+in the `examples` folder.
+
+<a id='animatingsprites'></a>
+#### Animating sprites
+
+A neat feature of Flappy Fairy is that the fairy character flaps her wings
+when she's flying up. This animation was created by rapidly displaying 3
+simple images in a continuous loop. Each image displays a slightly different
+frame of the animation, as shown below:
+
+![Animation frames](/tutorials/screenshots/24.png)
+
+These three images are just three ordinary frames in the game's texture atlas, called
+`0.png`, `1.png` and `2.png`.  But how can you turn a sequence of frames like this into a sprite animation?
+
+First, create an array that defines the frames of the animation, like
+this:
+```js
+let fairyFrames = [
+  "0.png", 
+  "1.png", 
+  "2.png"
+];
+```
+Then create a sprite using those frames, like this:
+```js
+let fairy = g.sprite(fairyFrames);
+```
+Or, if you prefer, you can combine this into one step:
+```js
+let fairy = g.sprite([
+  "0.png", 
+  "1.png", 
+  "2.png"
+]);
+
+```
+Any sprite with more than one image frame automatically becomes an
+animated sprite. If you want the animation frames to start playing,
+just call the sprite's `playAnimation` method:
+```js
+fairy.playAnimation();
+```
+The frames will automatically play in a continuous loop. If you don't want them
+to loop, set `loop` to `false`.
+```js
+fairy.loop = false;
+```
+Use the `stopAnimation` method to stop an animation:
+```js
+fairy.stopAnimation();
+```
+If you want to know whether or not a sprite's animation is currently
+playing, use the Boolean (true/false) `playing` property to find out.
+
+How quickly or slowly do you want the animation to play? You can set
+the animation's frames-per-second (`fps`) like this:
+```js
+fairy.fps = 24;
+```
+A sprite animation's frame rate is independent of the game's frame
+rate. That gives you a lot of flexibility to fine-tune sprite
+animations.
+
+What if you don't want to use all the sprite's image frames in the animation, only some of them? For example, imagine that you have a sprite with 30 frames, but you only want to play frames 10 to 15 as part of the animation. Supply the `playAnimation` method with an array containing two numbers: the first and last frames of the sequence you want to play.
+```js
+animatedSprite.playAnimation([10, 15]);
+```
+Now only the frames between 10 to 15 will play as part of the animation. To make
+this more readable, you can define the sequence as an array that
+describes what those animated frames actually do. For example, perhaps
+they define a character's walk cycle. You could create an array called
+`walkCycle` that defines those frames:
+```js
+let walkCycle = [10, 15];
+```
+Then use that array with `playAnimation`, like this:
+```js
+animatedSprite.playAnimation(walkCycle);
+```
+That's a bit more code to write, but much more readable!
+
+For more details on Hexi's sprite animation system and what you can do
+with it, see the `keyframeAnimation.html`,
+`textureAtlasAnimation.html` and  `animationStates.html` file in the `examples` folder.
+
+<a id='makingthefairyfly'></a>
+#### Making the fairy fly
+
+Now that you know how to animate a sprite, how is Flappy Fairy's
+flying animation triggered when you tap on the game screen?
+
+A value of `0.05`, which represents gravity, is subtracted from the
+fairy's `y` position each frame in the `play` function. This is the
+gravity effect that pulls the fairy to the bottom of the screen. 
+```js
+fairy.vy += -0.05;
+fairy.y -= fairy.vy;
+```
+But when you tap the screen, the fairy flies up. This is thanks to
+Hexi's built-in `pointer` object. It has a `tap` method which you can define to
+perform any action you like. In Flappy Fairy, the `tap` method increases the fairy's vertical velocity, `vy`, by 1.5 pixels each time you tap.
+```js
+g.pointer.tap = () => {
+  fairy.vy += 1.5;
+};  
+```
+Hexi's built-in `pointer` object also has `press` and `release` methods
+that you can define in the same way. It also has Boolean (true/false)
+`isUp`, `isDown` and `tapped` properties that you can use to find the
+pointer's state, if you need to.
+
+But you'll notice that the fairy only flaps her wings when she's
+starting to fly up, and stops flapping when she looses momentum and
+starts going down. To make this work, you need to know whether the fairy is
+currently on the way up, or on the way down, based on a change in the
+fairy's vertical velocity (vy) value. The game implements a well-worn
+old trick to help figure this out. The `play` function captures the
+fairy's velocity for this current frame in a new value called `oldVy`. But
+it does this *only after the fairy's position has changed*. 
+```js
+function play(){
+
+  //...
+  //... all of the code that moves the fairy comes first...
+  //...
+
+  //Then, after the fairy's position has been changed, capture
+  //her velocity for this current frame
+  fairy.oldVy = fairy.vy;
+}
+```
+This means that when the next game frame swings around, `oldVy` will still be storing the fairy's velocity value from the *previous frame*. And that means you
+can use that value to figure out the change in the fairy's velocity from the
+previous frame to the current frame. If she's starting to go up (if `vy` is
+greater than `oldVy`), play the fairy's animation: 
+```js
+if (fairy.vy > fairy.oldVy) {
+  if(!fairy.playing) {
+    fairy.playAnimation();
+  }
+}
+```
+If she's starting to go down, stop the animation and just show the
+fairy's first frame.
+```js
+if (fairy.vy < 0 && fairy.oldVy > 0) {
+  if (fairy.playing) fairy.stopAnimation();
+  fairy.show(0);
+}
+```
+And that's how the fairy flies!
+
+<a id='makeascrollingbackground'></a>
+#### Make a scrolling background
+
+A fun new feature of Flappy Fairy is that it has an infinitely scrolling
+background of clouds moving from right to left.
+
+![Scrolling background](/tutorials/screenshots/25.png)
+
+The background moves at a slower rate than the green pillars, and that
+creates the illusion that the clouds are further away. (This is a
+shallow, pseudo 3D effect called **paralax scrolling**.) 
+
+The background is just a single image.
+
+![Scrolling background](/tutorials/screenshots/26.png)
+
+The image has been designed so that the clouds **tile seamlessly**:
+the clouds on the top and left match up with the clouds on the right
+and bottom. That means you can connect multiple instances of the same
+image and they will appear to create a single, unbroken continuous
+image. ([Image from OpenGameArt.](opengameart.org/content/cartoony-sky)) 
+
+Because this is really useful for games, Hexi has a sprite type
+called a `tilingSprite` that's designed just for such infinite
+scrolling effects. Here's how to create a `tilingSprite`: 
+```js
+sky = g.tilingSprite(
+  "sky.png"              //The image to use
+  g.canvas.width,        //The width
+  g.canvas.height,       //The height
+);
+```
+The first argument the image your want to use, and the last two
+arguments are the sprite's width and height. 
+
+Tiling sprites have the same properties as normal sprites, with the addition of two new properties: `tileX` and `tileY`. Those two properties let you set the image offset from the sprite's top left corner. If you want to make a tiling sprite scroll continuously, just increase its `tileX` value by some small amount each frame in the game loop, like this:
+```js
+sky.tileX -= 1;
+```
+And that's all you need to do to make an infinitely scrolling
+background.
+
+<a id='particleeffects'></a>
+####Particle effects
+
+How do you create effects like fire, smoke, magic, and explosions? 
+You make lots of tiny sprites; dozens, hundreds or thousands of them. 
+Then apply some physical or gravitational constraints to those sprites 
+so that they behave like the element you’re trying to simulate. You 
+also need to give them some rules about how they should appear and 
+disappear, and what kinds of patterns they should form. These tiny 
+sprites are called particles. You can use them to make a wide range 
+of special effects for games.
+
+Hexi has a versatile built-in method called `ceateParticles` that can
+create most kinds of particle effects you'll need for games. Here's
+the format for using it:
+```js
+createParticles(
+  pointer.x,                           //The particle’s starting x position
+  pointer.y,                           //The particle’s starting y position
+  () => sprite("images/star.png"),     //Particle function
+  g.stage,                             //The container to add the particles to   
+  20,                                  //Number of particles
+  0.1,                                 //Gravity
+  true,                                //Random spacing
+  0, 6.28,                             //Min/max angle
+  12, 24,                              //Min/max size
+  1, 2,                                //Min/max speed
+  0.005, 0.01,                         //Min/max scale speed
+  0.005, 0.01,                         //Min/max alpha speed
+  0.05, 0.1                            //Min/max rotation speed
+);
+```
+You can see that most of the arguments describe a range between the 
+minimum and maximum values that should be used to change the sprites’ 
+speed, rotation, scale, or alpha. You can also assign the number of 
+particles that should be created, and add optional gravity. 
+You can make particles using any sprites by customizing the third argument.
+Just supply a function that returns the kind of sprite you want to use
+for each particle:
+```js
+() => ("images/star.png"),
+```
+If you supply a sprite that has multiple frames, the `createParticles` 
+method will automatically choose a random frame for each particle.
+The minimum and maximum angle values are important for defining the 
+circular spread of particles as they radiate out from the origin point. 
+For a completely circular explosion effect, use a minimum angle of 0 and 
+a maximum angle of 6.28.
+```js
+0, 6.28,
+```
+(These values are radians; the equivalent in degrees is 0 and 360.) 
+0 starts at the 3 o’clock position, pointing directly to the right. 3.14 
+is the 9 o’clock position, and 6.28 takes you around back to 0 again.
+If you want to constrain the particle range to a narrower angle, just 
+supply the minimum and maximum values that describe that range. Here are 
+values you could use to constrain the angle to a pizza-slice with the 
+crust pointing left.
+```js
+2.4, 3.6,
+```
+You could use a constrained angle range like this to create a particle
+stream, like those used to create a fountain or rocket engine flames. 
+(You’ll see exactly how to do this ahead.) The random spacing value 
+(the sixth argument) determines whether the particles should be spaced 
+evenly (`false`) or randomly (`true`) within this range.
+By carefully choosing the sprite for the particle and finely adjusting 
+each parameter, you can use this all-purpose `createParticles` method 
+to simulate everything from liquid to fire. In Flappy Fairy, it's used
+to create fairy dust.
+
+<a id='thefairydustexplosions'></a>
+#####The fairy dust explosions
+
+When Flappy Fairy hits a block, she disappears in a puff of dust. 
+
+![Fairy dust explosion](/tutorials/screenshots/27.png)
+
+How does that effect work?
+
+Before we can create the explosion effect, we have to define an array
+that lists the images we want to use for each particle.
+As you learned above, the `createParticles` method will randomly 
+display a frame on a sprite, if that sprite contains multiple frames. 
+To make this work, first define an array of texture atlas frames that 
+you want to use for the fairy's dust explosion:
+```js
+dustFrames = [
+  "pink.png",
+  "yellow.png",
+  "green.png",
+  "violet.png"
+];
+```
+The explosion happens when the fairy hits one of the green blocks.
+The game loop does this with the help of the `hitTestRectangle` 
+method. The code loops through the `blocks.children` array and tests for 
+a collision between each green block and the fairy. If `hitTestRectangle` 
+returns `true`, the loop quits and a collision object called
+`fairyVsBlock` becomes `true`.
+```js
+let fairyVsBlock = blocks.children.some(block => {
+  return g.hitTestRectangle(fairy, block, true);  
+});
+```
+`hitTestRectangle`’s third argument needs to be `true` so that the collision 
+detection is done using the sprite’s global coordinates (`gx` and `gy`). 
+That’s because the fairy is a child of the `stage`, but each block is a child 
+of the `blocks` group. That means they don’t share the same local coordinate space. 
+Using the blocks sprites' global coordinates forces `hitTestRectangle`
+to use their positions relative to the canvas. 
+
+If `fairyVsBlock` is `true`, and the fairy is currently visible, the 
+collision code runs. It makes the fairy invisible, creates the particle 
+explosion, and calls the game’s `reset` function after a delay of 3 seconds.
+```
+if (fairyVsBlock && fairy.visible) {
+
+  //Make the fairy invisible
+  fairy.visible = false;
+
+  //Create a fairy dust explosion
+  g.createParticles(
+    fairy.centerX, fairy.centerY, //x and y position
+    () => g.sprite(dustFrames),   //Particle sprite
+    g.stage,                      //The container to add the particles to  
+    20,                           //Number of particles
+    0,                            //Gravity
+    false,                        //Random spacing
+    0, 6.28,                      //Min/max angle
+    16, 32,                       //Min/max size
+    1, 3                          //Min/max speed
+  );
+  
+  //Stop the dust emitter that's trailing the fairy
+  dust.stop();
+
+  //Wait 3 seconds and then reset the game
+  g.wait(3000, reset);
+}
+```
+
+<a id='useaparticleemitter'></a>
+#####Use a particle emitter
+
+A particle emitter is just a simple timer that creates particles at 
+fixed intervals. That means instead of just calling the 
+`createParticles` method once, the emitter calls it periodically.
+Hexi has a built-in `particleEmitter` method that let's you do this easily.
+Here’s how to use it:
+```
+let particleStream = g.particleEmitter(
+  100,                                      //The interval
+  () => g.createParticles(                  //The `particleEffect` function
+    //Assign particle parameters...
+  )
+);
+```
+The `particleEmitter` method just wraps around the `createParticles` method. 
+Its first argument is a number, in milliseconds, that determines how 
+frequently the particles should be created. The second argument is 
+the `createParticles` method, which you can customize however you like. 
+The `particleEmitter` method returns an object with `play` and `stop` methods 
+that you can use to control the particle stream. You can use them 
+just like the `play` and `stop` methods you use to control a sprite’s 
+animation.
+```
+particleStream.play();
+particleStream.stop();
+```
+The emitter object also has a `playing` property that will be either 
+`true` or `false` depending on the emitter’s current state. (See the
+`particleEmitter.html` file in the `examples` folder for more details
+on how to create and use a particle emitter.)
+
+A particle emitter is used in Flappy Fairy to make the fairy emit a 
+stream of multicolored particles while she’s flapping her wings. The 
+particles are constrained to an angle between 2.4 and 3.6 radians, so 
+they’re emitted in a cone-shaped wedge to the left of the fairy. 
+
+![Emitting fairy dust](/tutorials/screenshots/28.png)
+
+The particle stream randomly emits pink, yellow, green, or violet 
+particles, each of which is a separate frame on the texture atlas.
+
+Here's the code that creates this effect: 
+```
+dustFrames = [
+  "pink.png",
+  "yellow.png",
+  "green.png",
+  "violet.png"
+];
+
+//Create the emitter
+dust = g.particleEmitter(
+  300,                                   //The interval
+  () => {                         
+      g.createParticles(                 //The function
+      fairy.x + 8,                       //x position
+      fairy.y + fairy.halfHeight + 8,    //y position
+      () => g.sprite(dustFrames),        //Particle sprite
+      g.stage,                           //The container to add the particles to               
+      3,                                 //Number of particles
+      0,                                 //Gravity
+      true,                              //Random spacing
+      2.4, 3.6,                          //Min/max angle
+      12, 18,                            //Min/max size
+      1, 2,                              //Min/max speed
+      0.005, 0.01,                       //Min/max scale speed
+      0.005, 0.01,                       //Min/max alpha speed
+      0.05, 0.1                          //Min/max rotation speed
+    );
+  }
+);
+```
+You can now control the `dust` emitter with `play` and `stop` methods.
+
+<a id='creatingandmovingthepillars'></a>
+####Creating and moving the pillars
+
+You now know how Flappy Fairy implements some of Hexi's special features
+for some fun and useful effects. But, if you're new to game
+programming, you might also be wondering how the world that Flappy Fairy flies
+through was created. Let's take a quick look at the code that creates
+and moves the green pillars that the fairy has to navigate to reach
+the Finish sign.
+
+There are fifteen green pillars in the game. Every five pillars, the 
+gap between the top and bottom sections becomes narrower. The first five 
+pillars have a gap of four blocks, the next five have a gap of three blocks 
+and the last five have a gap of two blocks. This makes the game increasingly 
+difficult as Flappy Fairy flies further. The exact position of the gap is 
+random for each pillar, and different every time game is played. Each pillar 
+is spaced by 384 pixels, and here's how they would look like if 
+they were right next to each other.
+
+![The green pillars](/tutorials/screenshots/29.png)
+
+You can see how the gap gradually narrows from four spaces on the left 
+down to two on the right. 
+
+All the blocks that make up the pillars are in a `group` called
+`blocks`.
+```
+blocks = g.group();
+```
+A nested for loop creates each block and adds it to the `blocks` container. 
+The outer loop runs 15 times; once to create each pillar. The inner loop 
+runs eight times; once for each block in the pillar. The blocks are only 
+added if they’re not occupying the range that’s been randomly chosen for 
+the gap. Every fifth time the outer loop runs, the size of the gap narrows by one.
+```
+//What should the initial size of the gap be between the pillars?
+let gapSize = 4;
+
+//How many pillars?
+let numberOfPillars = 15;
+
+//Loop 15 times to make 15 pillars
+for (let i = 0; i < numberOfPillars; i++) {
+
+  //Randomly place the gap somewhere inside the pillar
+  let startGapNumber = g.randomInt(0, 8 - gapSize); 
+
+  //Reduce the `gapSize` by one after every fifth pillar. This is
+  //what makes gaps gradually become narrower
+  if (i > 0 && i % 5 === 0) gapSize -= 1; 
+
+  //Create a block if it's not within the range of numbers
+  //occupied by the gap
+  for (let j = 0; j < 8; j++) {
+    if (j < startGapNumber || j > startGapNumber + gapSize - 1) {
+      let block = g.sprite("greenBlock.png");
+      blocks.addChild(block);
+
+      //Space each pillar 384 pixels apart. The first pillar will be
+      //placed at an x position of 512
+      block.x = (i * 384) + 512;
+      block.y = j * 64;
+    }
+  }
+
+  //After the pillars have been created, add the finish image
+  //right at the end
+  if (i === numberOfPillars - 1) {
+    finish = g.sprite("finish.png");
+    blocks.addChild(finish);
+    finish.x = (i * 384) + 896;
+    finish.y = 192;
+  }
+}
+```
+The last part of the code adds the big `finish` sprite to the world, which 
+Flappy Fairy will see if she manages to make it through to the end.
+
+The game loop moves the group of blocks by 2 pixels to the right each 
+frame, but only while the finish sprite is off-screen:
+```
+if (finish.gx > 256) {
+  blocks.x -= 2;
+}
+```
+When the `finish` sprite scrolls into the center of the canvas, the 
+`blocks` container will stop moving. Notice that the code uses the 
+`finish` sprite’s global x position (`gx`) to test whether it’s inside 
+the area of the canvas. Because global coordinates are relative to 
+the canvas, not the parent container, they’re really useful for 
+just these kinds of situations where you want to want to find a 
+nested sprite’s position on the canvas.
+
+Make sure you check out the complete Flappy Fairy source code in the
+`examples` folder so that you can see all this code in its proper context.
+
+<a id='aguidetotheexamples'></a>
+#Coming soon: A guide to the examples
+
+
+
+
 
 
