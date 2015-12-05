@@ -144,7 +144,7 @@ function setup(){
     cat.vx = g.randomInt(-10, 10);
     cat.vy = g.randomInt(-10, 10);
 
-    //Push the cat into the `cats` group
+    //Add the cat to the `cats` group
     cats.addChild(cat);
   };
 

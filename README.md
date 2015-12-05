@@ -30,10 +30,69 @@ I know for a fact that it's the best book, because I wrote it!
 Ok, got it?  Do you know what JavaScript variables, functions, arrays and objects are and how to use them? Do you know what [JSON data files](http://www.copterlabs.com/blog/json-what-it-is-how-it-works-how-to-use-it/) are? Have you used the [Canvas Drawing API](https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API/Drawing_graphics_with_canvas)? Then you're ready to start using Hexi!  
 
 ### Table of contents:
-1. [Features](#features)
+1. [Hexi's Features](#features)
 2. [Modules](#modules)
-4. [Quick start](#quickstart)
-5. [Tutorials](#tutorials)
+3. [Quick start](#quickstart)
+  1. [The HTML container page](#thehtmlcontainer)
+  3. [Hexi's architecture](#hexisarchitecture)
+  2. [Setting up and starting Hexi](#settingupandstartinghexi)
+  4. [The load function](#theloadfunction')
+  5. [The setup function](#thesetupfunction')
+  6. [The play function](#thesplayfunction')
+  7. [Taking it further](#takingitfurther')
+4. [Tutorials](#tutorials)
+  1. [Treasure Hunter](#treasure)
+    1. [Setting up the HTML container page](#settingup)
+    2. [Initializing the Ga engine](#initializing)
+    3. [Define your "global" variables](#defineglobals)
+    4. [Initialize your game with a setup function](#setupfunction)
+      1. [Customizing the canvas](#customizing)
+      2. [Creating the `chimes` sound object](#creatingsound)
+      3. [Creating game scenes](#gamescenes)
+      4. [Making sprites](#makingsprites)
+      5. [Positioning sprites](#positioningsprites)
+      6. [Assigning dynamic properties](#dynamicproperties)
+      7. [Creating the enemy sprites](#enemysprites)
+      8. [The health bar](#healthbar)
+      9. [The game over scene](#gameoverscene)
+      10. [Keyboard interactivity](#keyboard)
+      11. [Setting the game state](#gamestate)
+    5. [Game logic with the play function loop](#gamelogic)
+      1. [Moving the player sprite](#movingplayer)
+      2. [Containing sprites inside the screen boundaries](#boundries)
+      3. [Collision with the enemies](#collisionenemy)
+        1. [Collision with the treasure](#collisiontreasure)
+      4. [Ending the game](#endinggame1)
+    6. [Using images](#usingimages)
+      1. [Individual images](#individualimages)
+        1. [Loading image files](#loadingimagefile)
+        2. [Making sprites with images](#makingsprites)
+        3. [Fine-tuning the containment area](#finetuning)
+    7. [Using a texture atlas](#textureatlas)
+      1. [Preparing the images](#preparingimages)
+      2. [loading the texture atlas](#loadingatlas)
+  2. [Alien Armada](#alienarmada)
+    1. [Load and use a custom font](#customfonts)
+    2. [Scale and center the game in the browser](#scalebrowser)
+    3. [A loading progress bar](#progressbar)
+    4. [Shooting bullets](#shootingbullets)
+    5. [Sprite states](#spritestates)
+    6. [Generating random aliens](#randomaliens)
+      1. [Timing the aliens](#timingaliens)
+      2. [The aliens' random start positions](#randomposition)
+    7. [Moving the aliens](#movingaliens)
+    8. [Making the aliens explode](#explodealiens)
+    9. [Displaying the score](#displayingscore)
+    10. [Ending and resetting the game](#endinggame2)
+  3. [Flappy Fairy!](#flappyfairy)
+    1. [Launch a game in fullscreen mode](#launchagameinfullscreenmode)
+    2. [Make a button](#makeabutton)
+    3. [Making the fairy fly](#makingthefairyfly)
+    4. [Make a scrolling background](#makeascrollingbackground)
+    5. [The fairy dust explosions](#thefairydustexplosions)
+    6. [Use a particle emitter](#useaparticleemitter)
+    7. [Creating and moving the pillars](#creatingandmovingthepillars)
+5. [A Guide to the examples](#aguidetotheexamples)
 
 <a id='features'></a>
 Features
@@ -163,7 +222,7 @@ properties or methods of these modules in your high-level Hexi code.
   your game or application runs, and completely separates your sprite rendering loop from your
   application logic loop.
 
-Read the documents at code repositories for these modules to find out
+Read the documents at the code repositories for each of these modules to find out
 what you can do with them.
 
 Hexi lets you access most of these module methods and properties as
@@ -219,6 +278,7 @@ way to being productive with Hexi fast - so let's find out!
 (Note: If you're new to game programming and feel you need a gentler,
 more methodical, introduction to Hexi, check out the [Tutorials](#tutorials) section ahead. You'll learn how to make 3 complete games from scratch, and each game gradually builds on the skills you learnt in the previous game.)
 
+<a id='thehtmlcontainer'></a>
 ###The HTML container
 
 The only file you need to start using Hexi is
@@ -257,6 +317,7 @@ internal version of Pixi, with your own custom build of Pixi, or a
 specific version of Pixi that you want to use. Or maybe you made some
 other crazy modifications to Hexi's modules that you want to try out. But typically, you'll probably never need to do this.
 
+<a id='hexisarchitecture'></a>
 ###Hexi's Architecture
 
 All the fun happens in your main JavaScript file. Hexi
@@ -313,6 +374,7 @@ basic model can scale to any size.
 Let's find out how this architectural model was used to build the Quick
 Start application.
 
+<a id='settingupandstartinghexi'></a>
 ###1. Setting up and starting Hexi
 
 First, create an array that lists all the files you want to load. The Quick
@@ -373,6 +435,7 @@ g.start();
 This is important! Without calling the `start` method Hexi won't
 start!
 
+<a id='theloadfunction'></a>
 ###2. The `load` function, that runs while things are loading
 
 If you supplied Hexi with a function called `load` when you initialized it, you can display a loading bar and loading progress information. Just create a function called `load`, like this:
@@ -389,6 +452,7 @@ function load(){
   g.loadingBar();
 }
 ```
+<a id='thesetupfunction'></a>
 ###3. The `setup` function, which initializes and creates your game objects
 
 Now that you've started Hexi and loaded all your files, you can start
@@ -440,7 +504,7 @@ makeCat = (x, y) => {
   cat.vx = g.randomInt(-10, 10);
   cat.vy = g.randomInt(-10, 10);
 
-  //Push the cat into the `cats` group
+  //Add the cat to the `cats` group
   cats.addChild(cat);
 };
 
@@ -506,6 +570,7 @@ g.state = play;
 The `play` state is a function that will run in a loop, and is where
 all our application logic is. Let's find out how that works next.
 
+<a id='thesplayfunction'></a>
 ###4. The `play` function: the looping application logic
 
 The last thing you need in your Hexi application is a `play` function.
@@ -589,6 +654,7 @@ cat.y += cat.vy;
 ```
 And that's all there is to it! This is everything you know about the Quick Start application, and almost everything you need to know about Hexi!
 
+<a id='takingitfurther'></a>
 ###Taking it further
 
 With this basic Hexi architecture, you can create anything. Just set Hexi's `state` property to any other function to switch the behaviour of your application. Here's how:
@@ -2441,8 +2507,7 @@ if (g.hitTestRectangle(alien, bullet)) {
   g.wait(1000, () => g.remove(alien));
 }
 ```
-You can use Hexi's universal `remove` function to remove any sprite from a
-a game, like this:
+You can use Hexi's universal `remove` function to remove any sprite from a game, like this:
 ```js
 g.remove(anySprite);
 ```
