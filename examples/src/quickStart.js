@@ -33,7 +33,6 @@ Take a look at the code ahead to see how it all works.
 let thingsToLoad = [
   "images/cat.png",
   "fonts/puzzler.otf",
-  "fonts/disko.xml",
   "sounds/music.wav"
 ];
 
@@ -130,7 +129,7 @@ function setup(){
     //Set the cat's position
     cat.setPosition(x, y);
 
-    //You can also set the position my modifying the sprite's `x` and
+    //You can alternatively set the position my modifying the sprite's `x` and
     //`y` properties directly, like this
     //cat.x = x;
     //cat.y = y;
@@ -145,7 +144,7 @@ function setup(){
     cat.vx = g.randomInt(-10, 10);
     cat.vy = g.randomInt(-10, 10);
 
-    //Push the cat into the `cats` array
+    //Push the cat into the `cats` group
     cats.addChild(cat);
   };
 
@@ -249,8 +248,8 @@ function play() {
     //on which side of the stage the cat hit
 
     //Move the cat with the `move` method. The `move` method updates
-    //the sprite's position by it' `vx` and `vy` velocity values. (All Hexi
-    //sprites have `vx` and `vy` values, which are initialized to
+    //the sprite's position by its `vx` and `vy` velocity values. (All Hexi
+    //sprites have `vx` and `vy` properties, which are initialized to
     //zero). You can move more than one sprite at a time by supplying
     //`move` with a list of sprites, separated by commas.
     g.move(cat);

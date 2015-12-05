@@ -6,8 +6,7 @@ Hexi
 **Hexi** is a fun and easy way to make HTML5 games or any other
 kind interactive media using pure JavaScript code (ES6/2015). Take a look at 
 the feature list and the [examples](https://github.com/kittykatattack/hexi/tree/master/examples) folder to get started. Keep scrolling, 
-and you'll find a complete beginner's tutorial ahead. If you've never
-made a game before, the tutorials are the best place to start.
+and you'll find a complete quick start guide and beginner's tutorials ahead. If you've never made a game before, the tutorials are the best place to start.
 
 What's great about Hexi? You get all the power of WebGL rendering with
 a streamlined API that lets you write your code in a
@@ -20,13 +19,21 @@ repository's [Issues](https://github.com/kittykatattack/hexi/issues).
 You only need one file from this repository to get started using Hexi:
 [`hexi.min.js`](https://github.com/kittykatattack/hexi/blob/master/bin/hexi.min.js). [Link it to your HTML document with a `<script>` tag](http://www.quackit.com/javascript/tutorial/external_javascript_file.cfm), and go for it! 
 Hexi has been written, from the ground up, in the latest version of
-JavaScript (ES6/7, 20015/6) but is compiled down to ES5 (using [Babel](https://babeljs.io)) so that it
-will run anywhere.
+JavaScript (ES6/7, 20015/6) but is compiled down to ES5 (using [Babel](https://babeljs.io)) so that it will run anywhere. Of course, Hexi is completely free to use: for-anything, for-ever!
+
+What do you need to know before you start using Hexi? You should have a reasonable understanding of HTML and JavaScript. You don't have to be an expert, just an ambitious beginner with an eagerness to learn. If you don't know HTML and JavaScript, the best place to start learning it is this book:
+
+[Foundation Game Design with HTML5 and JavaScript](http://www.apress.com/9781430247166)
+
+I know for a fact that it's the best book, because I wrote it!
+
+Ok, got it?  Do you know what JavaScript variables, functions, arrays and objects are and how to use them? Do you know what [JSON data files](http://www.copterlabs.com/blog/json-what-it-is-how-it-works-how-to-use-it/) are? Have you used the [Canvas Drawing API](https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API/Drawing_graphics_with_canvas)? Then you're ready to start using Hexi!  
 
 ### Table of contents:
 1. [Features](#features)
 2. [Modules](#modules)
-3. [Tutorials](#tutorials)
+4. [Quick start](#quickstart)
+5. [Tutorials](#tutorials)
 
 <a id='features'></a>
 Features
@@ -181,6 +188,416 @@ are also only accessible as top-level global objects. This is was done
 to simplify the way these modules are integrated with Hexi, and
 maintain the widest possible cross-platform compatibility.
 
+<a id='quickstart'></a>
+Hexi quick start
+----------------
+
+To start working with Hexi quickly, take a look at the Quick Start
+project in Hexi's [examples
+folder](https://github.com/kittykatattack/hexi/tree/master/examples).
+You'll find the [HTML container page here](https://github.com/kittykatattack/hexi/blob/master/examples/01_quickStart.html) and the [JavaScript
+source file here](https://github.com/kittykatattack/hexi/blob/master/examples/src/quickStart.js). The source code is fully commented and explains how all the code works so, if you want to, you can just skip straight to that file and read through it. (You'll find the complied, ES5, version of the JavaScript file [in the `bin` folder](https://github.com/kittykatattack/hexi/tree/master/examples/bin).) 
+
+The Quick Start project is a tour of all of Hexi's main features, and you can use it as a template for making your own new Hexi applications. Click on the image below to try a working example:
+
+[![Quick start](/tutorials/screenshots/30.png)](https://cdn.gitcdn.xyz/cdn/kittykatattack/hexi/a1713aa19bdcc9a0c661e67d079a205d7c221917/examples/01_quickStart.html)
+
+You'll first see a loading bar that shows you the percentage of files
+(sounds and images) being loaded. You'll then see a spinning message that asks to you to tap on the screen to create cats. Cats will appear on the screen wherever you click with the pointer while music plays in
+the background. (Oops, Sorry! I forgot to warn you about the music!) A text field rotates and counts the number of cats
+you've created. The cats themselves move and bounce around the
+screen, while scaling in size and oscillating their transparency.
+Here's an illustration of what you'll see:
+
+[![Quick start illustration](/tutorials/screenshots/31.png)]
+
+If you know how this Quick Start project was made, you'll be well on your
+way to being productive with Hexi fast - so let's find out!
+
+(Note: If you're new to game programming and feel you need a gentler,
+more methodical, introduction to Hexi, check out the [Tutorials](#tutorials) section ahead. You'll learn how to make 3 complete games from scratch, and each game gradually builds on the skills you learnt in the previous game.)
+
+###The HTML container
+
+The only file you need to start using Hexi is
+[`hexi.min.js`](https://github.com/kittykatattack/hexi/blob/master/bin/hexi.min.js). It has an incredibly simple "installation": Just link it to an HTML page with a `<script>` tag. Then link your main JavaScript file that will contain your game or application code. Here's what a typical Hexi HTML container page might look like:
+```js
+<!doctype html>
+<meta charset="utf-8">
+<title>Hexi</title>
+<body>
+<script src="hexi.min.js"></script>
+<script src="main.js"></script>
+</body>
+```
+You can, of course, load as many external script files that you need
+for your game.
+
+If you need a little more fine-control, you can alternatively load
+Hexi using three separate files: The Pixi renderer, Hexi's modules, and Hexi's `core.js`file. 
+```js
+<!doctype html>
+<meta charset="utf-8">
+<title>Hexi</title>
+<body>
+
+<!-- Pixi renderer, Hexi's modules, and Hexi's core  -->
+<script src="pixi.js"></script>
+<script src="modules.js"></script>
+<script src="core.js"></script>
+
+<!-- Main application file -->
+<script src="bin/quickStart.js"></script>
+</body>
+```
+An advantage to doing this is that it lets you swap out Hexi's internal version of Pixi, with your own custom build of Pixi, or a specific version that you want to use.
+But typically, you'll probably never need to do this.
+
+###Hexi's Architecture
+
+All the fun happens in your main JavaScript file. Hexi
+applications have a very simple but flexible architecture that you can
+scale to any size you need. Small games with a few hundred lines of code or big games with a few hundred files - Hexi can do it!
+Here's the structure of at typical Hexi application:
+
+1. Start Hexi.
+2. The `load` function, that will run while your files are loading.
+3. The `setup` function, which initializes your game objects, variables and sprites.
+4. The `play` function, which is your game or application logic that runs in a loop.
+
+And Here's what this actually looks like in real code:
+
+```js
+//1. Setting up and starting Hexi
+
+//An array of files you want to load
+let thingsToLoad = ["anyFiles", "youWant", "toLoad"];
+
+//Initialize and start Hexi
+let g = hexi(canvasWidth, canvasHeight, setup, thingsToLoad, load);
+g.start();
+
+//2. The `load` function that will run while your files are loading
+
+function load(){
+  
+  //Display an optional loading bar
+  g.loadingBar();
+}
+
+//3. The `setup` function, which initializes your game objects, variables and sprites
+
+function setup() {
+
+  //Create your game objects here
+
+  //Set the game state to `play` to start the game loop
+  g.state = play;
+}
+
+//4. The `play` function, which is your game or application logic that runs in a loop
+
+function play(){
+  //This is your game loop, where you can move sprites and add your
+  //game logic
+}
+```
+This simple model is all you need to create any kind of game or application.
+You can use it as the starting template for your own projects, and this same
+basic model can scale to any size.
+
+Let's find out how this architectural model was used to build the Quick
+Start application.
+
+###1. Setting up and starting Hexi
+
+First, create an array that lists all the files you want to load. The Quick
+Start project loads an image file, a font file, and a music file.
+```js
+let thingsToLoad = [
+  "images/cat.png",
+  "fonts/puzzler.otf",
+  "sounds/music.wav"
+];
+```
+If you don't have any files you want to load, just skip this step.
+
+Next, initialize Hexi with the `hexi` function. Here's how to initialize a
+new Hexi application with a screen size of 512x512 pixels. It tells
+Hexi to load the files in the `thingsToLoad` array, run a function called `load` while
+its loading, and then run a function called `setup` when everything is ready to go.
+```js
+let g = hexi(512, 512, setup, thingsToLoad, load);
+```
+You can now access the instance of Hexi in your application through an
+object called `g` (Although, you can give this any name you like. I
+like using "g" because it stands for "game", and is short to type.)
+
+The `hexi` function has 5 arguments, although only the first 3 are required.
+
+1. Canvas width.
+2. Canvas height. 
+3. The `setup` function.
+4. The `thingsToLoad` array you defined above. This is optional.
+5. The `load` function. This is also optional.
+
+If you skip the last two arguments, Hexi will skip the loading process and jump straight to the `setup` function.
+
+Optionally Set the frames per second at which the game logic loop should run.
+(Sprites will be rendered independently, with interpolation, at full 60 fps)
+If you don't set the `fps`, Hexi will default to an fps of 60.
+```js
+g.fps = 30;
+```
+Setting an fps lower than 60 gives you much more performance overhead to play
+with, and your games will still look great.
+
+You can also optionally add a border and set the background color.
+```js
+g.border = "2px red dashed";
+g.backgroundColor = 0x000000;
+```
+And, if you want to scale and align the game screen to the maximum browser
+window size, you can use the `scaleToWindow` method.
+```js
+g.scaleToWindow();
+```
+Finally, call the `start` method to get Hexi running
+```js
+g.start();
+```
+This is important! Without calling the `start` method Hexi won't
+start!
+
+###2. The `load` function, that runs while things are loading
+
+If you supplied Hexi with a function called `load` when you initialized it, you can display a loading bar and loading progress information. Just create a function called `load`, like this:
+```js
+function load(){
+
+  //Display the file currently being loaded
+  console.log(`loading: ${g.loadingFile}`); 
+
+  //Display the percentage of files currently loaded
+  console.log(`progress: ${g.loadingProgress}`);
+
+  //Add an optional loading bar 
+  g.loadingBar();
+}
+```
+###3The `setup` function, which initializes and creates your game objects
+
+Now that you've started Hexi and loaded all your files, you can start
+making things! This happens in the `setup` function. If you have any
+objects or variables that you want to use across more than one
+function, define them outside the `setup` function, like this:
+```js
+//These things will be used in more than one function
+let makeCat, cats, message;
+
+//Use the `setup` function to create things
+function setup(){
+
+  //... create things here! ... 
+}
+```
+Let's find out how the code inside the `setup` function works. We're going
+to be making lots of cats, so it's useful to create a `group` called
+`cats`to keep them all together.
+```js
+cats = g.group();
+```
+In the Quick Start project you can make a new cat by tapping the
+screen with the mouse (or touch.) So, we need a function that will
+produce new cat **sprites** for us. (Sprites are interactive graphics that you can animate and move around the screen.) Hexi lets you create a new sprite using the `sprite` method. Just supply `sprite` with file name that you want to use for the sprite. Each new cat sprite that's created should be positioned and added add to the cats `group`, using the `addChild` method. We also want the cat to animate its scale using the `breathe` method and animate its transparency using the `pulse` method. A function called `makeCats` does all this. `makeCats` takes two arguments: the x and y
+position where you want the cat to appear, relative to the top left corner of the screen.
+```js
+makeCat = (x, y) => {
+
+  //Create the cat sprite. Supply the `sprite` method with 
+  //the name of the loaded image that should be displayed
+  let cat = g.sprite("images/cat.png");
+
+  //Set the cat's position
+  cat.setPosition(x, y);
+
+  //You can alternatively set the position my modifying the sprite's `x` and
+  //`y` properties directly, like this
+  //cat.x = x;
+  //cat.y = y;
+
+  //Add some optional tween animation effects from the Hexi's 
+  //built-in tween library (called Charm). `breathe` makes the
+  //sprite scale in and out. `pulse` oscillates its transparency
+  g.breathe(cat, 2, 2, 20);
+  g.pulse(cat, 10, 0.5);
+
+  //Set the cat's velocity to a random number between -10 and 10
+  cat.vx = g.randomInt(-10, 10);
+  cat.vy = g.randomInt(-10, 10);
+
+  //Push the cat into the `cats` group
+  cats.addChild(cat);
+};
+
+```
+(You can find out more about how the `breathe` and `pulse` methods work to
+animate the cat in the [tweening example](https://github.com/kittykatattack/hexi/blob/master/examples/src/tweening.js) in the [examples folder](https://github.com/kittykatattack/hexi/tree/master/examples).)
+
+We also need to create a `text` sprite to display the words "Tap for
+cats!" We can use Hexi's `text` method to do that.
+```js
+message = g.text("Tap for cats!", "38px puzzler", "red");
+```
+The `text` method's arguments are the text you want to display, the
+font size and family, and the color (You can use any HTML/CSS color
+string value, RGBA or HSLA values).
+
+Use Hexi's `putCenter` method to center the text inside the `stage`.
+```js
+g.stage.putCenter(message);
+```
+What's the `stage`? It's the root container that all Hexi sprites
+belong to when they're first created. 
+
+You can also use `putLeft`, `putRight`, `putTop` or `putBottom` methods to help you align objects relative to other objects. The optional 2nd and 3rd arguments of these methods define the x and y offset, which help you fine-tune positioning.
+
+Because we want the text message to rotate around its center point we
+have to set its `pivotX` and `pivotY` values to 0.5.
+```js
+message.pivotX = 0.5;
+message.pivotY = 0.5;
+```
+0.5 means "the very center of the sprite".
+
+You can also use this alternative syntax to set the pivot point:
+```js
+message.setPivot(0.5, 0.5);
+```
+We need some way to tell Hexi to create a new cat whenever the screen
+is clicked or tapped. We also want the text message to tell us how many cats are currently on the screen. Hexi has a built in `pointer` object with a `tap` method that we can program to help us do this.
+```js
+g.pointer.tap = () => {
+  
+  //Supply `makeCat` with the pointer's `x` and `y` coordinates.
+  makeCat(g.pointer.x, g.pointer.y);
+
+  //Make the `message.content` display the number of cats 
+  message.content = `${cats.children.length}`;
+};
+```
+We also want the music file that we loaded to start playing. We can
+access the music sound object with Hexi's `sound` method. Use the sound object's `loop`
+method to make it loop continuously, and use `play` to start it playing right away.
+```js
+let music = g.sound("sounds/music.wav");
+music.loop = true;
+music.play();
+```
+We're now done setting everything up! That means we're finished with
+our application's `setup` state and can now switch the state to `play`. Here's how to do that: 
+```js
+g.state = play;
+```
+The `play` state is a function that will run in a loop, and is where
+all our application logic is. Let's find out how that works next.
+
+###4. The `play` function: the looping application logic
+
+The last thing you need in your Hexi application is a `play` function.
+```js
+function play() {
+
+  //All this code will run in a loop
+}
+```
+The `play` function is called in a continuous loop, at whatever fps
+(frames per second) value you set. This is your **game logic loop**. (The
+render loop will be run by Hexi in the background at the maximum fps
+your system can handle.) You can pause Hexi's game loop at any time
+with the `pause` method, and restart it with the `resume` method.
+(Check out the [Flappy Fairy](https://github.com/kittykatattack/hexi/blob/master/tutorials/src/flappyFairy.js) project to find out how `pause` and
+`resume` can be used to manage an application with complex states.)
+
+The Quick Start project's `play` function just does two things: It
+makes the text rotate, and moves and bounces the cats around the
+screen. Here's the entire `play` function that does all this.
+```js
+function play() {
+  
+  //Rotate the text 
+  message.rotation += 0.1;
+
+  //Loop through all of the cats to make them move and bounce off the
+  //edges of the stage
+  cats.children.forEach(cat => {
+
+    //Make the cat bounce off the screen edges
+    let collision = g.contain(cat, g.stage, true);
+
+    //Move the cat
+    g.move(cat);
+  });
+}
+```
+That's all! Compared to all the work we put into the `setup` function, the
+`play` function does practically nothing! But how does it work?
+
+It first makes the text rotate around its center by updating the
+`message` text sprite's `rotation` property by 0.1 radians.
+```js
+message.rotation += 0.1;
+```
+Because this new rotation value is being applied to the old rotation value in a continuous loop, it gradually increases the value and makes the text rotate.
+
+The next thing the code does is loop through all the sprites in the
+`cat` group's `children` array.
+```js
+cats.children.forEach(cat => {
+  //Loop through each `cat` sprite in the `chidren` array
+});
+```
+All Hexi groups have an array called `children` which
+tells you which sprites they contain. Whenever you add a sprite to a
+group using the `addChild` method, the sprite is added to the group's
+`children` array. Hexi's root container, called the `stage`, also has
+a `children` array that contains all the sprite and groups in your
+Hexi application. Even `sprite` objects have a `children` array, and
+that means you can use `addChild` to group sprites with other sprites
+to create complex game objects.
+
+When the code loops through each cat, it first checks whether the cat
+is touching the edges of the screen and, if it is, it bounces it away
+in the opposite direction. Hexi's `contain` method helps us do this.
+```js
+let collision = g.contain(cat, g.stage, true);
+```
+Setting the third argument to `true` is what causes the cat to bounce.
+
+The cat moves around the screen with the help of the `move` method.
+```js
+g.move(cat);
+```
+The `move` method updates the sprite's position by its `vx` and `vy` velocity values. (All Hexi sprites have `vx` and `vy` values, which are initialized to zero). You can move more than one sprite at a time by supplying `move` with a list of sprites, separated by commas. Here's what `move` is actually doing under the hood:
+```js
+cat.x += cat.vx;
+cat.y += cat.vy;
+```
+And that's all there is to it! This is everything you know about the Quick Start application, and almost everything you need to know about Hexi!
+
+###Taking it further
+
+With this basic Hexi architecture, you can create anything. Just set Hexi's `state` property to any other function to switch the behaviour of your application. Here's how:
+```js
+g.state = anyStateFunction;
+```
+Nice and simple!
+
+Write as many state functions as you need. If it's a small project, you can keep all these functions in one file. But, for a big project, load your functions from external JS files as you need them. Use any module system you prefer, like ES6 modules, CommonJS, AMD, or good old HTML `<script>` tags.  This simple architectural model can scale to any size, and is the only architectural model you need to know. Keep it simple and stay happy!
+
+Now that you've got a broad overview of how Hexi works, read through
+the tutorials to dive into the details.
+
 <a id='tutorials'></a>
 Tutorials
 ---------
@@ -290,7 +707,7 @@ g.start();
 You can see that the result of the `hexi` function is being assigned to
 an variable called `g`. 
 ```js
-let g = hexi(
+let g = hexi(//...
 ```
 Now, whenever you want to use any of Hexi's custom
 methods or objects in your game, just prefix it with `g`. (You don't
