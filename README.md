@@ -196,7 +196,7 @@ To start working with Hexi quickly, take a look at the Quick Start
 project in Hexi's [examples
 folder](https://github.com/kittykatattack/hexi/tree/master/examples).
 You'll find the [HTML container page here](https://github.com/kittykatattack/hexi/blob/master/examples/01_quickStart.html) and the [JavaScript
-source file here](https://github.com/kittykatattack/hexi/blob/master/examples/src/quickStart.js). The source code is fully commented and explains how all the code works so, if you want to, you can just skip straight to that file and read through it. (You'll find the complied, ES5, version of the JavaScript file [in the `bin` folder](https://github.com/kittykatattack/hexi/tree/master/examples/bin).) 
+source file here](https://github.com/kittykatattack/hexi/blob/master/examples/src/quickStart.js). The source code is fully commented and explains how all everything works so, if you want to, you can just skip straight to that file and read through it. (You'll find the complied, ES5, version of the JavaScript file [in the `bin` folder](https://github.com/kittykatattack/hexi/tree/master/examples/bin).) 
 
 The Quick Start project is a tour of all of Hexi's main features, and you can use it as a template for making your own new Hexi applications. Click on the image below to try a working example:
 
@@ -209,9 +209,11 @@ you've created. The cats themselves move and bounce around the
 screen, while scaling in size and oscillating their transparency.
 Here's an illustration of what you'll see:
 
-[![Quick start illustration](/tutorials/screenshots/31.png)]
+![Quick start illustration](/tutorials/screenshots/31.png)
 
-If you know how this Quick Start project was made, you'll be well on your
+Why cats? [Because](http://motherboard.vice.com/blog/toxo-terror-are-our-brains-controlled-by-cat-loving-parasites).
+
+If you know how this Quick Start application was made, you'll be well on your
 way to being productive with Hexi fast - so let's find out!
 
 (Note: If you're new to game programming and feel you need a gentler,
@@ -221,7 +223,7 @@ more methodical, introduction to Hexi, check out the [Tutorials](#tutorials) sec
 
 The only file you need to start using Hexi is
 [`hexi.min.js`](https://github.com/kittykatattack/hexi/blob/master/bin/hexi.min.js). It has an incredibly simple "installation": Just link it to an HTML page with a `<script>` tag. Then link your main JavaScript file that will contain your game or application code. Here's what a typical Hexi HTML container page might look like:
-```js
+```html
 <!doctype html>
 <meta charset="utf-8">
 <title>Hexi</title>
@@ -235,7 +237,7 @@ for your game.
 
 If you need a little more fine-control, you can alternatively load
 Hexi using three separate files: The Pixi renderer, Hexi's modules, and Hexi's `core.js`file. 
-```js
+```html
 <!doctype html>
 <meta charset="utf-8">
 <title>Hexi</title>
@@ -250,8 +252,10 @@ Hexi using three separate files: The Pixi renderer, Hexi's modules, and Hexi's `
 <script src="bin/quickStart.js"></script>
 </body>
 ```
-An advantage to doing this is that it lets you swap out Hexi's internal version of Pixi, with your own custom build of Pixi, or a specific version that you want to use.
-But typically, you'll probably never need to do this.
+An advantage to doing this is that it lets you swap out Hexi's
+internal version of Pixi, with your own custom build of Pixi, or a
+specific version of Pixi that you want to use. Or maybe you made some
+other crazy modifications to Hexi's modules that you want to try out. But typically, you'll probably never need to do this.
 
 ###Hexi's Architecture
 
@@ -385,7 +389,7 @@ function load(){
   g.loadingBar();
 }
 ```
-###3The `setup` function, which initializes and creates your game objects
+###3. The `setup` function, which initializes and creates your game objects
 
 Now that you've started Hexi and loaded all your files, you can start
 making things! This happens in the `setup` function. If you have any
@@ -393,7 +397,7 @@ objects or variables that you want to use across more than one
 function, define them outside the `setup` function, like this:
 ```js
 //These things will be used in more than one function
-let makeCat, cats, message;
+let cats, message;
 
 //Use the `setup` function to create things
 function setup(){
@@ -402,7 +406,7 @@ function setup(){
 }
 ```
 Let's find out how the code inside the `setup` function works. We're going
-to be making lots of cats, so it's useful to create a `group` called
+to be making cats - lots of cats! - so it's useful to create a `group` called
 `cats`to keep them all together.
 ```js
 cats = g.group();
@@ -548,7 +552,7 @@ It first makes the text rotate around its center by updating the
 ```js
 message.rotation += 0.1;
 ```
-Because this new rotation value is being applied to the old rotation value in a continuous loop, it gradually increases the value and makes the text rotate.
+Because this new rotation value is being applied to the old rotation value inside a continuous loop, it gradually increases the value and makes the text rotate.
 
 The next thing the code does is loop through all the sprites in the
 `cat` group's `children` array.
@@ -561,7 +565,7 @@ All Hexi groups have an array called `children` which
 tells you which sprites they contain. Whenever you add a sprite to a
 group using the `addChild` method, the sprite is added to the group's
 `children` array. Hexi's root container, called the `stage`, also has
-a `children` array that contains all the sprite and groups in your
+a `children` array that contains all the sprites and groups in your
 Hexi application. Even `sprite` objects have a `children` array, and
 that means you can use `addChild` to group sprites with other sprites
 to create complex game objects.
@@ -578,7 +582,7 @@ The cat moves around the screen with the help of the `move` method.
 ```js
 g.move(cat);
 ```
-The `move` method updates the sprite's position by its `vx` and `vy` velocity values. (All Hexi sprites have `vx` and `vy` values, which are initialized to zero). You can move more than one sprite at a time by supplying `move` with a list of sprites, separated by commas. Here's what `move` is actually doing under the hood:
+The `move` method updates the sprite's position by its `vx` and `vy` velocity values. (All Hexi sprites have `vx` and `vy` values, which are initialized to zero). You can move more than one sprite at a time by supplying `move` with a list of sprites, separated by commas. You can even supply it with an array that that contains all the sprites you want to move. Here's what `move` is actually doing under the hood:
 ```js
 cat.x += cat.vx;
 cat.y += cat.vy;

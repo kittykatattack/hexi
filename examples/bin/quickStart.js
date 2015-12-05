@@ -94,8 +94,7 @@ function load() {
 */
 
 //Declare any variables that need to be used in more than one function
-var makeCat = undefined,
-    cats = undefined,
+var cats = undefined,
     message = undefined;
 
 //The `setup` function will run when all the assets have loaded. This

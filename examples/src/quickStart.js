@@ -98,7 +98,7 @@ function load(){
 */
 
 //Declare any variables that need to be used in more than one function
-let makeCat, cats, message;
+let cats, message;
 
 //The `setup` function will run when all the assets have loaded. This
 //is the `setup` function you assigned as Hexi's 3rd argument. It's
