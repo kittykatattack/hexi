@@ -31,3 +31,6 @@
 [submodule "src/modules/fullScreen"]
 	path = src/modules/fullScreen
 	url = git@github.com:kittykatattack/fullScreen.git
+[submodule "src/modules/tileUtilities"]
+	path = src/modules/tileUtilities
+	url = git@github.com:kittykatattack/tileUtilities.git

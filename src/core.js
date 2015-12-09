@@ -84,6 +84,7 @@ class Hexi{
     this.bump = new Bump(PIXI);
     this.tink = new Tink(PIXI);
     this.spriteUtilities = new SpriteUtilities(PIXI);
+    this.tileUtilities = new TileUtilities(PIXI);
     this.gameUtilities = new GameUtilities();
 
     //Any modules that have an `update` method that should updated
@@ -700,6 +701,7 @@ class Hexi{
     this.randomFloat = this.gameUtilities.randomFloat;
     this.move = this.gameUtilities.move;
     this.wait = this.gameUtilities.wait;
+    this.worldCamera = (world, worldWidth, worldHeight, canvas = this.canvas) => this.gameUtilities.worldCamera(world, worldWidth, worldHeight, canvas);
 
     //Sound.js - Sound
     this.soundEffect = (
@@ -714,6 +716,11 @@ class Hexi{
 
     //FullScreen
     this.enableFullScreen = (exitKeyCodes) => this.fullScreen.enableFullScreen(exitKeyCodes);
+
+    //TileUtilities
+    this.hitTestTile = (sprite, mapArray, gidToCheck, world, pointsToCheck) => {
+      return this.tileUtilities.hitTestTile(sprite, mapArray, gidToCheck, world, pointsToCheck);
+    }
   }
 
   get resources() {return this.loader.resources}
@@ -810,6 +817,35 @@ class Hexi{
   button(source, x, y) {
     let o = this.tink.button(source, x, y);
     this.addProperties(o);
+    this.stage.addChild(o);
+    return o;
+  }
+
+  makeTiledWorld(jsonTiledMap, tileset) {
+    let o = this.tileUtilities.makeTiledWorld(jsonTiledMap, tileset);
+    this.addProperties(o);
+
+    //Add Hexi's special sprite properties to the world object and all
+    //its child objects
+    let addHexiSpriteProperties = object => {
+      this.addProperties(object);
+      if (object.children) {
+        if (object.children.length > 0) {
+          object.children.forEach(child => {
+            addHexiSpriteProperties(child);
+          });
+        }
+      }
+    };
+    if (o.children) {
+      if (o.children.length > 0) {
+        o.children.forEach(child => {
+          addHexiSpriteProperties(child);
+        });
+      }
+    }
+
+    //Return the world object
     this.stage.addChild(o);
     return o;
   }

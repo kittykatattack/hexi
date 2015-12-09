@@ -4,7 +4,7 @@ Hexi
 ====
 
 **Hexi** is a fun and easy way to make HTML5 games or any other
-kind interactive media using pure JavaScript code (ES6/2015). Take a look at 
+kind interactive media using pure JavaScript code. Take a look at 
 the feature list and the [examples](https://github.com/kittykatattack/hexi/tree/master/examples) folder to get started. Keep scrolling, 
 and you'll find a complete quick start guide and beginner's tutorials ahead. If you've never made a game before, the tutorials are the best place to start.
 
@@ -15,19 +15,21 @@ a streamlined API that lets you write your code in a
 It makes coding a game as easy and fun as writing poetry or drawing. Try it! If you
 need any help or have any questions, post something in this
 repository's [Issues](https://github.com/kittykatattack/hexi/issues).
+The Issues page is is Hexi's friendly chat room - don't be afraid to
+ask for help :) 
 
 You only need one file from this repository to get started using Hexi:
-[`hexi.min.js`](https://github.com/kittykatattack/hexi/blob/master/bin/hexi.min.js). [Link it to your HTML document with a `<script>` tag](http://www.quackit.com/javascript/tutorial/external_javascript_file.cfm), and go for it! 
+[`hexi.min.js`](https://github.com/kittykatattack/hexi/blob/master/bin/hexi.min.js). That's all! [Link it to your HTML document with a `<script>` tag](http://www.quackit.com/javascript/tutorial/external_javascript_file.cfm), and go for it! 
 Hexi has been written, from the ground up, in the latest version of
-JavaScript (ES6/7, 20015/6) but is compiled down to ES5 (using [Babel](https://babeljs.io)) so that it will run anywhere. Of course, Hexi is completely free to use: for-anything, for-ever!
-
-What do you need to know before you start using Hexi? You should have a reasonable understanding of HTML and JavaScript. You don't have to be an expert, just an ambitious beginner with an eagerness to learn. If you don't know HTML and JavaScript, the best place to start learning it is this book:
+JavaScript (ES6/7, 20015/6) but is compiled down to ES5 (using [Babel](https://babeljs.io)) so that it will run anywhere. What do you need to know before you start using Hexi? You should have a reasonable understanding of HTML and JavaScript. You don't have to be an expert, just an ambitious beginner with an eagerness to learn. If you don't know HTML and JavaScript, the best place to start learning it is this book:
 
 [Foundation Game Design with HTML5 and JavaScript](http://www.apress.com/9781430247166)
 
 I know for a fact that it's the best book, because I wrote it!
 
-Ok, got it?  Do you know what JavaScript variables, functions, arrays and objects are and how to use them? Do you know what [JSON data files](http://www.copterlabs.com/blog/json-what-it-is-how-it-works-how-to-use-it/) are? Have you used the [Canvas Drawing API](https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API/Drawing_graphics_with_canvas)? Then you're ready to start using Hexi!  
+Ok, got it? Do you know what JavaScript variables, functions, arrays and objects are and how to use them? Do you know what [JSON data files](http://www.copterlabs.com/blog/json-what-it-is-how-it-works-how-to-use-it/) are? Have you used the [Canvas Drawing API](https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API/Drawing_graphics_with_canvas)? Then you're ready to start using Hexi!  
+
+Of course, Hexi is completely free to use: for-anything, for-ever! It was written in Canada (Toronto, Hamilton), India (Kullu Valley, Ladakh), Nepal (Kathmandu, Pokhara, Annapurna Base Camp), Thailand (Ko Phangan, Ko Tao) and South Africa (Cape Town), and is the result of 15 years' research into API usability for game design. The name, "Hexi" comes from ["Hex"](https://en.wiktionary.org/wiki/hex) + ["Pixi"](https://github.com/pixijs/pixi.js/) = "Hexi". [It has absolutely no other meaning](https://www.youtube.com/watch?v=XYGmNs6274A).
 
 ### Table of contents:
 1. [Hexi's Features](#features)
@@ -143,7 +145,7 @@ Here's Hexi's core feature list:
 - An optional `load` state that lets you run actions while assets are
   loading. You can use the `load` state to add a loading progress bar.
 - A fast and focused [Pixi-based](https://github.com/pixijs/pixi.js/) rendering engine. If Pixi can do it, so can Hexi! Hexi 
-  is just a thin layer of code that sits on top of Pixi. And you can acess the
+  is just a thin layer of code that sits on top of Pixi. And you can access the
   global `PIXI` object at any time to write pure Pixi code directly if you want
   to. Hexi includes the latest stable version of Pixi v3.0 automatically bundled for you.
 - A sophisticated game loop using a fixed timestep with variable rendering
@@ -182,9 +184,6 @@ Here's Hexi's core feature list:
 - Use `scaleToWindow` to make the game automatically scale to its maximum size and align itself 
   for the best fit inside the browser window. Use `enableFullscreen` to make the 
   browser enter full screen mode.
-
-Coming very soon:
-
 - Tiled Editor support using `makeTiledWorld`. Design your game in
   Tiled Editor and access all the sprites, layers and objects directly
   in your game code. It's an extremely fun, quick and easy way to make
@@ -202,7 +201,7 @@ Coming very soon:
 ### Hexi's modules
 
 Hexi contains a collection of useful modules, and you use any of the
-properties or methods of these modules in your high-level Hexi code. 
+properties or methods of these modules in your high-level Hexi code.
 
 - [Pixi](https://github.com/pixijs/pixi.js/): The fasted 2D WebGL renderer.
 - [Bump](https://github.com/kittykatattack/bump): A complete suite of 2D collision functions for games.
@@ -223,10 +222,12 @@ properties or methods of these modules in your high-level Hexi code.
   application logic loop.
 
 Read the documents at the code repositories for each of these modules to find out
-what you can do with them.
+what you can do with them and exactly how they work. Because they're
+all built into Hexi, you don't have to install them yourself - they
+just work right out-of-the-box.
 
 Hexi lets you access most of these module methods and properties as
-top-level objects. For example, if you want to access the `hit` method
+**top-level objects**. For example, if you want to access the `hit` method
 from the Bump collision module, you can do it like this:
 ```js
 g.hit(spriteOne, spriteTwo);
@@ -237,15 +238,21 @@ g.bump.hit(spriteOne, spriteTwo);
 ```
 (This assumes that your Hexi instance is called `g`);
 
-Just refer to the module name using lowerCamelCase. That means you can
+Just refer to the module name using **lowerCamelCase**. That means you can
 access the Smoothie module as `smoothie` and the Sprite Utilities
 module as `spriteUtilities`.
 
 There are two exceptions to this convention. You can access the Pixi
-global object directly as `PIXI`. The functions in the Sound.js module
+global object directly as `PIXI`. Also, the functions in the Sound.js module
 are also only accessible as top-level global objects. This is was done
 to simplify the way these modules are integrated with Hexi, and
 maintain the widest possible cross-platform compatibility.
+
+If you're a developer and would like to contribute to Hexi, the best
+way is to contribute new and improved features to these modules. Or,
+if you're really ambitious, propose a new module to the Hexi
+development team (in this repo's [Issues](https://github.com/kittykatattack/hexi/issues),
+and maybe we'll add it to Hexi's core!)
 
 <a id='quickstart'></a>
 Hexi quick start

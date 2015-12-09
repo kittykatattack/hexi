@@ -89,6 +89,7 @@ var Hexi = (function () {
     this.bump = new Bump(PIXI);
     this.tink = new Tink(PIXI);
     this.spriteUtilities = new SpriteUtilities(PIXI);
+    this.tileUtilities = new TileUtilities(PIXI);
     this.gameUtilities = new GameUtilities();
 
     //Any modules that have an `update` method that should updated
@@ -923,6 +924,10 @@ var Hexi = (function () {
       this.randomFloat = this.gameUtilities.randomFloat;
       this.move = this.gameUtilities.move;
       this.wait = this.gameUtilities.wait;
+      this.worldCamera = function (world, worldWidth, worldHeight) {
+        var canvas = arguments.length <= 3 || arguments[3] === undefined ? _this4.canvas : arguments[3];
+        return _this4.gameUtilities.worldCamera(world, worldWidth, worldHeight, canvas);
+      };
 
       //Sound.js - Sound
       this.soundEffect = function (frequencyValue, attack, decay, type, volumeValue, panValue, wait, pitchBendAmount, reverse, randomValue, dissonance, echo, reverb) {
@@ -932,6 +937,11 @@ var Hexi = (function () {
       //FullScreen
       this.enableFullScreen = function (exitKeyCodes) {
         return _this4.fullScreen.enableFullScreen(exitKeyCodes);
+      };
+
+      //TileUtilities
+      this.hitTestTile = function (sprite, mapArray, gidToCheck, world, pointsToCheck) {
+        return _this4.tileUtilities.hitTestTile(sprite, mapArray, gidToCheck, world, pointsToCheck);
       };
     }
   }, {
@@ -1070,6 +1080,38 @@ var Hexi = (function () {
     value: function button(source, x, y) {
       var o = this.tink.button(source, x, y);
       this.addProperties(o);
+      this.stage.addChild(o);
+      return o;
+    }
+  }, {
+    key: "makeTiledWorld",
+    value: function makeTiledWorld(jsonTiledMap, tileset) {
+      var _this5 = this;
+
+      var o = this.tileUtilities.makeTiledWorld(jsonTiledMap, tileset);
+      this.addProperties(o);
+
+      //Add Hexi's special sprite properties to the world object and all
+      //its child objects
+      var addHexiSpriteProperties = function addHexiSpriteProperties(object) {
+        _this5.addProperties(object);
+        if (object.children) {
+          if (object.children.length > 0) {
+            object.children.forEach(function (child) {
+              addHexiSpriteProperties(child);
+            });
+          }
+        }
+      };
+      if (o.children) {
+        if (o.children.length > 0) {
+          o.children.forEach(function (child) {
+            addHexiSpriteProperties(child);
+          });
+        }
+      }
+
+      //Return the world object
       this.stage.addChild(o);
       return o;
     }
@@ -1262,7 +1304,7 @@ var Hexi = (function () {
   }, {
     key: "addProperties",
     value: function addProperties(o) {
-      var _this5 = this;
+      var _this6 = this;
 
       //Velocity
       o.vx = 0;
@@ -1378,7 +1420,7 @@ var Hexi = (function () {
         var xOffset = arguments.length <= 1 || arguments[1] === undefined ? 0 : arguments[1];
         var yOffset = arguments.length <= 2 || arguments[2] === undefined ? 0 : arguments[2];
 
-        if (o._stage) a = _this5.compensateForStageSize(o);
+        if (o._stage) a = _this6.compensateForStageSize(o);
         //b.x = (a.x + a.halfWidth - (b.halfWidth * ((1 - b.anchor.x) - b.anchor.x))) + xOffset;
         b.x = a.x + nudgeAnchor(a, a.halfWidth, "x") - nudgeAnchor(b, b.halfWidth, "x") + xOffset;
         b.y = a.y + nudgeAnchor(a, a.halfHeight, "y") - nudgeAnchor(b, b.halfHeight, "y") + yOffset;
@@ -1392,7 +1434,7 @@ var Hexi = (function () {
         var xOffset = arguments.length <= 1 || arguments[1] === undefined ? 0 : arguments[1];
         var yOffset = arguments.length <= 2 || arguments[2] === undefined ? 0 : arguments[2];
 
-        if (o._stage) a = _this5.compensateForStageSize(o);
+        if (o._stage) a = _this6.compensateForStageSize(o);
         b.x = a.x - nudgeAnchor(b, b.width, "x") + xOffset - compensateForAnchors(a, b, "width", "x");
         b.y = a.y + nudgeAnchor(a, a.halfHeight, "y") - nudgeAnchor(b, b.halfHeight, "y") + yOffset;
 
@@ -1405,7 +1447,7 @@ var Hexi = (function () {
         var xOffset = arguments.length <= 1 || arguments[1] === undefined ? 0 : arguments[1];
         var yOffset = arguments.length <= 2 || arguments[2] === undefined ? 0 : arguments[2];
 
-        if (o._stage) a = _this5.compensateForStageSize(o);
+        if (o._stage) a = _this6.compensateForStageSize(o);
         b.x = a.x + nudgeAnchor(a, a.halfWidth, "x") - nudgeAnchor(b, b.halfWidth, "x") + xOffset;
         b.y = a.y - nudgeAnchor(b, b.height, "y") + yOffset - compensateForAnchors(a, b, "height", "y");
 
@@ -1418,7 +1460,7 @@ var Hexi = (function () {
         var xOffset = arguments.length <= 1 || arguments[1] === undefined ? 0 : arguments[1];
         var yOffset = arguments.length <= 2 || arguments[2] === undefined ? 0 : arguments[2];
 
-        if (o._stage) a = _this5.compensateForStageSize(o);
+        if (o._stage) a = _this6.compensateForStageSize(o);
         b.x = a.x + nudgeAnchor(a, a.width, "x") + xOffset + compensateForAnchors(a, b, "width", "x");
         b.y = a.y + nudgeAnchor(a, a.halfHeight, "y") - nudgeAnchor(b, b.halfHeight, "y") + yOffset;
         //b.x = (a.x + a.width) + xOffset;
@@ -1433,7 +1475,7 @@ var Hexi = (function () {
         var xOffset = arguments.length <= 1 || arguments[1] === undefined ? 0 : arguments[1];
         var yOffset = arguments.length <= 2 || arguments[2] === undefined ? 0 : arguments[2];
 
-        if (o._stage) a = _this5.compensateForStageSize(o);
+        if (o._stage) a = _this6.compensateForStageSize(o);
         //b.x = (a.x + a.halfWidth - b.halfWidth) + xOffset;
         b.x = a.x + nudgeAnchor(a, a.halfWidth, "x") - nudgeAnchor(b, b.halfWidth, "x") + xOffset;
         //b.y = (a.y + a.height) + yOffset;

@@ -23,9 +23,10 @@ SPRITE_UTILITIES ?= src/modules/spriteUtilities/bin/spriteUtilities.js
 GAME_UTILITIES ?= src/modules/gameUtilities/bin/gameUtilities.js
 SMOOTHIE ?= src/modules/smoothie/bin/smoothie.js
 FULLSCREEN ?= src/modules/fullScreen/bin/fullScreen.js
+TILE_UTILITIES ?= src/modules/tileUtilities/bin/tileUtilities.js
 
 #Concatenated modules
-ES5_MODULES := ${SOUND} $(SCALE_TO_WINDOW) ${BUMP} ${CHARM} ${TINK} ${DUST} ${SPRITE_UTILITIES} ${GAME_UTILITIES} ${SMOOTHIE} ${FULLSCREEN}
+ES5_MODULES := ${SOUND} $(SCALE_TO_WINDOW) ${BUMP} ${CHARM} ${TINK} ${DUST} ${SPRITE_UTILITIES} ${GAME_UTILITIES} ${SMOOTHIE} ${FULLSCREEN} ${TILE_UTILITIES}
 
 #The concatenated modules output file (exluding PIXI)
 MODULES ?= bin/modules.js
@@ -41,7 +42,7 @@ all: compile concatModules concatAllFiles minify
 compile: $(CORE_ES6)
 	babel $^ --out-file $(CORE_ES5) --source-maps
 
-minify: $(FILES)
+minify: $(OUTPUT)
 	uglifyjs $(OUTPUT) --output $(MINIFIED_OUTPUT)
 
 concatModules: $(ES5_MODULES) 
