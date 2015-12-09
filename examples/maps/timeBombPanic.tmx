@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.0" orientation="orthogonal" width="8" height="8" tilewidth="64" tileheight="64" backgroundcolor="#ffffff">
+ <tileset firstgid="1" name="timeBombPanic" tilewidth="64" tileheight="64">
+  <image source="../timeBombPanic.png" width="320" height="419"/>
+  <tile id="3">
+   <properties>
+    <property name="name" value="alien"/>
+   </properties>
+  </tile>
+  <tile id="4">
+   <properties>
+    <property name="name" value="bomb"/>
+   </properties>
+  </tile>
+ </tileset>
+ <layer name="backgroudLayer" width="8" height="8">
+  <data encoding="csv">
+1,1,1,1,1,1,1,1,
+1,1,1,1,1,1,1,1,
+1,1,1,1,1,1,1,1,
+1,1,1,1,1,1,1,1,
+1,1,1,1,1,1,1,1,
+1,1,1,1,1,1,1,1,
+1,1,1,1,1,1,1,1,
+1,1,1,1,1,1,1,1
+</data>
+ </layer>
+ <layer name="wallLayer" width="8" height="8">
+  <data encoding="csv">
+2,2,2,2,2,2,2,2,
+2,0,0,0,0,3,0,2,
+2,0,3,0,0,0,0,2,
+2,0,3,3,0,0,3,2,
+2,0,0,0,0,0,0,2,
+2,0,3,3,0,3,0,2,
+2,0,0,3,0,0,0,2,
+2,2,2,2,2,2,2,2
+</data>
+ </layer>
+ <layer name="bombLayer" width="8" height="8">
+  <data encoding="csv">
+0,0,0,0,0,0,0,0,
+0,0,5,0,0,0,5,0,
+0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,
+0,0,0,5,0,0,0,0,
+0,0,0,0,0,0,0,0,
+0,5,0,0,0,5,0,0,
+0,0,0,0,0,0,0,0
+</data>
+ </layer>
+ <layer name="alienLayer" width="8" height="8">
+  <data encoding="csv">
+0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,
+0,0,0,0,4,0,0,0,
+0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0
+</data>
+ </layer>
+</map>

@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.0" orientation="orthogonal" width="24" height="24" tilewidth="32" tileheight="32" backgroundcolor="#ffffff">
+ <tileset firstgid="1" name="fantasy" tilewidth="32" tileheight="32">
+  <image source="../images/fantasy.png" width="192" height="192"/>
+  <tile id="4">
+   <properties>
+    <property name="name" value="skull"/>
+   </properties>
+  </tile>
+  <tile id="5">
+   <properties>
+    <property name="name" value="marmot"/>
+   </properties>
+  </tile>
+  <tile id="11">
+   <properties>
+    <property name="name" value="heart"/>
+   </properties>
+  </tile>
+ </tileset>
+ <layer name="ground" width="24" height="24">
+  <data encoding="base64" compression="zlib">
+   eJxjZGBgYAJiRhrR7EDMQUOaVu4edf+o+0fdP+r+UfePun/U/cPX/QBplAoh
+  </data>
+ </layer>
+ <layer name="obstacles" width="24" height="24">
+  <data encoding="base64" compression="zlib">
+   eJzVlEsOgCAMRGerpxgj9z+jJFJjEMqniPElDQvoMLQNQJ7Fx6rsz0TzQh/bPCsXKU/EfC+1fSK+qVMLRL3HXQkXVgu5fOL0OEpf9GJcCKHU51jH6g/QezFCX6NXn6ibIU3/PkdOOWfRb4F4vuk+56lV6P3HU3e+mTeLuB5E3m+udi0a2t4fIMr+R52pxaol+Qe+2woJ
+  </data>
+ </layer>
+ <layer name="items" width="24" height="24">
+  <data encoding="base64" compression="zlib">
+   eJxjYBgFAw1YB9oBo2DQAJ6BdsAoGAWjYBRAAdtAO4DGAAB07AAY
+  </data>
+ </layer>
+ <objectgroup name="objects">
+  <object name="elf" x="287" y="350" width="64" height="64">
+   <properties>
+    <property name="texture" value="elfTextures"/>
+   </properties>
+  </object>
+ </objectgroup>
+ <layer name="wallTops" width="24" height="24">
+  <data encoding="base64" compression="zlib">
+   eJxjYKAOYAZiFiqZRS0wWNw0WNxBbyAExLJ4sBCF5ksQYT8lQJCAPMgPckh8UuNZnGQXkQaGs/nIaUsOjzpyzSeUtogB+NI+JelmuANSwgOX2tEwHQXEAACOHwN8
+  </data>
+ </layer>
+ <layer name="treeTops" width="24" height="24">
+  <data encoding="base64" compression="zlib">
+   eJzNlVcKwDAMQ3OBDuiAjvufs/4pBKM4XoUK9GerL87oUkpZyRt5L7IG8kieyHOn9tVBPskX+e7ULgYWD5uFJZNNwxhh+zMjz/Mytrh4npWxxxXdFy9XS3wO0TyujDMkCc3B865YhNbk/SbqQ2vyzlHbpz1PnDfjDnt4JUkZGfdGytCcg0iNZj68BmVZ3qe6H9WgLO9/Gim6Z3X/13oAvBYRUg==
+  </data>
+ </layer>
+</map>

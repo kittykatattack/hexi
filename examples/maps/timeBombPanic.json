@@ -1,0 +1,84 @@
+{ "backgroundcolor":"#ffffff",
+ "height":8,
+ "layers":[
+        {
+         "data":[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+         "height":8,
+         "name":"backgroudLayer",
+         "opacity":1,
+         "type":"tilelayer",
+         "visible":true,
+         "width":8,
+         "x":0,
+         "y":0
+        }, 
+        {
+         "data":[2, 2, 2, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 3, 0, 2, 2, 0, 3, 0, 0, 0, 0, 2, 2, 0, 3, 3, 0, 0, 3, 2, 2, 0, 0, 0, 0, 0, 0, 2, 2, 0, 3, 3, 0, 3, 0, 2, 2, 0, 0, 3, 0, 0, 0, 2, 2, 2, 2, 2, 2, 2, 2, 2],
+         "height":8,
+         "name":"wallLayer",
+         "opacity":1,
+         "type":"tilelayer",
+         "visible":true,
+         "width":8,
+         "x":0,
+         "y":0
+        }, 
+        {
+         "data":[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+         "height":8,
+         "name":"bombLayer",
+         "opacity":1,
+         "type":"tilelayer",
+         "visible":true,
+         "width":8,
+         "x":0,
+         "y":0
+        }, 
+        {
+         "data":[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+         "height":8,
+         "name":"alienLayer",
+         "opacity":1,
+         "type":"tilelayer",
+         "visible":true,
+         "width":8,
+         "x":0,
+         "y":0
+        }],
+ "orientation":"orthogonal",
+ "properties":
+    {
+
+    },
+ "tileheight":64,
+ "tilesets":[
+        {
+         "firstgid":1,
+         "image":"..\/..\/chapter03\/images\/timeBombPanic.png",
+         "imageheight":419,
+         "imagewidth":320,
+         "margin":0,
+         "name":"timeBombPanic",
+         "properties":
+            {
+
+            },
+         "spacing":0,
+         "tileheight":64,
+         "tileproperties":
+            {
+             "3":
+                {
+                 "name":"alien"
+                },
+             "4":
+                {
+                 "name":"bomb"
+                }
+            },
+         "tilewidth":64
+        }],
+ "tilewidth":64,
+ "version":1,
+ "width":8
+}
