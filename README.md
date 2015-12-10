@@ -214,6 +214,7 @@ properties or methods of these modules in your high-level Hexi code.
   create and use Pixi sprites, as well adding a state machine and
   animation player
 - [Game Utilities](https://github.com/kittykatattack/gameUtilities): A collection of useful methods for games.
+- [Tile Utilities](https://github.com/kittykatattack/tileUtilities): A collection of useful methods for making tile-based game worlds with [Tiled Editor](http://www.mapeditor.org).
 - [Sound.js](https://github.com/kittykatattack/sound.js): A micro-library for loading, controlling and generating
   sound and music effects. Everything you need to add sound to games.
 - [Smoothie](https://github.com/kittykatattack/smoothie): Ultra-smooth sprite animation using 
