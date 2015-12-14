@@ -29269,6 +29269,13 @@ var Bump = (function () {
     }
   }
 
+  //`addCollisionProperties` adds extra properties to sprites to help
+  //simplify the collision code. It won't add these properties if they
+  //already exist on the sprite. After these properties have been
+  //added, this methods adds a Boolean property to the sprite called `_bumpPropertiesAdded`
+  //and sets it to `true` to flag that the sprite has these
+  //new properties
+
   _createClass(Bump, [{
     key: "addCollisionProperties",
     value: function addCollisionProperties(sprite) {
@@ -29276,50 +29283,75 @@ var Bump = (function () {
       //Add properties to Pixi sprites
       if (this.renderer === "pixi") {
 
-        Object.defineProperties(sprite, {
-          "gx": {
+        //gx
+        if (sprite.gx === undefined) {
+          Object.defineProperty(sprite, "gx", {
             get: function get() {
               return sprite.getGlobalPosition().x;
             },
 
             enumerable: true, configurable: true
-          },
-          "gy": {
+          });
+        }
+
+        //gy
+        if (sprite.gy === undefined) {
+          Object.defineProperty(sprite, "gy", {
             get: function get() {
               return sprite.getGlobalPosition().y;
             },
 
             enumerable: true, configurable: true
-          },
-          "centerX": {
+          });
+        }
+
+        //centerX
+        if (sprite.centerX === undefined) {
+          Object.defineProperty(sprite, "centerX", {
             get: function get() {
               return sprite.x + sprite.width / 2;
             },
 
             enumerable: true, configurable: true
-          },
-          "centerY": {
+          });
+        }
+
+        //centerY
+        if (sprite.centerY === undefined) {
+          Object.defineProperty(sprite, "centerY", {
             get: function get() {
               return sprite.y + sprite.height / 2;
             },
 
             enumerable: true, configurable: true
-          },
-          "halfWidth": {
+          });
+        }
+
+        //halfWidth
+        if (sprite.halfWidth === undefined) {
+          Object.defineProperty(sprite, "halfWidth", {
             get: function get() {
               return sprite.width / 2;
             },
 
             enumerable: true, configurable: true
-          },
-          "halfHeight": {
+          });
+        }
+
+        //halfHeight
+        if (sprite.halfHeight === undefined) {
+          Object.defineProperty(sprite, "halfHeight", {
             get: function get() {
               return sprite.height / 2;
             },
 
             enumerable: true, configurable: true
-          },
-          "xAnchorOffset": {
+          });
+        }
+
+        //xAnchorOffset
+        if (sprite.xAnchorOffset === undefined) {
+          Object.defineProperty(sprite, "xAnchorOffset ", {
             get: function get() {
               if (sprite.anchor !== undefined) {
                 return sprite.height * sprite.anchor.x;
@@ -29329,8 +29361,12 @@ var Bump = (function () {
             },
 
             enumerable: true, configurable: true
-          },
-          "yAnchorOffset": {
+          });
+        }
+
+        //yAnchorOffset
+        if (sprite.yAnchorOffset === undefined) {
+          Object.defineProperty(sprite, "yAnchorOffset ", {
             get: function get() {
               if (sprite.anchor !== undefined) {
                 return sprite.width * sprite.anchor.y;
@@ -29340,10 +29376,10 @@ var Bump = (function () {
             },
 
             enumerable: true, configurable: true
-          }
-        });
+          });
+        }
 
-        if (sprite.circular) {
+        if (sprite.circular && sprite.radius === undefined) {
           Object.defineProperty(sprite, "radius", {
             get: function get() {
               return sprite.width / 2;
@@ -29352,21 +29388,61 @@ var Bump = (function () {
             enumerable: true, configurable: true
           });
         }
+
+        //Earlier code - not needed now.
+        /*
+        Object.defineProperties(sprite, {
+          "gx": {
+            get(){return sprite.getGlobalPosition().x},
+            enumerable: true, configurable: true
+          },
+          "gy": {
+            get(){return sprite.getGlobalPosition().y},
+            enumerable: true, configurable: true
+          },
+          "centerX": {
+            get(){return sprite.x + sprite.width / 2},
+            enumerable: true, configurable: true
+          },
+          "centerY": {
+            get(){return sprite.y + sprite.height / 2},
+            enumerable: true, configurable: true
+          },
+          "halfWidth": {
+            get(){return sprite.width / 2},
+            enumerable: true, configurable: true
+          },
+          "halfHeight": {
+            get(){return sprite.height / 2},
+            enumerable: true, configurable: true
+          },
+          "xAnchorOffset": {
+            get(){
+              if (sprite.anchor !== undefined) {
+                return sprite.height * sprite.anchor.x;
+              } else {
+                return 0;
+              }
+            },
+            enumerable: true, configurable: true
+          },
+          "yAnchorOffset": {
+            get(){
+              if (sprite.anchor !== undefined) {
+                return sprite.width * sprite.anchor.y;
+              } else {
+                return 0;
+              }
+            },
+            enumerable: true, configurable: true
+          }
+        });
+        */
       }
 
       //Add a Boolean `_bumpPropertiesAdded` property to the sprite to flag it
       //as having these new properties
       sprite._bumpPropertiesAdded = true;
-    }
-
-    //`compensateForAnchor` checks whether the sprite's anchor x/y point
-    //has been shifted and adds `_xAnchorOffset` and `_yAnchorOffset`
-    //properties to the sprite to compensate for this
-
-  }, {
-    key: "anchorOffset",
-    value: function anchorOffset(dimension) {
-      return;
     }
 
     /*
@@ -36314,14 +36390,107 @@ var _createClass = (function () { function defineProperties(target, props) { for
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
+/*
+Hexi
+====
+   
+Welcome to Hexi's source code!
+This file, `core.js` is the glue that holds Hexi together. Most of Hexi's functionality comes
+from some external libraries, written for Hexi, that `core.js` instantiates and wires
+together. Here are the external libraries that Hexi is currently using:
+
+- [Pixi](https://github.com/pixijs/pixi.js/): The world's fastest 2D WebGL and canvas renderer.
+- [Bump](https://github.com/kittykatattack/bump): A complete suite of 2D collision functions for games.
+- [Tink](https://github.com/kittykatattack/tink): Drag-and-drop, buttons, a universal pointer and other
+  helpful interactivity tools.
+- [Charm](https://github.com/kittykatattack/charm): Easy-to-use tweening animation effects for Pixi sprites.
+- [Dust](https://github.com/kittykatattack/dust): Particle effects for creating things like explosions, fire
+  and magic.
+- [Sprite Utilities](https://github.com/kittykatattack/spriteUtilities): Easier and more intuitive ways to
+  create and use Pixi sprites, as well adding a state machine and animation player
+- [Game Utilities](https://github.com/kittykatattack/gameUtilities): A collection of useful methods for games.
+- [Tile Utilities](https://github.com/kittykatattack/tileUtilities): A collection of useful methods for making tile-based game worlds with [Tiled Editor](http://www.mapeditor.org).
+- [Sound.js](https://github.com/kittykatattack/sound.js): A micro-library for loading, controlling and generating
+  sound and music effects. Everything you need to add sound to games.
+- [fullScreen.js](https://github.com/kittykatattack/fullScreen): Adds an easy-to-implement full screen feature.
+- [Smoothie](https://github.com/kittykatattack/smoothie): Ultra-smooth sprite animation using 
+  true delta-time interpolation. It also lets you specify the fps (frames-per-second) at which 
+  your game or application runs, and completely separates your sprite rendering loop from your
+  application logic loop.
+
+The job of `core.js` (this file!) is to instantiate Hexi, load the assets, start the game loop, and 
+create top-level access to most of the properties and methods in the external libraries.
+It also customizes some of those methods and runs them with some useful side-effects, such as 
+automatically adding sprites to Hexi's `stage`. (Hexi's `stage` is the root Pixi `Container` for the display list.)
+
+I've divided this `core.js` file into "Chapters" which describes what each major section of code does.
+You'll find a "Table of Contents" ahead, which is your guide to this file.
+All this code is fully commented, but if there's something you don't understand, please ask 
+in this repository's Issues and we will do our best to help. All this code is in one single file for now, just for the sake of simplicity,
+until the total scope of this project stabilizes. 
+
+Hexi's build system
+-------------------
+
+All of Hexi's source code is written in JavaScript ES6, transpiled to ES5 using Babel, and minified using Uglify2. 
+Make is currently being used as the build
+system. So, to build Hexi, make sure you have Node, Babel and Uglify2 installed, and call `make` in the 
+command line from Hexi's root directory. Make will compile the `core.js` file, concatenate all files (including
+the modules) and produce the `hexi.min.js` file using Uglify2.
+
+You can also use Make to build individual sections of Hexi's code base.
+If you just want to watch and compile the core.js file from ES6 to ES5, run:
+
+   make watchSrc
+
+If you want to concatenate all the modules, run:
+
+  make concatModules
+
+If you want to concatenate all the files, run:
+
+  make concatAllFiles
+
+To watch and compile the example files from ES6 to ES5, run:
+  
+  make watchExamples
+
+To watch and compile the tutorial files from ES6 to ES5, run:
+
+  make watchTutorials
+
+If anyone reading this wishes to contribute a simpler, more automated system using Grunt of Gulp, 
+we would welcome the contribution!
+
+Table of Contents
+-----------------
+
+Here's your handy guide to this `core.js` file.
+
+1. Setup and instantiation.
+2. The `Hexi` class constructor.
+3. Hexi's engine: `start`, `load` and `update` methods.
+4. Module interfaces: Hexi's top-level access to the module properties and methods.
+5. Sprite creation methods: `sprite`, `tilingSprite`, `text`, `bitmapText`, `rectangle`, `circle`, `line`, `button`.
+6. Display utilities: `group`, `batch`, `grid`, `makeTiledWorld`, `remove`, `flowRight`, `flowDown`, `flowLeft`, `flowUp`.
+7. Sprite properties: Hexi's custom sprite properties (also known as super-powers!).
+8. Utilities: `scaleToWindow`, `log`, `makeProgressBar`, `loadingBar`, `compensateForStageSize`, `image`, `id`, `json`, `xml`, `sound`
+
+*/
+
+//1. SETUP AND INSTANTIATION
+//---------------------------
+
 //IMPORTANT: Make sure to load Pixi and the modules before instantiating Hexi!
 
 //The high level `hexi` function lets you quickly create an instance
-//of Hexi using sensible defaults
+//of Hexi using sensible defaults.
 function hexi(width, height, setup) {
   var thingsToLoad = arguments.length <= 3 || arguments[3] === undefined ? undefined : arguments[3];
   var load = arguments.length <= 4 || arguments[4] === undefined ? undefined : arguments[4];
 
+  //If you need to, you can also instantiate Hexi with a configuration
+  //object, which lets you fine-tune the options.
   var hexi = new Hexi({
 
     //Required options:
@@ -36365,6 +36534,9 @@ function hexi(width, height, setup) {
 //code. See how it's done in the `hexi` function above for a good example
 //of how to do that.
 
+//2. THE HEXI CLASS CONSTRUCTOR
+//----------------------------
+
 var Hexi = (function () {
 
   /*
@@ -36375,17 +36547,17 @@ var Hexi = (function () {
   `setup`: A function that should run as soon as Hexi is initialized
    Here are the optional options:
    `assets`: Array of assets (files) that should be loaded
-  `load`: A function that should run while Hexi is loading asssets
+  `load`: A function that should run while Hexi is loading assets
   `renderer`: The type of renderer to use: "auto" (the default), "canvas" or "webgl"
   `backgroundColor`: Hexadecimal color code that defines the canvas color
   `border`: The canvas border style as a CSS border string, such as "1px dashed black"
-  `scaleToWindow`: A Boolean that determines whether the canvas should scale to maximum window size
+  `scaleToWindow`: A Boolean that determines whether the canvas should scale to maximum window size.
   `scaleBorderColor`: Color string that defines the color of the border around a scaled canvas.
   `interpolationProperties: An object that defines 5 Boolean properties that determines which sprite properties are interpolated 
                             (smoothly animated) by Hexi's rendering engine (Smoothie): `position`, `size`, `rotation`, `scale` or `alpha`
-  `interpolate`: A Boolean which should be `false` if you *don't* want any sprite animation smoothing
-  `fps`: The frames-per-second the engine's game logic loop should run at (the default is 60)
-  `renderFps`: Clamps the fps rendering to the supplied frame rate
+  `interpolate`: A Boolean which should be `false` if you *don't* want any sprite animation smoothing.
+  `fps`: The frames-per-second the engine's game logic loop should run at (the default is 60).
+  `renderFps`: Clamps the fps rendering to the supplied frame rate.
    You can also add any of Pixi's initialization options, and those will be applied 
   to Pixi's renderer when Hexi creates it.
    */
@@ -36393,7 +36565,8 @@ var Hexi = (function () {
   function Hexi(o) {
     _classCallCheck(this, Hexi);
 
-    //Initialize all the helper libraries
+    //Initialize all the helper modules.
+    //(See Hexi's README.md on information about these libraries)
     this.charm = new Charm(PIXI);
     this.dust = new Dust(PIXI);
     this.bump = new Bump(PIXI);
@@ -36414,8 +36587,10 @@ var Hexi = (function () {
     this.modulesToUpdate.push(this.tink);
     this.modulesToUpdate.push(this.spriteUtilities);
 
-    //Create local alias for the important methods and properties of
-    //these libraries, including the most useful Pixi properties
+    //Create local aliases for the important methods and properties of
+    //these libraries, including the most useful Pixi properties.
+    //Take a look at Hexi's `createModulePropertyAliases` method in the
+    //source code ahead to see how this works
     this.createModulePropertyAliases();
 
     //Create the stage and renderer
@@ -36454,13 +36629,13 @@ var Hexi = (function () {
       }
     });
 
-    //A Boolean to flag wether the canvas has been scaled
+    //A Boolean to flag whether the canvas has been scaled
     this.canvas.scaled = false;
 
     //Add the FullScreen module and supply it with the canvas element
     this.fullScreen = new FullScreen(this.canvas);
 
-    //Note: Hexi's update function checks whether we're in full screen
+    //Note: Hexi's `update` function checks whether we're in full screen
     //mode and updates the global scale value accordingly
 
     //Set the canvas's optional background color and border style
@@ -36518,7 +36693,7 @@ var Hexi = (function () {
 
     //Tell Hexi that we're not using a loading progress bar.
     //(This will be set to `true` if the user invokes the `loadingBar`
-    //function, which you'll see below)
+    //function, which you'll see ahead)
     this._progressBarAdded = false;
 
     //The `soundObjects` object is used to store all sounds
@@ -36539,62 +36714,34 @@ var Hexi = (function () {
     });
   }
 
-  //A method to scale and align the canvas in the browser
-  //window using the `scaleToWindow.js` function module
+  //3. HEXI'S ENGINE: START, LOAD AND SETUP
+  //---------------------------------------
+
+  //The `start` method must be called by the user after Hexi has been
+  //initialized to start the loading process and turn on the engine.
 
   _createClass(Hexi, [{
-    key: "scaleToWindow",
-    value: (function (_scaleToWindow) {
-      function scaleToWindow() {
-        return _scaleToWindow.apply(this, arguments);
-      }
-
-      scaleToWindow.toString = function () {
-        return _scaleToWindow.toString();
-      };
-
-      return scaleToWindow;
-    })(function () {
-      var _this = this;
-
-      var scaleBorderColor = arguments.length <= 0 || arguments[0] === undefined ? "#2C3539" : arguments[0];
-
-      //Set the default CSS padding and margins of HTML elements to 0
-      //<style>* {padding: 0; margin: 0}</style>
-      var newStyle = document.createElement("style");
-      var style = "* {padding: 0; margin: 0}";
-      newStyle.appendChild(document.createTextNode(style));
-      document.head.appendChild(newStyle);
-
-      //Use the `scaleToWindow` function module to scale the canvas to
-      //the maximum window size
-      this.scale = scaleToWindow(this.canvas, scaleBorderColor);
-      this.pointer.scale = this.scale;
-
-      //Re-scale on each browser resize
-      window.addEventListener("resize", function (event) {
-
-        //Scale the canvas and update Hexi's global `scale` value and
-        //the pointer's `scale` value
-        _this.scale = scaleToWindow(_this.canvas, scaleBorderColor);
-        _this.pointer.scale = _this.scale;
-      });
-
-      //Flag that the canvas has been scaled
-      this.canvas.scaled = true;
-    })
-
-    //The `start` method must be called by the user after Hexi has been
-    //initialized to start the loading process and turn on the engine.
-
-  }, {
     key: "start",
     value: function start() {
 
       //If there are assets to load, load them, and set the game's state
-      //to the user-defined `loadState`
+      //to the user-defined `loadState` (which can be supplied by the user in the
+      //constructor)
       if (this.assetsToLoad) {
+
+        //Call Hexi's `load` method (ahead) to load the assets
         this.load(this.assetsToLoad, this.validateAssets);
+
+        //After the assets have been loaded, a method called
+        //`validateAssets` will run (see `validateAssets` ahead.)
+        //`validateAssets` checks to see what has been loaded and,
+        //in the case of sound files, decodes them and creates sound
+        //objects.
+
+        //If the user has supplied Hexi with a `load` function (in
+        //Hexi's constructor), it will be assigned to Hexi's current
+        //`state` and, as you'll see ahead, called in a loop while the
+        //assets load
         if (this.loadState) this.state = this.loadState;
       } else {
 
@@ -36604,18 +36751,19 @@ var Hexi = (function () {
       }
 
       //Start the game loop
-      //this.gameLoop();
       this.smoothie.start();
     }
 
     //Use the `load` method to load any files into Hexi. Pass it a
     //callback function as the second argument to launch a function that
-    //should run when all the assets have finished loading.
+    //should run when all the assets have finished loading. Hexi's
+    //default callback function is `validateAssets`, which you'll find
+    //in the code ahead
 
   }, {
     key: "load",
     value: function load(assetsToLoad) {
-      var _this2 = this;
+      var _this = this;
 
       var callbackFunction = arguments.length <= 1 || arguments[1] === undefined ? undefined : arguments[1];
 
@@ -36651,13 +36799,13 @@ var Hexi = (function () {
         this.spanElements = [];
         fontFiles.forEach(function (source) {
 
-          //Loads the font files by writing CSS code to the HTML document head
+          //Loads the font files by writing CSS code to the HTML document head.
           //Use the font's filename as the `fontFamily` name. This code captures
           //the font file's name without the extension or file path
           var fontFamily = source.split("/").pop().split(".")[0];
 
           //Push the font family name into Hexi's `fontFamilies` array
-          if (_this2.fontFamilies) _this2.fontFamilies.push(fontFamily);
+          if (_this.fontFamilies) _this.fontFamilies.push(fontFamily);
 
           //Append an `@afont-face` style rule to the head of the HTML document
           var newStyle = document.createElement("style");
@@ -36673,7 +36821,7 @@ var Hexi = (function () {
           span.innerHTML = "?";
           span.style.display = "block";
           span.style.opacity = "0";
-          _this2.spanElements.push(span);
+          _this.spanElements.push(span);
         });
       }
 
@@ -36697,12 +36845,10 @@ var Hexi = (function () {
       var loadProgressHandler = function loadProgressHandler(loader, resource) {
 
         //Display the file `url` currently being loaded
-        //console.log(`loading: ${resource.url}`);
-        _this2.loadingFile = resource.url;
+        _this.loadingFile = resource.url;
 
         //Display the percentage of files currently loaded
-        //console.log(`progress: ${loader.progress}`);
-        _this2.loadingProgress = loader.progress;
+        _this.loadingProgress = loader.progress;
       };
 
       //Load the files and call the `loadProgressHandler` while they're
@@ -36724,43 +36870,44 @@ var Hexi = (function () {
   }, {
     key: "validateAssets",
     value: function validateAssets() {
-      var _this3 = this;
+      var _this2 = this;
 
       console.log("All assets loaded");
 
       //The `finishLoadingState` method will be called if everything has
       //finished loading and any possible sounds have been decoded
       var finishLoadingState = function finishLoadingState() {
+
         //Reset the `assetsToLoad` array
-        _this3.assetsToLoad = [];
+        _this2.assetsToLoad = [];
 
         //Clear the `loadState`
-        _this3.loadState = undefined;
+        _this2.loadState = undefined;
 
         //Clear the game `state` function for now to stop the loop.
-        _this3.state = undefined;
+        _this2.state = undefined;
 
         //Remove the loading progress bar if the user invoked the `loadingBar`
         //function
-        if (_this3._progressBarAdded) {
-          _this3.progressBar.remove();
+        if (_this2._progressBarAdded) {
+          _this2.progressBar.remove();
         }
 
         //If any fonts were tricked into loading
-        //method make the <span> tags that use them invisible
-        if (_this3.spanElements) {
-          _this3.spanElements.forEach(function (element) {
+        //make the <span> tags that use them invisible
+        if (_this2.spanElements) {
+          _this2.spanElements.forEach(function (element) {
             element.style.display = "none";
           });
         }
 
         //Call the `setup` state
-        _this3.setupState();
+        _this2.setupState();
       };
 
       //We need to check if any possible sound file have been loaded
       //because, if there have, they need to fist be decoded before we
-      //can launch the setup state.
+      //can launch the `setup` state.
 
       //Variables to count the number of sound files and the sound files
       //that have been decoded. If both these numbers are the same at
@@ -36801,8 +36948,8 @@ var Hexi = (function () {
 
           //Create aliases for the sound's `xhr` object and `url` (its
           //file name)
-          var xhr = _this3.loader.resources[resource].xhr,
-              url = _this3.loader.resources[resource].url;
+          var xhr = _this2.loader.resources[resource].xhr,
+              url = _this2.loader.resources[resource].url;
 
           //Create a sound sprite using the `sound.js` module's
           //`makeSound` function. Notice the 4th argument is the loaded
@@ -36810,16 +36957,16 @@ var Hexi = (function () {
           //means that `makeSound` won't attempt to load the sounds
           //again. When the sound has been decoded, the `decodeHandler`
           //(see above!) will be run
-          var soundSprite = makeSound(url, decodeHandler.bind(_this3), false, xhr);
+          var soundSprite = makeSound(url, decodeHandler.bind(_this2), false, xhr);
 
           //Get the sound file name.
-          soundSprite.name = _this3.loader.resources[resource].name;
+          soundSprite.name = _this2.loader.resources[resource].name;
 
           //Add the sound object to Hexi's `soundObjects` object.
           //You'll be able to access them in your application through
           //Hexi's higher-level `sound` method, like this:
           //`hexi.sound("soundFileName.wav");`
-          _this3.soundObjects[soundSprite.name] = soundSprite;
+          _this2.soundObjects[soundSprite.name] = soundSprite;
         }
       });
 
@@ -36829,6 +36976,10 @@ var Hexi = (function () {
         finishLoadingState();
       }
     }
+
+    //The `update` method is run by Hexi's game loop each frame.
+    //It manages the game state and updates the modules
+
   }, {
     key: "update",
     value: function update() {
@@ -36872,15 +37023,15 @@ var Hexi = (function () {
       this.paused = false;
     }
 
-    /* Hexi's interfaces to the modules */
+    //4. MODULE INTERFACES
 
-    //A function that helpfully creates local, top-level references to the
+    //A method that helpfully creates local, top-level references to the
     //most useful properties and methods from the loaded modules
 
   }, {
     key: "createModulePropertyAliases",
     value: function createModulePropertyAliases() {
-      var _this4 = this;
+      var _this3 = this;
 
       //Pixi - Rendering
       this.Container = PIXI.Container;
@@ -36889,64 +37040,64 @@ var Hexi = (function () {
       this.filters = PIXI.filters;
       //Filters
       this.dropShadowFilter = function () {
-        return new _this4.filters.DropShadowFilter();
+        return new _this3.filters.DropShadowFilter();
       };
       this.asciiFilter = function () {
-        return new _this4.filters.AsciiFilter();
+        return new _this3.filters.AsciiFilter();
       };
       this.alphaMaskFilter = function () {
-        return new _this4.filters.AlphaMaskFilter();
+        return new _this3.filters.AlphaMaskFilter();
       };
       this.bloomFilter = function () {
-        return new _this4.filters.BloomFilter();
+        return new _this3.filters.BloomFilter();
       };
       this.blurDirFilter = function () {
-        return new _this4.filters.BlurDirFilter();
+        return new _this3.filters.BlurDirFilter();
       };
       this.blurFilter = function () {
-        return new _this4.filters.BlurFilter();
+        return new _this3.filters.BlurFilter();
       };
       this.colorMatrixFilter = function () {
-        return new _this4.filters.ColorMatrixFilter();
+        return new _this3.filters.ColorMatrixFilter();
       };
       this.colorStepFilter = function () {
-        return new _this4.filters.ColorStepFilter();
+        return new _this3.filters.ColorStepFilter();
       };
       this.crossHatchFilter = function () {
-        return new _this4.filters.CrossHatchFilter();
+        return new _this3.filters.CrossHatchFilter();
       };
       this.displacementFilter = function () {
-        return new _this4.filters.DisplacementFilter();
+        return new _this3.filters.DisplacementFilter();
       };
       this.dotScreenFilter = function () {
-        return new _this4.filters.DotScreenFilter();
+        return new _this3.filters.DotScreenFilter();
       };
       this.grayFilter = function () {
-        return new _this4.filters.GrayFilter();
+        return new _this3.filters.GrayFilter();
       };
       this.invertFilter = function () {
-        return new _this4.filters.InvertFilter();
+        return new _this3.filters.InvertFilter();
       };
       this.pixelateFilter = function () {
-        return new _this4.filters.PixelateFilter();
+        return new _this3.filters.PixelateFilter();
       };
       this.sepiaFilter = function () {
-        return new _this4.filters.SepiaFilter();
+        return new _this3.filters.SepiaFilter();
       };
       this.shockwaveFilter = function () {
-        return new _this4.filters.ShockwaveFilter();
+        return new _this3.filters.ShockwaveFilter();
       };
       this.twistFilter = function () {
-        return new _this4.filters.TwistFilter();
+        return new _this3.filters.TwistFilter();
       };
       this.rgbSplitFilter = function () {
-        return new _this4.filters.RGBSplitFilter();
+        return new _this3.filters.RGBSplitFilter();
       };
       this.smartBlurFilter = function () {
-        return new _this4.filters.SmartBlurFilter();
+        return new _this3.filters.SmartBlurFilter();
       };
       this.tiltShiftFilter = function () {
-        return new _this4.filters.TiltShiftFilter();
+        return new _this3.filters.TiltShiftFilter();
       };
 
       //Tink - Interactivity
@@ -36954,24 +37105,24 @@ var Hexi = (function () {
       this.pointers = this.tink.pointers;
       this.buttons = this.tink.buttons;
       this.makePointer = function (canvas, scale) {
-        return _this4.tink.makePointer(canvas, scale);
+        return _this3.tink.makePointer(canvas, scale);
       };
       this.makeDraggable = function () {
         var _tink;
 
-        return (_tink = _this4.tink).makeDraggable.apply(_tink, arguments);
+        return (_tink = _this3.tink).makeDraggable.apply(_tink, arguments);
       };
       this.makeUndraggable = function () {
         var _tink2;
 
-        return (_tink2 = _this4.tink).makeUndraggable.apply(_tink2, arguments);
+        return (_tink2 = _this3.tink).makeUndraggable.apply(_tink2, arguments);
       };
       this.makeInteractive = function (o) {
-        return _this4.tink.makeInteractive(o);
+        return _this3.tink.makeInteractive(o);
       };
       this.keyboard = this.tink.keyboard;
       this.arrowControl = function (sprite, speed) {
-        return _this4.tink.arrowControl(sprite, speed);
+        return _this3.tink.arrowControl(sprite, speed);
       };
 
       //Add the arrow key objects
@@ -36983,61 +37134,61 @@ var Hexi = (function () {
 
       //Dust - Particle effects
       this.createParticles = function (x, y, spriteFunction, container, numberOfParticles, gravity, randomSpacing, minAngle, maxAngle, minSize, maxSize, minSpeed, maxSpeed, minScaleSpeed, maxScaleSpeed, minAlphaSpeed, maxAlphaSpeed, minRotationSpeed, maxRotationSpeed) {
-        return _this4.dust.create(x, y, spriteFunction, container, numberOfParticles, gravity, randomSpacing, minAngle, maxAngle, minSize, maxSize, minSpeed, maxSpeed, minScaleSpeed, maxScaleSpeed, minAlphaSpeed, maxAlphaSpeed, minRotationSpeed, maxRotationSpeed);
+        return _this3.dust.create(x, y, spriteFunction, container, numberOfParticles, gravity, randomSpacing, minAngle, maxAngle, minSize, maxSize, minSpeed, maxSpeed, minScaleSpeed, maxScaleSpeed, minAlphaSpeed, maxAlphaSpeed, minRotationSpeed, maxRotationSpeed);
       };
       this.particleEmitter = function (interval, particleFunction) {
-        return _this4.dust.emitter(interval, particleFunction);
+        return _this3.dust.emitter(interval, particleFunction);
       };
 
       //SpriteUtilities - Sprite creation tools
       this.filmstrip = function (texture, frameWidth, frameHeight, spacing) {
-        return _this4.spriteUtilities.filmstrip(texture, frameWidth, frameHeight, spacing);
+        return _this3.spriteUtilities.filmstrip(texture, frameWidth, frameHeight, spacing);
       };
       this.frame = function (source, x, y, width, height) {
-        return _this4.spriteUtilities.frame(source, x, y, width, height);
+        return _this3.spriteUtilities.frame(source, x, y, width, height);
       };
       this.frames = function (source, coordinates, frameWidth, frameHeight) {
-        return _this4.spriteUtilities.frames(source, coordinates, frameWidth, frameHeight);
+        return _this3.spriteUtilities.frames(source, coordinates, frameWidth, frameHeight);
       };
       this.frameSeries = function (startNumber, endNumber, baseName, extension) {
-        return _this4.spriteUtilities.frames(startNumber, endNumber, baseName, extension);
+        return _this3.spriteUtilities.frames(startNumber, endNumber, baseName, extension);
       };
       this.colorToRGBA = function (value) {
-        return _this4.spriteUtilities.colorToRGBA(value);
+        return _this3.spriteUtilities.colorToRGBA(value);
       };
       this.colorToHex = function (value) {
-        return _this4.spriteUtilities.colorToHex(value);
+        return _this3.spriteUtilities.colorToHex(value);
       };
       this.byteToHex = function (value) {
-        return _this4.spriteUtilities.byteToHex(value);
+        return _this3.spriteUtilities.byteToHex(value);
       };
       this.color = function (value) {
-        return _this4.spriteUtilities.color(value);
+        return _this3.spriteUtilities.color(value);
       };
       this.shoot = function (shooter, angle, x, y, container, bulletSpeed, bulletArray, bulletSprite) {
-        return _this4.spriteUtilities.shoot(shooter, angle, x, y, container, bulletSpeed, bulletArray, bulletSprite);
+        return _this3.spriteUtilities.shoot(shooter, angle, x, y, container, bulletSpeed, bulletArray, bulletSprite);
       };
       this.shake = function (sprite) {
         var magnitude = arguments.length <= 1 || arguments[1] === undefined ? 16 : arguments[1];
         var angular = arguments.length <= 2 || arguments[2] === undefined ? false : arguments[2];
 
         console.log("shake");
-        return _this4.spriteUtilities.shake(sprite, magnitude, angular);
+        return _this3.spriteUtilities.shake(sprite, magnitude, angular);
       };
 
       //Charm - Tweening
       this.fadeOut = function (sprite) {
         var frames = arguments.length <= 1 || arguments[1] === undefined ? 60 : arguments[1];
-        return _this4.charm.fadeOut(sprite, frames);
+        return _this3.charm.fadeOut(sprite, frames);
       };
       this.fadeIn = function (sprite) {
         var frames = arguments.length <= 1 || arguments[1] === undefined ? 60 : arguments[1];
-        return _this4.charm.fadeIn(sprite, frames);
+        return _this3.charm.fadeIn(sprite, frames);
       };
       this.pulse = function (sprite) {
         var frames = arguments.length <= 1 || arguments[1] === undefined ? 60 : arguments[1];
         var minAlpha = arguments.length <= 2 || arguments[2] === undefined ? 0 : arguments[2];
-        return _this4.charm.pulse(sprite, frames, minAlpha);
+        return _this3.charm.pulse(sprite, frames, minAlpha);
       };
       this.slide = function (sprite, endX, endY) {
         var frames = arguments.length <= 3 || arguments[3] === undefined ? 60 : arguments[3];
@@ -37045,7 +37196,7 @@ var Hexi = (function () {
         var yoyo = arguments.length <= 5 || arguments[5] === undefined ? false : arguments[5];
         var delayBeforeRepeat = arguments.length <= 6 || arguments[6] === undefined ? 0 : arguments[6];
 
-        return _this4.charm.slide(sprite, endX, endY, frames, type, yoyo, delayBeforeRepeat = 0);
+        return _this3.charm.slide(sprite, endX, endY, frames, type, yoyo, delayBeforeRepeat = 0);
       };
       this.breathe = function (sprite) {
         var endScaleX = arguments.length <= 1 || arguments[1] === undefined ? 0.8 : arguments[1];
@@ -37054,13 +37205,13 @@ var Hexi = (function () {
         var yoyo = arguments.length <= 4 || arguments[4] === undefined ? true : arguments[4];
         var delayBeforeRepeat = arguments.length <= 5 || arguments[5] === undefined ? 0 : arguments[5];
 
-        return _this4.charm.breathe(sprite, endScaleX, endScaleY, frames, yoyo, delayBeforeRepeat);
+        return _this3.charm.breathe(sprite, endScaleX, endScaleY, frames, yoyo, delayBeforeRepeat);
       };
       this.scale = function (sprite) {
         var endScaleX = arguments.length <= 1 || arguments[1] === undefined ? 0.5 : arguments[1];
         var endScaleY = arguments.length <= 2 || arguments[2] === undefined ? 0.5 : arguments[2];
         var frames = arguments.length <= 3 || arguments[3] === undefined ? 60 : arguments[3];
-        return _this4.charm.scale(sprite, endScaleX, endScaleY, frames);
+        return _this3.charm.scale(sprite, endScaleX, endScaleY, frames);
       };
       this.strobe = function (sprite) {
         var scaleFactor = arguments.length <= 1 || arguments[1] === undefined ? 1.3 : arguments[1];
@@ -37070,7 +37221,7 @@ var Hexi = (function () {
         var yoyo = arguments.length <= 5 || arguments[5] === undefined ? true : arguments[5];
         var delayBeforeRepeat = arguments.length <= 6 || arguments[6] === undefined ? 0 : arguments[6];
 
-        return _this4.charm.strobe(sprite, scaleFactor, startMagnitude, endMagnitude, frames, yoyo, delayBeforeRepeat);
+        return _this3.charm.strobe(sprite, scaleFactor, startMagnitude, endMagnitude, frames, yoyo, delayBeforeRepeat);
       };
       this.wobble = function (sprite) {
         var scaleFactorX = arguments.length <= 1 || arguments[1] === undefined ? 1.2 : arguments[1];
@@ -37084,14 +37235,14 @@ var Hexi = (function () {
         var yoyo = arguments.length <= 9 || arguments[9] === undefined ? true : arguments[9];
         var delayBeforeRepeat = arguments.length <= 10 || arguments[10] === undefined ? 0 : arguments[10];
 
-        return _this4.charm.wobble(sprite, scaleFactorX = 1.2, scaleFactorY = 1.2, frames = 10, xStartMagnitude = 10, xEndMagnitude = 10, yStartMagnitude = -10, yEndMagnitude = -10, friction = 0.98, yoyo = true, delayBeforeRepeat = 0);
+        return _this3.charm.wobble(sprite, scaleFactorX = 1.2, scaleFactorY = 1.2, frames = 10, xStartMagnitude = 10, xEndMagnitude = 10, yStartMagnitude = -10, yEndMagnitude = -10, friction = 0.98, yoyo = true, delayBeforeRepeat = 0);
       };
       this.followCurve = function (sprite, pointsArray, totalFrames) {
         var type = arguments.length <= 3 || arguments[3] === undefined ? "smoothstep" : arguments[3];
         var yoyo = arguments.length <= 4 || arguments[4] === undefined ? false : arguments[4];
         var delayBeforeRepeat = arguments.length <= 5 || arguments[5] === undefined ? 0 : arguments[5];
 
-        return _this4.charm.followCurve(sprite, pointsArray, totalFrames, type, yoyo, delayBeforeRepeat);
+        return _this3.charm.followCurve(sprite, pointsArray, totalFrames, type, yoyo, delayBeforeRepeat);
       };
       this.walkPath = function (sprite, originalPathArray) {
         var totalFrames = arguments.length <= 2 || arguments[2] === undefined ? 300 : arguments[2];
@@ -37100,7 +37251,7 @@ var Hexi = (function () {
         var yoyo = arguments.length <= 5 || arguments[5] === undefined ? false : arguments[5];
         var delayBetweenSections = arguments.length <= 6 || arguments[6] === undefined ? 0 : arguments[6];
 
-        return _this4.charm.walkPath(sprite, originalPathArray, totalFrames, type, loop, yoyo, delayBetweenSections);
+        return _this3.charm.walkPath(sprite, originalPathArray, totalFrames, type, loop, yoyo, delayBetweenSections);
       };
       this.walkCurve = function (sprite, pathArray) {
         var totalFrames = arguments.length <= 2 || arguments[2] === undefined ? 300 : arguments[2];
@@ -37109,84 +37260,82 @@ var Hexi = (function () {
         var yoyo = arguments.length <= 5 || arguments[5] === undefined ? false : arguments[5];
         var delayBeforeContinue = arguments.length <= 6 || arguments[6] === undefined ? 0 : arguments[6];
 
-        return _this4.charm.walkCurve(sprite, pathArray, totalFrames, type, loop, yoyo, delayBeforeContinue);
+        return _this3.charm.walkCurve(sprite, pathArray, totalFrames, type, loop, yoyo, delayBeforeContinue);
       };
       this.removeTween = function (tweenObject) {
-        return _this4.charm.removeTween(tweenObject);
+        return _this3.charm.removeTween(tweenObject);
       };
       this.makeTween = function (tweensToAdd) {
-        return _this4.charm.makeTween(tweensToAdd);
+        return _this3.charm.makeTween(tweensToAdd);
       };
       this.tweenProperty = function (sprite, property, startValue, endValue, totalFrames) {
         var type = arguments.length <= 5 || arguments[5] === undefined ? "smoothstep" : arguments[5];
         var yoyo = arguments.length <= 6 || arguments[6] === undefined ? false : arguments[6];
         var delayBeforeRepeat = arguments.length <= 7 || arguments[7] === undefined ? 0 : arguments[7];
 
-        return _this4.charm.tweenProperty(sprite, property, startValue, endValue, totalFrames, type, yoyo, delayBeforeRepeat);
+        return _this3.charm.tweenProperty(sprite, property, startValue, endValue, totalFrames, type, yoyo, delayBeforeRepeat);
       };
 
       //Bump - Collision
       this.hitTestPoint = function (point, sprite) {
-        return _this4.bump.hitTestPoint(point, sprite);
+        return _this3.bump.hitTestPoint(point, sprite);
       };
       this.hitTestCircle = function (c1, c2) {
         var global = arguments.length <= 2 || arguments[2] === undefined ? false : arguments[2];
-        return _this4.bump.hitTestCircle(c1, c2, global);
+        return _this3.bump.hitTestCircle(c1, c2, global);
       };
       this.circleCollision = function (c1, c2) {
         var bounce = arguments.length <= 2 || arguments[2] === undefined ? false : arguments[2];
         var global = arguments.length <= 3 || arguments[3] === undefined ? false : arguments[3];
-        return _this4.bump.circleCollision(c1, c2, bounce, global);
+        return _this3.bump.circleCollision(c1, c2, bounce, global);
       };
       this.movingCircleCollision = function (c1, c2) {
         var global = arguments.length <= 2 || arguments[2] === undefined ? false : arguments[2];
-        return _this4.bump.movingCircleCollision(c1, c2, global);
+        return _this3.bump.movingCircleCollision(c1, c2, global);
       };
       this.multipleCircleCollision = function (arrayOfCircles) {
         var global = arguments.length <= 1 || arguments[1] === undefined ? false : arguments[1];
-        return _this4.bump.multipleCircleCollision(arrayOfCircles, global);
+        return _this3.bump.multipleCircleCollision(arrayOfCircles, global);
       };
       this.rectangleCollision = function (r1, r2) {
         var bounce = arguments.length <= 2 || arguments[2] === undefined ? false : arguments[2];
         var global = arguments.length <= 3 || arguments[3] === undefined ? true : arguments[3];
-        return _this4.bump.rectangleCollision(r1, r2, bounce, global);
+        return _this3.bump.rectangleCollision(r1, r2, bounce, global);
       };
       this.hitTestRectangle = function (r1, r2) {
         var global = arguments.length <= 2 || arguments[2] === undefined ? false : arguments[2];
-        return _this4.bump.hitTestRectangle(r1, r2, global);
+        return _this3.bump.hitTestRectangle(r1, r2, global);
       };
       this.hitTestCircleRectangle = function (c1, r1) {
         var global = arguments.length <= 2 || arguments[2] === undefined ? false : arguments[2];
-        return _this4.bump.hitTestCircleRectangle(c1, r1, global);
+        return _this3.bump.hitTestCircleRectangle(c1, r1, global);
       };
       this.hitTestCirclePoint = function (c1, point) {
         var global = arguments.length <= 2 || arguments[2] === undefined ? false : arguments[2];
-        return _this4.bump.hitTestCirclePoint(c1, point, global);
+        return _this3.bump.hitTestCirclePoint(c1, point, global);
       };
       this.circleRectangleCollision = function (c1, r1) {
         var bounce = arguments.length <= 2 || arguments[2] === undefined ? false : arguments[2];
         var global = arguments.length <= 3 || arguments[3] === undefined ? false : arguments[3];
-        return _this4.bump.circleRectangleCollision(c1, r1, bounce, global);
+        return _this3.bump.circleRectangleCollision(c1, r1, bounce, global);
       };
       this.circlePointCollision = function (c1, point) {
         var bounce = arguments.length <= 2 || arguments[2] === undefined ? false : arguments[2];
         var global = arguments.length <= 3 || arguments[3] === undefined ? false : arguments[3];
-        return _this4.bump.circlePointCollision(c1, point, bounce, global);
+        return _this3.bump.circlePointCollision(c1, point, bounce, global);
       };
       this.bounceOffSurface = function (o, s) {
-        return _this4.bump.bounceOffSurface(o, s);
+        return _this3.bump.bounceOffSurface(o, s);
       };
       this.hit = function (a, b) {
         var react = arguments.length <= 2 || arguments[2] === undefined ? false : arguments[2];
         var bounce = arguments.length <= 3 || arguments[3] === undefined ? false : arguments[3];
         var global = arguments[4];
         var extra = arguments.length <= 5 || arguments[5] === undefined ? undefined : arguments[5];
-        return _this4.bump.hit(a, b, react, bounce, global, extra);
+        return _this3.bump.hit(a, b, react, bounce, global, extra);
       };
-      //this.outsideBounds = this.bump.outsideBounds;
-      //this.contain = (sprite, container, bounce = false, extra = undefined) => this.bump.contain(sprite, container, bounce, extra);
 
-      //Intercept the Bump library's `contain` method to make sure that
+      //Intercept the Bump library's `contain` and `outsideBounds` methods to make sure that
       //the stage `width` and `height` match the canvas width and height
       this.contain = function (sprite, container) {
         var bounce = arguments.length <= 2 || arguments[2] === undefined ? false : arguments[2];
@@ -37194,11 +37343,11 @@ var Hexi = (function () {
 
         var o = {};
         if (container._stage) {
-          o = _this4.compensateForStageSize(container);
+          o = _this3.compensateForStageSize(container);
         } else {
           o = container;
         }
-        return _this4.bump.contain(sprite, o, bounce, extra);
+        return _this3.bump.contain(sprite, o, bounce, extra);
       };
 
       this.outsideBounds = function (sprite, container) {
@@ -37206,28 +37355,28 @@ var Hexi = (function () {
 
         var o = {};
         if (container._stage) {
-          o = _this4.compensateForStageSize(container);
+          o = _this3.compensateForStageSize(container);
         } else {
           o = container;
         }
-        return _this4.bump.outsideBounds(sprite, o, extra);
+        return _this3.bump.outsideBounds(sprite, o, extra);
       };
 
       //GameUtilities - Useful utilities
       this.distance = function (s1, s2) {
-        return _this4.gameUtilities.distance(s1, s2);
+        return _this3.gameUtilities.distance(s1, s2);
       };
       this.followEase = function (follower, leader, speed) {
-        return _this4.gameUtilities.followEase(follower, leader, speed);
+        return _this3.gameUtilities.followEase(follower, leader, speed);
       };
       this.followConstant = function (follower, leader, speed) {
-        return _this4.gameUtilities.followConstant(follower, leader, speed);
+        return _this3.gameUtilities.followConstant(follower, leader, speed);
       };
       this.angle = function (s1, s2) {
-        return _this4.gameUtilities.angle(s1, s2);
+        return _this3.gameUtilities.angle(s1, s2);
       };
       this.rotateAroundSprite = function (rotatingSprite, centerSprite, distance, angle) {
-        return _this4.gameUtilities.rotateAroundSprite(rotatingSprite, centerSprite, distance, angle);
+        return _this3.gameUtilities.rotateAroundSprite(rotatingSprite, centerSprite, distance, angle);
       };
       this.rotateAroundPoint = this.gameUtilities.rotateAroundPoint;
       this.randomInt = this.gameUtilities.randomInt;
@@ -37235,8 +37384,8 @@ var Hexi = (function () {
       this.move = this.gameUtilities.move;
       this.wait = this.gameUtilities.wait;
       this.worldCamera = function (world, worldWidth, worldHeight) {
-        var canvas = arguments.length <= 3 || arguments[3] === undefined ? _this4.canvas : arguments[3];
-        return _this4.gameUtilities.worldCamera(world, worldWidth, worldHeight, canvas);
+        var canvas = arguments.length <= 3 || arguments[3] === undefined ? _this3.canvas : arguments[3];
+        return _this3.gameUtilities.worldCamera(world, worldWidth, worldHeight, canvas);
       };
 
       //Sound.js - Sound
@@ -37246,25 +37395,32 @@ var Hexi = (function () {
 
       //FullScreen
       this.enableFullScreen = function (exitKeyCodes) {
-        return _this4.fullScreen.enableFullScreen(exitKeyCodes);
+        return _this3.fullScreen.enableFullScreen(exitKeyCodes);
       };
 
       //TileUtilities
       this.hitTestTile = function (sprite, mapArray, gidToCheck, world, pointsToCheck) {
-        return _this4.tileUtilities.hitTestTile(sprite, mapArray, gidToCheck, world, pointsToCheck);
+        return _this3.tileUtilities.hitTestTile(sprite, mapArray, gidToCheck, world, pointsToCheck);
       };
     }
+
+    //Getters and setters
+
+    //Pixi's loader resources
+
   }, {
     key: "sprite",
 
-    /* Sprite creation methods */
+    //5. SPRITE CREATION METHODS
 
-    //Hexi's uses methods uses the from
+    //Hexi uses methods from the
     //SpriteUtilities module to help create sprites. But, as a helpful bonus, Hexi automatically adds sprites
     //to the `stage` container. (The `stage` is Hexi's root container for all
     //Hexi sprites.) Hexi also adds a whole bunch of
     //extra, useful properties and methods to sprites with the
     //`addProperties` method
+
+    //Universal sprites
     value: function sprite(source) {
       var x = arguments.length <= 1 || arguments[1] === undefined ? 0 : arguments[1];
       var y = arguments.length <= 2 || arguments[2] === undefined ? 0 : arguments[2];
@@ -37277,6 +37433,9 @@ var Hexi = (function () {
       this.stage.addChild(o);
       return o;
     }
+
+    //Tiling sprites
+
   }, {
     key: "tilingSprite",
     value: function tilingSprite(source, width, height) {
@@ -37307,7 +37466,7 @@ var Hexi = (function () {
       return message;
     }
 
-    //`bitmapText` method is a quick way to create a Pixi BitmapText sprite
+    //The `bitmapText` method is a quick way to create a Pixi BitmapText sprite
 
   }, {
     key: "bitmapText",
@@ -37393,40 +37552,9 @@ var Hexi = (function () {
       this.stage.addChild(o);
       return o;
     }
-  }, {
-    key: "makeTiledWorld",
-    value: function makeTiledWorld(jsonTiledMap, tileset) {
-      var _this5 = this;
 
-      var o = this.tileUtilities.makeTiledWorld(jsonTiledMap, tileset);
-      this.addProperties(o);
-
-      //Add Hexi's special sprite properties to the world object and all
-      //its child objects
-      var addHexiSpriteProperties = function addHexiSpriteProperties(object) {
-        _this5.addProperties(object);
-        if (object.children) {
-          if (object.children.length > 0) {
-            object.children.forEach(function (child) {
-              addHexiSpriteProperties(child);
-            });
-          }
-        }
-      };
-      if (o.children) {
-        if (o.children.length > 0) {
-          o.children.forEach(function (child) {
-            addHexiSpriteProperties(child);
-          });
-        }
-      }
-
-      //Return the world object
-      this.stage.addChild(o);
-      return o;
-    }
-
-    //Display utilities
+    //6. DISPLAY UTILITIES
+    //--------------------
 
     //Use `group` to create a Container
 
@@ -37436,6 +37564,17 @@ var Hexi = (function () {
       var _spriteUtilities;
 
       var o = (_spriteUtilities = this.spriteUtilities).group.apply(_spriteUtilities, arguments);
+      this.addProperties(o);
+      this.stage.addChild(o);
+      return o;
+    }
+
+    //`batch` creates a Pixi ParticleContainer
+
+  }, {
+    key: "batch",
+    value: function batch(size, options) {
+      var o = this.spriteUtilities.batch(size, options);
       this.addProperties(o);
       this.stage.addChild(o);
       return o;
@@ -37462,13 +37601,39 @@ var Hexi = (function () {
       return o;
     }
 
-    //`batch` creates a Pixi ParticleContainer
+    //`makeTiledWorld` uses a Tiled Editor JSON file to generate a game
+    //world. It uses the `makeTiledWorld` method from the
+    //`tileUtilities` module to do help do this.
 
   }, {
-    key: "batch",
-    value: function batch(size, options) {
-      var o = this.spriteUtilities.batch(size, options);
+    key: "makeTiledWorld",
+    value: function makeTiledWorld(jsonTiledMap, tileset) {
+      var _this4 = this;
+
+      var o = this.tileUtilities.makeTiledWorld(jsonTiledMap, tileset);
       this.addProperties(o);
+
+      //Add Hexi's special sprite properties to the world object and all
+      //its child objects
+      var addHexiSpriteProperties = function addHexiSpriteProperties(object) {
+        _this4.addProperties(object);
+        if (object.children) {
+          if (object.children.length > 0) {
+            object.children.forEach(function (child) {
+              addHexiSpriteProperties(child);
+            });
+          }
+        }
+      };
+      if (o.children) {
+        if (o.children.length > 0) {
+          o.children.forEach(function (child) {
+            addHexiSpriteProperties(child);
+          });
+        }
+      }
+
+      //Return the world object
       this.stage.addChild(o);
       return o;
     }
@@ -37579,7 +37744,7 @@ var Hexi = (function () {
       }
     }
 
-    //flowLeft
+    //flowUp
 
   }, {
     key: "flowUp",
@@ -37605,7 +37770,7 @@ var Hexi = (function () {
       }
     }
 
-    /* Hexi's sprite properties */
+    //7. SPRITE PROPERTIES
 
     //The sprite creation methods above all run the `addProperties`
     //method on each sprite they create. `addProperties` adds special
@@ -37614,7 +37779,7 @@ var Hexi = (function () {
   }, {
     key: "addProperties",
     value: function addProperties(o) {
-      var _this6 = this;
+      var _this5 = this;
 
       //Velocity
       o.vx = 0;
@@ -37634,7 +37799,7 @@ var Hexi = (function () {
       //Is the sprite draggable?
       o._draggable = false;
 
-      //Flag this object for compatiblity with the Bump collision
+      //Flag this object for compatibility with the Bump collision
       //library
       o._bumpPropertiesAdded = true;
 
@@ -37687,10 +37852,14 @@ var Hexi = (function () {
 
       //The `put` methods are conveniences that help you position a
       //another sprite in and around this sprite.
-      //First, get a short form reference to the sprite to make the code more
+      //First, get a short form reference to the sprite to make the code
       //easier to read
       var a = o;
 
+      //The `nudgeAnchor`, `compensateForAnchor` and
+      //`compensateForAnchors` (with an "s"!) methods are used by
+      //the `put` methods to adjust the position of the sprite based on
+      //its x/y anchor point.
       var nudgeAnchor = function nudgeAnchor(o, value, axis) {
         if (o.anchor !== undefined) {
           if (o.anchor[axis] !== 0) {
@@ -37719,6 +37888,7 @@ var Hexi = (function () {
         return compensateForAnchor(a, a[property1], property2) + compensateForAnchor(b, b[property1], property2);
       };
 
+      //The `put` methods:
       //Center a sprite inside this sprite. `xOffset` and `yOffset`
       //arguments determine by how much the other sprite's position
       //should be offset from the center. These methods use the
@@ -37730,7 +37900,7 @@ var Hexi = (function () {
         var xOffset = arguments.length <= 1 || arguments[1] === undefined ? 0 : arguments[1];
         var yOffset = arguments.length <= 2 || arguments[2] === undefined ? 0 : arguments[2];
 
-        if (o._stage) a = _this6.compensateForStageSize(o);
+        if (o._stage) a = _this5.compensateForStageSize(o);
         //b.x = (a.x + a.halfWidth - (b.halfWidth * ((1 - b.anchor.x) - b.anchor.x))) + xOffset;
         b.x = a.x + nudgeAnchor(a, a.halfWidth, "x") - nudgeAnchor(b, b.halfWidth, "x") + xOffset;
         b.y = a.y + nudgeAnchor(a, a.halfHeight, "y") - nudgeAnchor(b, b.halfHeight, "y") + yOffset;
@@ -37744,7 +37914,7 @@ var Hexi = (function () {
         var xOffset = arguments.length <= 1 || arguments[1] === undefined ? 0 : arguments[1];
         var yOffset = arguments.length <= 2 || arguments[2] === undefined ? 0 : arguments[2];
 
-        if (o._stage) a = _this6.compensateForStageSize(o);
+        if (o._stage) a = _this5.compensateForStageSize(o);
         b.x = a.x - nudgeAnchor(b, b.width, "x") + xOffset - compensateForAnchors(a, b, "width", "x");
         b.y = a.y + nudgeAnchor(a, a.halfHeight, "y") - nudgeAnchor(b, b.halfHeight, "y") + yOffset;
 
@@ -37757,7 +37927,7 @@ var Hexi = (function () {
         var xOffset = arguments.length <= 1 || arguments[1] === undefined ? 0 : arguments[1];
         var yOffset = arguments.length <= 2 || arguments[2] === undefined ? 0 : arguments[2];
 
-        if (o._stage) a = _this6.compensateForStageSize(o);
+        if (o._stage) a = _this5.compensateForStageSize(o);
         b.x = a.x + nudgeAnchor(a, a.halfWidth, "x") - nudgeAnchor(b, b.halfWidth, "x") + xOffset;
         b.y = a.y - nudgeAnchor(b, b.height, "y") + yOffset - compensateForAnchors(a, b, "height", "y");
 
@@ -37770,7 +37940,7 @@ var Hexi = (function () {
         var xOffset = arguments.length <= 1 || arguments[1] === undefined ? 0 : arguments[1];
         var yOffset = arguments.length <= 2 || arguments[2] === undefined ? 0 : arguments[2];
 
-        if (o._stage) a = _this6.compensateForStageSize(o);
+        if (o._stage) a = _this5.compensateForStageSize(o);
         b.x = a.x + nudgeAnchor(a, a.width, "x") + xOffset + compensateForAnchors(a, b, "width", "x");
         b.y = a.y + nudgeAnchor(a, a.halfHeight, "y") - nudgeAnchor(b, b.halfHeight, "y") + yOffset;
         //b.x = (a.x + a.width) + xOffset;
@@ -37785,7 +37955,7 @@ var Hexi = (function () {
         var xOffset = arguments.length <= 1 || arguments[1] === undefined ? 0 : arguments[1];
         var yOffset = arguments.length <= 2 || arguments[2] === undefined ? 0 : arguments[2];
 
-        if (o._stage) a = _this6.compensateForStageSize(o);
+        if (o._stage) a = _this5.compensateForStageSize(o);
         //b.x = (a.x + a.halfWidth - b.halfWidth) + xOffset;
         b.x = a.x + nudgeAnchor(a, a.halfWidth, "x") - nudgeAnchor(b, b.halfWidth, "x") + xOffset;
         //b.y = (a.y + a.height) + yOffset;
@@ -38006,6 +38176,7 @@ var Hexi = (function () {
 
           enumerable: true, configurable: true
         },
+
         //The `localBounds` and `globalBounds` methods return an object
         //with `x`, `y`, `width`, and `height` properties that define
         //the dimensions and position of the sprite. This is a convenience
@@ -38061,6 +38232,7 @@ var Hexi = (function () {
             return o._circular;
           },
           set: function set(value) {
+
             //Give the sprite `diameter` and `radius` properties
             //if `circular` is `true`
             if (value === true && o._circular === false) {
@@ -38113,7 +38285,7 @@ var Hexi = (function () {
         o.y = y;
       };
 
-      //A similar `setScale` convenince method
+      //A similar `setScale` convenience method
       o.setScale = function (xScale, yScale) {
         o.scale.x = xScale;
         o.scale.y = yScale;
@@ -38136,7 +38308,52 @@ var Hexi = (function () {
       }
     }
 
-    /* Utilities */
+    //8. Utilities
+
+    //A method to scale and align the canvas in the browser
+    //window using the `scaleToWindow.js` function module
+
+  }, {
+    key: "scaleToWindow",
+    value: (function (_scaleToWindow) {
+      function scaleToWindow() {
+        return _scaleToWindow.apply(this, arguments);
+      }
+
+      scaleToWindow.toString = function () {
+        return _scaleToWindow.toString();
+      };
+
+      return scaleToWindow;
+    })(function () {
+      var _this6 = this;
+
+      var scaleBorderColor = arguments.length <= 0 || arguments[0] === undefined ? "#2C3539" : arguments[0];
+
+      //Set the default CSS padding and margins of HTML elements to 0
+      //<style>* {padding: 0; margin: 0}</style>
+      var newStyle = document.createElement("style");
+      var style = "* {padding: 0; margin: 0}";
+      newStyle.appendChild(document.createTextNode(style));
+      document.head.appendChild(newStyle);
+
+      //Use the `scaleToWindow` function module to scale the canvas to
+      //the maximum window size
+      this.scale = scaleToWindow(this.canvas, scaleBorderColor);
+      this.pointer.scale = this.scale;
+
+      //Re-scale on each browser resize
+      window.addEventListener("resize", function (event) {
+
+        //Scale the canvas and update Hexi's global `scale` value and
+        //the pointer's `scale` value
+        _this6.scale = scaleToWindow(_this6.canvas, scaleBorderColor);
+        _this6.pointer.scale = _this6.scale;
+      });
+
+      //Flag that the canvas has been scaled
+      this.canvas.scaled = true;
+    })
 
     //`log` is a shortcut for `console.log`, so that you have less to
     //type when you're debugging
@@ -38173,9 +38390,6 @@ var Hexi = (function () {
         //Use the `create` method to create the progress bar
         create: function create() {
 
-          //Store a reference to the `assets` object
-          //this.assets = assets;
-
           //Set the maximum width to half the width of the canvas
           this.maxWidth = hexi.canvas.width / 2;
 
@@ -38205,10 +38419,7 @@ var Hexi = (function () {
         update: function update() {
 
           //Change the width of the blue `frontBar` to match the
-          //ratio of assets that have loaded. Adding `+1` to
-          //`assets.loaded` means that the loading bar will appear at 100%
-          //when the last asset is being loaded, which is reassuring for the
-          //player observing the load progress
+          //ratio of assets that have loaded.
           var ratio = hexi.loadingProgress / 100;
           //console.log(`ratio: ${ratio}`);
           this.frontBar.width = this.maxWidth * ratio;

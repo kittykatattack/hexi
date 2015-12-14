@@ -56,4 +56,7 @@ watchSrc: $(CORE_ES6)
 
 watchExamples:
 	babel examples/src --watch --out-dir examples/bin --source-maps
+
+watchTutorials:
+	babel tutorials/src --watch --out-dir tutorials/bin --source-maps
     

@@ -1,8 +1,103 @@
+/*
+Hexi
+====
+   
+Welcome to Hexi's source code!
+This file, `core.js` is the glue that holds Hexi together. Most of Hexi's functionality comes
+from some external libraries, written for Hexi, that `core.js` instantiates and wires
+together. Here are the external libraries that Hexi is currently using:
+
+- [Pixi](https://github.com/pixijs/pixi.js/): The world's fastest 2D WebGL and canvas renderer.
+- [Bump](https://github.com/kittykatattack/bump): A complete suite of 2D collision functions for games.
+- [Tink](https://github.com/kittykatattack/tink): Drag-and-drop, buttons, a universal pointer and other
+  helpful interactivity tools.
+- [Charm](https://github.com/kittykatattack/charm): Easy-to-use tweening animation effects for Pixi sprites.
+- [Dust](https://github.com/kittykatattack/dust): Particle effects for creating things like explosions, fire
+  and magic.
+- [Sprite Utilities](https://github.com/kittykatattack/spriteUtilities): Easier and more intuitive ways to
+  create and use Pixi sprites, as well adding a state machine and animation player
+- [Game Utilities](https://github.com/kittykatattack/gameUtilities): A collection of useful methods for games.
+- [Tile Utilities](https://github.com/kittykatattack/tileUtilities): A collection of useful methods for making tile-based game worlds with [Tiled Editor](http://www.mapeditor.org).
+- [Sound.js](https://github.com/kittykatattack/sound.js): A micro-library for loading, controlling and generating
+  sound and music effects. Everything you need to add sound to games.
+- [fullScreen.js](https://github.com/kittykatattack/fullScreen): Adds an easy-to-implement full screen feature.
+- [Smoothie](https://github.com/kittykatattack/smoothie): Ultra-smooth sprite animation using 
+  true delta-time interpolation. It also lets you specify the fps (frames-per-second) at which 
+  your game or application runs, and completely separates your sprite rendering loop from your
+  application logic loop.
+
+The job of `core.js` (this file!) is to instantiate Hexi, load the assets, start the game loop, and 
+create top-level access to most of the properties and methods in the external libraries.
+It also customizes some of those methods and runs them with some useful side-effects, such as 
+automatically adding sprites to Hexi's `stage`. (Hexi's `stage` is the root Pixi `Container` for the display list.)
+
+I've divided this `core.js` file into "Chapters" which describes what each major section of code does.
+You'll find a "Table of Contents" ahead, which is your guide to this file.
+All this code is fully commented, but if there's something you don't understand, please ask 
+in this repository's Issues and we will do our best to help. All this code is in one single file for now, just for the sake of simplicity,
+until the total scope of this project stabilizes. 
+
+Hexi's build system
+-------------------
+
+All of Hexi's source code is written in JavaScript ES6, transpiled to ES5 using Babel, and minified using Uglify2. 
+Make is currently being used as the build
+system. So, to build Hexi, make sure you have Node, Babel and Uglify2 installed, and call `make` in the 
+command line from Hexi's root directory. Make will compile the `core.js` file, concatenate all files (including
+the modules) and produce the `hexi.min.js` file using Uglify2.
+
+You can also use Make to build individual sections of Hexi's code base.
+If you just want to watch and compile the core.js file from ES6 to ES5, run:
+
+   make watchSrc
+
+If you want to concatenate all the modules, run:
+
+  make concatModules
+
+If you want to concatenate all the files, run:
+
+  make concatAllFiles
+
+To watch and compile the example files from ES6 to ES5, run:
+  
+  make watchExamples
+
+To watch and compile the tutorial files from ES6 to ES5, run:
+
+  make watchTutorials
+
+If anyone reading this wishes to contribute a simpler, more automated system using Grunt of Gulp, 
+we would welcome the contribution!
+
+Table of Contents
+-----------------
+
+Here's your handy guide to this `core.js` file.
+
+1. Setup and instantiation.
+2. The `Hexi` class constructor.
+3. Hexi's engine: `start`, `load` and `update` methods.
+4. Module interfaces: Hexi's top-level access to the module properties and methods.
+5. Sprite creation methods: `sprite`, `tilingSprite`, `text`, `bitmapText`, `rectangle`, `circle`, `line`, `button`.
+6. Display utilities: `group`, `batch`, `grid`, `makeTiledWorld`, `remove`, `flowRight`, `flowDown`, `flowLeft`, `flowUp`.
+7. Sprite properties: Hexi's custom sprite properties (also known as super-powers!).
+8. Utilities: `scaleToWindow`, `log`, `makeProgressBar`, `loadingBar`, `compensateForStageSize`, `image`, `id`, `json`, `xml`, `sound`
+
+*/
+
+
+//1. SETUP AND INSTANTIATION
+//---------------------------
+
 //IMPORTANT: Make sure to load Pixi and the modules before instantiating Hexi!
 
 //The high level `hexi` function lets you quickly create an instance
-//of Hexi using sensible defaults
+//of Hexi using sensible defaults.
 function hexi(width, height, setup, thingsToLoad = undefined, load = undefined) {
+
+  //If you need to, you can also instantiate Hexi with a configuration
+  //object, which lets you fine-tune the options.
   let hexi = new Hexi({
 
     //Required options:
@@ -47,6 +142,9 @@ function hexi(width, height, setup, thingsToLoad = undefined, load = undefined) 
 //code. See how it's done in the `hexi` function above for a good example
 //of how to do that.
 
+//2. THE HEXI CLASS CONSTRUCTOR
+//----------------------------
+
 class Hexi{
 
   /*
@@ -60,17 +158,17 @@ class Hexi{
   Here are the optional options:
 
   `assets`: Array of assets (files) that should be loaded
-  `load`: A function that should run while Hexi is loading asssets
+  `load`: A function that should run while Hexi is loading assets
   `renderer`: The type of renderer to use: "auto" (the default), "canvas" or "webgl"
   `backgroundColor`: Hexadecimal color code that defines the canvas color
   `border`: The canvas border style as a CSS border string, such as "1px dashed black"
-  `scaleToWindow`: A Boolean that determines whether the canvas should scale to maximum window size
+  `scaleToWindow`: A Boolean that determines whether the canvas should scale to maximum window size.
   `scaleBorderColor`: Color string that defines the color of the border around a scaled canvas.
   `interpolationProperties: An object that defines 5 Boolean properties that determines which sprite properties are interpolated 
                             (smoothly animated) by Hexi's rendering engine (Smoothie): `position`, `size`, `rotation`, `scale` or `alpha`
-  `interpolate`: A Boolean which should be `false` if you *don't* want any sprite animation smoothing
-  `fps`: The frames-per-second the engine's game logic loop should run at (the default is 60)
-  `renderFps`: Clamps the fps rendering to the supplied frame rate
+  `interpolate`: A Boolean which should be `false` if you *don't* want any sprite animation smoothing.
+  `fps`: The frames-per-second the engine's game logic loop should run at (the default is 60).
+  `renderFps`: Clamps the fps rendering to the supplied frame rate.
 
   You can also add any of Pixi's initialization options, and those will be applied 
   to Pixi's renderer when Hexi creates it.
@@ -78,7 +176,8 @@ class Hexi{
   */
   constructor(o){
 
-    //Initialize all the helper libraries
+    //Initialize all the helper modules.
+    //(See Hexi's README.md on information about these libraries)
     this.charm = new Charm(PIXI);
     this.dust = new Dust(PIXI);
     this.bump = new Bump(PIXI);
@@ -99,8 +198,10 @@ class Hexi{
     this.modulesToUpdate.push(this.tink);
     this.modulesToUpdate.push(this.spriteUtilities);
 
-    //Create local alias for the important methods and properties of
-    //these libraries, including the most useful Pixi properties
+    //Create local aliases for the important methods and properties of
+    //these libraries, including the most useful Pixi properties.
+    //Take a look at Hexi's `createModulePropertyAliases` method in the
+    //source code ahead to see how this works
     this.createModulePropertyAliases();
 
     //Create the stage and renderer
@@ -146,13 +247,13 @@ class Hexi{
       }
     });
 
-    //A Boolean to flag wether the canvas has been scaled
+    //A Boolean to flag whether the canvas has been scaled
     this.canvas.scaled = false;
 
     //Add the FullScreen module and supply it with the canvas element
     this.fullScreen = new FullScreen(this.canvas);
     
-    //Note: Hexi's update function checks whether we're in full screen
+    //Note: Hexi's `update` function checks whether we're in full screen
     //mode and updates the global scale value accordingly
     
     //Set the canvas's optional background color and border style
@@ -212,7 +313,7 @@ class Hexi{
 
     //Tell Hexi that we're not using a loading progress bar.
     //(This will be set to `true` if the user invokes the `loadingBar`
-    //function, which you'll see below)
+    //function, which you'll see ahead)
     this._progressBarAdded = false;
 
     //The `soundObjects` object is used to store all sounds
@@ -233,43 +334,31 @@ class Hexi{
     });
   }
 
-  //A method to scale and align the canvas in the browser
-  //window using the `scaleToWindow.js` function module
-  scaleToWindow(scaleBorderColor = "#2C3539") {
-
-    //Set the default CSS padding and margins of HTML elements to 0 
-    //<style>* {padding: 0; margin: 0}</style>
-    let newStyle = document.createElement("style");
-    let style = "* {padding: 0; margin: 0}";
-    newStyle.appendChild(document.createTextNode(style));
-    document.head.appendChild(newStyle);
-
-    //Use the `scaleToWindow` function module to scale the canvas to
-    //the maximum window size
-    this.scale = scaleToWindow(this.canvas, scaleBorderColor);
-    this.pointer.scale = this.scale;
-
-    //Re-scale on each browser resize
-    window.addEventListener("resize", event => { 
-
-      //Scale the canvas and update Hexi's global `scale` value and
-      //the pointer's `scale` value
-      this.scale = scaleToWindow(this.canvas, scaleBorderColor);
-      this.pointer.scale = this.scale;
-    });
-
-    //Flag that the canvas has been scaled
-    this.canvas.scaled = true;
-  }
-
+  //3. HEXI'S ENGINE: START, LOAD AND SETUP
+  //---------------------------------------
+  
   //The `start` method must be called by the user after Hexi has been
   //initialized to start the loading process and turn on the engine.
   start(){
 
     //If there are assets to load, load them, and set the game's state
-    //to the user-defined `loadState`
+    //to the user-defined `loadState` (which can be supplied by the user in the
+    //constructor)
     if (this.assetsToLoad) {
+
+      //Call Hexi's `load` method (ahead) to load the assets
       this.load(this.assetsToLoad, this.validateAssets);
+
+      //After the assets have been loaded, a method called
+      //`validateAssets` will run (see `validateAssets` ahead.)
+      //`validateAssets` checks to see what has been loaded and,
+      //in the case of sound files, decodes them and creates sound
+      //objects.
+
+      //If the user has supplied Hexi with a `load` function (in
+      //Hexi's constructor), it will be assigned to Hexi's current
+      //`state` and, as you'll see ahead, called in a loop while the
+      //assets load
       if (this.loadState) this.state = this.loadState;
     }
     else {
@@ -280,13 +369,14 @@ class Hexi{
     }
 
     //Start the game loop
-    //this.gameLoop();
     this.smoothie.start();
   }
   
   //Use the `load` method to load any files into Hexi. Pass it a 
   //callback function as the second argument to launch a function that
-  //should run when all the assets have finished loading.
+  //should run when all the assets have finished loading. Hexi's
+  //default callback function is `validateAssets`, which you'll find
+  //in the code ahead
   load(assetsToLoad, callbackFunction = undefined) {
 
     //Handle special file types that Pixi's loader doesn't understand
@@ -321,7 +411,7 @@ class Hexi{
       this.spanElements = [];
       fontFiles.forEach(source => {
       
-        //Loads the font files by writing CSS code to the HTML document head
+        //Loads the font files by writing CSS code to the HTML document head.
         //Use the font's filename as the `fontFamily` name. This code captures 
         //the font file's name without the extension or file path
         let fontFamily = source.split("/").pop().split(".")[0];
@@ -369,11 +459,9 @@ class Hexi{
     let loadProgressHandler = (loader, resource) => {
 
       //Display the file `url` currently being loaded
-      //console.log(`loading: ${resource.url}`); 
       this.loadingFile = resource.url;
 
       //Display the percentage of files currently loaded
-      //console.log(`progress: ${loader.progress}`); 
       this.loadingProgress = loader.progress;
     };
 
@@ -401,6 +489,7 @@ class Hexi{
     //The `finishLoadingState` method will be called if everything has
     //finished loading and any possible sounds have been decoded
     let finishLoadingState = () =>{
+
       //Reset the `assetsToLoad` array
       this.assetsToLoad = [];
 
@@ -417,7 +506,7 @@ class Hexi{
       }
 
       //If any fonts were tricked into loading 
-      //method make the <span> tags that use them invisible
+      //make the <span> tags that use them invisible
       if (this.spanElements) {
         this.spanElements.forEach(element =>{
           element.style.display = "none";
@@ -430,7 +519,7 @@ class Hexi{
 
     //We need to check if any possible sound file have been loaded
     //because, if there have, they need to fist be decoded before we
-    //can launch the setup state.
+    //can launch the `setup` state.
 
     //Variables to count the number of sound files and the sound files
     //that have been decoded. If both these numbers are the same at
@@ -498,9 +587,10 @@ class Hexi{
     if (soundsToDecode === 0) {
       finishLoadingState();
     }
-
   }
-  
+ 
+  //The `update` method is run by Hexi's game loop each frame.
+  //It manages the game state and updates the modules
   update() {
 
     //Update all the modules in the `modulesToUpdate` array.
@@ -535,9 +625,9 @@ class Hexi{
     this.paused = false;
   }
 
-  /* Hexi's interfaces to the modules */
+  //4. MODULE INTERFACES
 
-  //A function that helpfully creates local, top-level references to the
+  //A method that helpfully creates local, top-level references to the
   //most useful properties and methods from the loaded modules
   createModulePropertyAliases() {
 
@@ -665,10 +755,8 @@ class Hexi{
     this.circlePointCollision = (c1, point, bounce = false, global = false) => this.bump.circlePointCollision(c1, point, bounce, global);
     this.bounceOffSurface = (o, s) => this.bump.bounceOffSurface(o, s);
     this.hit = (a, b, react = false, bounce = false, global, extra = undefined) => this.bump.hit(a, b, react, bounce, global, extra);
-    //this.outsideBounds = this.bump.outsideBounds;
-    //this.contain = (sprite, container, bounce = false, extra = undefined) => this.bump.contain(sprite, container, bounce, extra);
 
-    //Intercept the Bump library's `contain` method to make sure that
+    //Intercept the Bump library's `contain` and `outsideBounds` methods to make sure that
     //the stage `width` and `height` match the canvas width and height
     this.contain = (sprite, container, bounce = false, extra = undefined) => {
       let o = {};
@@ -723,6 +811,9 @@ class Hexi{
     }
   }
 
+  //Getters and setters
+
+  //Pixi's loader resources
   get resources() {return this.loader.resources}
 
   //Add Smoothie getters and setters to access the `fps`,
@@ -747,14 +838,16 @@ class Hexi{
   set backgroundColor(value) {this.renderer.backgroundColor = this.color(value);}
 
 
-  /* Sprite creation methods */
+  //5. SPRITE CREATION METHODS
 
-  //Hexi's uses methods uses the from
+  //Hexi uses methods from the
   //SpriteUtilities module to help create sprites. But, as a helpful bonus, Hexi automatically adds sprites 
   //to the `stage` container. (The `stage` is Hexi's root container for all
   //Hexi sprites.) Hexi also adds a whole bunch of
   //extra, useful properties and methods to sprites with the
   //`addProperties` method
+
+  //Universal sprites
   sprite(source, x = 0, y = 0, tiling = false, width, height){
     let o = this.spriteUtilities.sprite(source, x, y, tiling, width, height);
     this.addProperties(o);
@@ -762,6 +855,7 @@ class Hexi{
     return o;
   }
 
+  //Tiling sprites
   tilingSprite(source, width, height, x = 0, y = 0){
     let o = this.spriteUtilities.tilingSprite(source, width, height, x, y);
     this.addProperties(o);
@@ -778,7 +872,7 @@ class Hexi{
     return message;
   }
 
-  //`bitmapText` method is a quick way to create a Pixi BitmapText sprite
+  //The `bitmapText` method is a quick way to create a Pixi BitmapText sprite
   bitmapText(content = "message", font, align, tint, x = 0, y = 0) {
     let message = this.spriteUtilities.bitmapText(content, font, align, tint, x, y);
     this.addProperties(message);
@@ -821,6 +915,45 @@ class Hexi{
     return o;
   }
 
+  //6. DISPLAY UTILITIES
+  //--------------------
+
+  //Use `group` to create a Container
+  group(...sprites) {
+    let o = this.spriteUtilities.group(...sprites);
+    this.addProperties(o);
+    this.stage.addChild(o);
+    return o;
+  }
+
+  //`batch` creates a Pixi ParticleContainer
+  batch(size, options) {
+    let o = this.spriteUtilities.batch(size, options);
+    this.addProperties(o);
+    this.stage.addChild(o);
+    return o;
+  }
+
+  //Create a grid of sprite
+  grid(
+    columns = 0, rows = 0, cellWidth = 32, cellHeight = 32,
+    centerCell = false, xOffset = 0, yOffset = 0,
+    makeSprite = undefined,
+    extra = undefined  
+  ) {
+  
+    let o = this.spriteUtilities.grid(
+      columns, rows, cellWidth, cellHeight,
+      centerCell, xOffset, yOffset, makeSprite, extra
+    );
+    this.addProperties(o);
+    this.stage.addChild(o);
+    return o;
+  }
+
+  //`makeTiledWorld` uses a Tiled Editor JSON file to generate a game
+  //world. It uses the `makeTiledWorld` method from the
+  //`tileUtilities` module to do help do this.
   makeTiledWorld(jsonTiledMap, tileset) {
     let o = this.tileUtilities.makeTiledWorld(jsonTiledMap, tileset);
     this.addProperties(o);
@@ -846,41 +979,6 @@ class Hexi{
     }
 
     //Return the world object
-    this.stage.addChild(o);
-    return o;
-  }
-
-  //Display utilities
-
-  //Use `group` to create a Container
-  group(...sprites) {
-    let o = this.spriteUtilities.group(...sprites);
-    this.addProperties(o);
-    this.stage.addChild(o);
-    return o;
-  }
-
-  //Create a grid of sprite
-  grid(
-    columns = 0, rows = 0, cellWidth = 32, cellHeight = 32,
-    centerCell = false, xOffset = 0, yOffset = 0,
-    makeSprite = undefined,
-    extra = undefined  
-  ) {
-  
-    let o = this.spriteUtilities.grid(
-      columns, rows, cellWidth, cellHeight,
-      centerCell, xOffset, yOffset, makeSprite, extra
-    );
-    this.addProperties(o);
-    this.stage.addChild(o);
-    return o;
-  }
-
-  //`batch` creates a Pixi ParticleContainer
-  batch(size, options) {
-    let o = this.spriteUtilities.batch(size, options);
-    this.addProperties(o);
     this.stage.addChild(o);
     return o;
   }
@@ -968,7 +1066,7 @@ class Hexi{
     }
   }
 
-  //flowLeft
+  //flowUp
   flowUp(padding, ...sprites) {
     let flowSprites = (spritesToFlow) => {
       if (spritesToFlow.length > 0) {
@@ -988,7 +1086,7 @@ class Hexi{
     }
   }
 
-  /* Hexi's sprite properties */
+  //7. SPRITE PROPERTIES
 
   //The sprite creation methods above all run the `addProperties`
   //method on each sprite they create. `addProperties` adds special
@@ -1014,7 +1112,7 @@ class Hexi{
     //Is the sprite draggable?
     o._draggable = false;
 
-    //Flag this object for compatiblity with the Bump collision
+    //Flag this object for compatibility with the Bump collision
     //library
     o._bumpPropertiesAdded = true;
     
@@ -1055,10 +1153,14 @@ class Hexi{
 
     //The `put` methods are conveniences that help you position a
     //another sprite in and around this sprite.
-    //First, get a short form reference to the sprite to make the code more
+    //First, get a short form reference to the sprite to make the code
     //easier to read
     let a = o;
 
+    //The `nudgeAnchor`, `compensateForAnchor` and
+    //`compensateForAnchors` (with an "s"!) methods are used by
+    //the `put` methods to adjust the position of the sprite based on
+    //its x/y anchor point.
     let nudgeAnchor = (o, value, axis) => {
       if (o.anchor !== undefined) {
         if (o.anchor[axis] !== 0) {
@@ -1087,6 +1189,7 @@ class Hexi{
        return compensateForAnchor(a, a[property1], property2) + compensateForAnchor(b, b[property1], property2)
     };
 
+    //The `put` methods:
     //Center a sprite inside this sprite. `xOffset` and `yOffset`
     //arguments determine by how much the other sprite's position
     //should be offset from the center. These methods use the
@@ -1315,6 +1418,7 @@ class Hexi{
         },
         enumerable: true, configurable: true
       },
+
       //The `localBounds` and `globalBounds` methods return an object
       //with `x`, `y`, `width`, and `height` properties that define
       //the dimensions and position of the sprite. This is a convenience
@@ -1365,6 +1469,7 @@ class Hexi{
       "circular": {
         get() {return o._circular;},
         set(value) {
+
           //Give the sprite `diameter` and `radius` properties
           //if `circular` is `true`
           if (value === true && o._circular === false) {
@@ -1414,7 +1519,7 @@ class Hexi{
       o.y = y;
     };
 
-    //A similar `setScale` convenince method
+    //A similar `setScale` convenience method
     o.setScale = (xScale, yScale) => {
       o.scale.x = xScale;
       o.scale.y = yScale;
@@ -1435,7 +1540,36 @@ class Hexi{
 
   }
 
-  /* Utilities */
+  //8. Utilities
+
+  //A method to scale and align the canvas in the browser
+  //window using the `scaleToWindow.js` function module
+  scaleToWindow(scaleBorderColor = "#2C3539") {
+
+    //Set the default CSS padding and margins of HTML elements to 0 
+    //<style>* {padding: 0; margin: 0}</style>
+    let newStyle = document.createElement("style");
+    let style = "* {padding: 0; margin: 0}";
+    newStyle.appendChild(document.createTextNode(style));
+    document.head.appendChild(newStyle);
+
+    //Use the `scaleToWindow` function module to scale the canvas to
+    //the maximum window size
+    this.scale = scaleToWindow(this.canvas, scaleBorderColor);
+    this.pointer.scale = this.scale;
+
+    //Re-scale on each browser resize
+    window.addEventListener("resize", event => { 
+
+      //Scale the canvas and update Hexi's global `scale` value and
+      //the pointer's `scale` value
+      this.scale = scaleToWindow(this.canvas, scaleBorderColor);
+      this.pointer.scale = this.scale;
+    });
+
+    //Flag that the canvas has been scaled
+    this.canvas.scaled = true;
+  }
 
   //`log` is a shortcut for `console.log`, so that you have less to
   //type when you're debugging
@@ -1447,7 +1581,6 @@ class Hexi{
   //`create`, `update` and `remove` methods. It's called by the
   //`loadingBar` method, which should be run inside the `load`
   //function of your application code. 
-
   makeProgressBar(hexiObject) {
   
     let hexi = hexiObject;
@@ -1466,9 +1599,6 @@ class Hexi{
 
       //Use the `create` method to create the progress bar
       create() {
-
-        //Store a reference to the `assets` object
-        //this.assets = assets;
 
         //Set the maximum width to half the width of the canvas
         this.maxWidth = hexi.canvas.width / 2;
@@ -1499,10 +1629,7 @@ class Hexi{
       update() {
 
         //Change the width of the blue `frontBar` to match the
-        //ratio of assets that have loaded. Adding `+1` to
-        //`assets.loaded` means that the loading bar will appear at 100%
-        //when the last asset is being loaded, which is reassuring for the
-        //player observing the load progress
+        //ratio of assets that have loaded.
         let ratio = hexi.loadingProgress / 100;
         //console.log(`ratio: ${ratio}`);
         this.frontBar.width = this.maxWidth * ratio;
@@ -1547,7 +1674,6 @@ class Hexi{
       this.progressBar.update();
     }
   }
-
 
   //Hexi's root `stage` object will have a width and height equal to
   //its contents, not the size of the canvas. So, let's use the more
@@ -1604,5 +1730,4 @@ class Hexi{
       throw new Error(`${soundFileName} does not appear to be a sound object`);
     }
   }
-
 }

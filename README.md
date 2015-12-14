@@ -6,7 +6,7 @@ Hexi
 **Hexi** is a fun and easy way to make HTML5 games or any other
 kind interactive media using pure JavaScript code. Take a look at 
 the feature list and the [examples](https://github.com/kittykatattack/hexi/tree/master/examples) folder to get started. Keep scrolling, 
-and you'll find a complete quick start guide and beginner's tutorials ahead. If you've never made a game before, the tutorials are the best place to start.
+and you'll find a complete Quick Start Guide and beginner's tutorials ahead. If you've never made a game before, the tutorials are the best place to start.
 
 What's great about Hexi? You get all the power of WebGL rendering with
 a streamlined API that lets you write your code in a
@@ -203,7 +203,7 @@ Here's Hexi's core feature list:
 Hexi contains a collection of useful modules, and you use any of the
 properties or methods of these modules in your high-level Hexi code.
 
-- [Pixi](https://github.com/pixijs/pixi.js/): The fasted 2D WebGL renderer.
+- [Pixi](https://github.com/pixijs/pixi.js/): The world's fastest 2D WebGL and canvas renderer.
 - [Bump](https://github.com/kittykatattack/bump): A complete suite of 2D collision functions for games.
 - [Tink](https://github.com/kittykatattack/tink): Drag-and-drop, buttons, a universal pointer and other
   helpful interactivity tools.
@@ -217,6 +217,7 @@ properties or methods of these modules in your high-level Hexi code.
 - [Tile Utilities](https://github.com/kittykatattack/tileUtilities): A collection of useful methods for making tile-based game worlds with [Tiled Editor](http://www.mapeditor.org).
 - [Sound.js](https://github.com/kittykatattack/sound.js): A micro-library for loading, controlling and generating
   sound and music effects. Everything you need to add sound to games.
+- [Full Screen](https://github.com/kittykatattack/fullScreen): A simple way to add a full screen feature.
 - [Smoothie](https://github.com/kittykatattack/smoothie): Ultra-smooth sprite animation using 
   true delta-time interpolation. It also lets you specify the fps (frames-per-second) at which 
   your game or application runs, and completely separates your sprite rendering loop from your
