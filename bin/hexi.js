@@ -1,7 +1,7 @@
 /**
  * @license
- * pixi.js - v3.0.8
- * Compiled 2015-10-14T14:21:20.183Z
+ * pixi.js - v3.0.9
+ * Compiled 2015-12-22T18:28:46.266Z
  *
  * pixi.js is licensed under the MIT License.
  * http://www.opensource.org/licenses/mit-license.php
@@ -110,12 +110,6 @@
             arr.length >= 0 &&
             arr.length % 1 === 0
         );
-    }
-
-    function _each(coll, iterator) {
-        return _isArrayLike(coll) ?
-            _arrayEach(coll, iterator) :
-            _forEachOf(coll, iterator);
     }
 
     function _arrayEach(arr, iterator) {
@@ -265,23 +259,26 @@
     async.eachOf = function (object, iterator, callback) {
         callback = _once(callback || noop);
         object = object || [];
-        var size = _isArrayLike(object) ? object.length : _keys(object).length;
-        var completed = 0;
-        if (!size) {
-            return callback(null);
-        }
-        _each(object, function (value, key) {
+
+        var iter = _keyIterator(object);
+        var key, completed = 0;
+
+        while ((key = iter()) != null) {
+            completed += 1;
             iterator(object[key], key, only_once(done));
-        });
+        }
+
+        if (completed === 0) callback(null);
+
         function done(err) {
+            completed--;
             if (err) {
                 callback(err);
             }
-            else {
-                completed += 1;
-                if (completed >= size) {
-                    callback(null);
-                }
+            // Check key is null in case iterator isn't exhausted
+            // and done resolved synchronously.
+            else if (key === null && completed <= 0) {
+                callback(null);
             }
         }
     };
@@ -307,7 +304,7 @@
                         return callback(null);
                     } else {
                         if (sync) {
-                            async.nextTick(iterate);
+                            async.setImmediate(iterate);
                         } else {
                             iterate();
                         }
@@ -388,7 +385,8 @@
 
     function _asyncMap(eachfn, arr, iterator, callback) {
         callback = _once(callback || noop);
-        var results = [];
+        arr = arr || [];
+        var results = _isArrayLike(arr) ? [] : {};
         eachfn(arr, function (value, index, callback) {
             iterator(value, function (err, v) {
                 results[index] = v;
@@ -414,7 +412,7 @@
                 callback(err);
             });
         }, function (err) {
-            callback(err || null, memo);
+            callback(err, memo);
         });
     };
 
@@ -422,6 +420,20 @@
     async.reduceRight = function (arr, memo, iterator, callback) {
         var reversed = _map(arr, identity).reverse();
         async.reduce(reversed, memo, iterator, callback);
+    };
+
+    async.transform = function (arr, memo, iterator, callback) {
+        if (arguments.length === 3) {
+            callback = iterator;
+            iterator = memo;
+            memo = _isArray(arr) ? [] : {};
+        }
+
+        async.eachOf(arr, function(v, k, cb) {
+            iterator(memo, v, k, cb);
+        }, function(err) {
+            callback(err, memo);
+        });
     };
 
     function _filter(eachfn, arr, iterator, callback) {
@@ -532,15 +544,24 @@
         }
     };
 
-    async.auto = function (tasks, callback) {
+    async.auto = function (tasks, concurrency, callback) {
+        if (!callback) {
+            // concurrency is optional, shift the args.
+            callback = concurrency;
+            concurrency = null;
+        }
         callback = _once(callback || noop);
         var keys = _keys(tasks);
         var remainingTasks = keys.length;
         if (!remainingTasks) {
             return callback(null);
         }
+        if (!concurrency) {
+            concurrency = remainingTasks;
+        }
 
         var results = {};
+        var runningTasks = 0;
 
         var listeners = [];
         function addListener(fn) {
@@ -566,6 +587,7 @@
         _arrayEach(keys, function (k) {
             var task = _isArray(tasks[k]) ? tasks[k]: [tasks[k]];
             var taskCallback = _restParam(function(err, args) {
+                runningTasks--;
                 if (args.length <= 1) {
                     args = args[0];
                 }
@@ -595,11 +617,12 @@
                 }
             }
             function ready() {
-                return _reduce(requires, function (a, x) {
+                return runningTasks < concurrency && _reduce(requires, function (a, x) {
                     return (a && results.hasOwnProperty(x));
                 }, true) && !results.hasOwnProperty(k);
             }
             if (ready()) {
+                runningTasks++;
                 task[task.length - 1](taskCallback, results);
             }
             else {
@@ -607,6 +630,7 @@
             }
             function listener() {
                 if (ready()) {
+                    runningTasks++;
                     removeListener(listener);
                     task[task.length - 1](taskCallback, results);
                 }
@@ -898,8 +922,17 @@
         function _next(q, tasks) {
             return function(){
                 workers -= 1;
+
+                var removed = false;
                 var args = arguments;
                 _arrayEach(tasks, function (task) {
+                    _arrayEach(workersList, function (worker, index) {
+                        if (worker === task && !removed) {
+                            workersList.splice(index, 1);
+                            removed = true;
+                        }
+                    });
+
                     task.callback.apply(task, args);
                 });
                 if (q.tasks.length + workers === 0) {
@@ -910,6 +943,7 @@
         }
 
         var workers = 0;
+        var workersList = [];
         var q = {
             tasks: [],
             concurrency: concurrency,
@@ -944,6 +978,7 @@
                             q.empty();
                         }
                         workers += 1;
+                        workersList.push(tasks[0]);
                         var cb = only_once(_next(q, tasks));
                         worker(data, cb);
                     }
@@ -954,6 +989,9 @@
             },
             running: function () {
                 return workers;
+            },
+            workersList: function () {
+                return workersList;
             },
             idle: function() {
                 return q.tasks.length + workers === 0;
@@ -1083,7 +1121,7 @@
             var callback = args.pop();
             var key = hasher.apply(null, args);
             if (key in memo) {
-                async.nextTick(function () {
+                async.setImmediate(function () {
                     callback.apply(null, memo[key]);
                 });
             }
@@ -3014,7 +3052,7 @@ function earcut(data, holeIndices, dim) {
 
     var hasHoles = holeIndices && holeIndices.length,
         outerLen = hasHoles ? holeIndices[0] * dim : data.length,
-        outerNode = filterPoints(data, linkedList(data, 0, outerLen, dim, true)),
+        outerNode = linkedList(data, 0, outerLen, dim, true),
         triangles = [];
 
     if (!outerNode) return triangles;
@@ -3041,7 +3079,7 @@ function earcut(data, holeIndices, dim) {
         size = Math.max(maxX - minX, maxY - minY);
     }
 
-    earcutLinked(data, outerNode, triangles, dim, minX, minY, size);
+    earcutLinked(outerNode, triangles, dim, minX, minY, size);
 
     return triangles;
 }
@@ -3059,51 +3097,44 @@ function linkedList(data, start, end, dim, clockwise) {
 
     // link points into circular doubly-linked list in the specified winding order
     if (clockwise === (sum > 0)) {
-        for (i = start; i < end; i += dim) last = insertNode(i, last);
+        for (i = start; i < end; i += dim) last = insertNode(i, data[i], data[i + 1], last);
     } else {
-        for (i = end - dim; i >= start; i -= dim) last = insertNode(i, last);
+        for (i = end - dim; i >= start; i -= dim) last = insertNode(i, data[i], data[i + 1], last);
     }
 
     return last;
 }
 
 // eliminate colinear or duplicate points
-function filterPoints(data, start, end) {
+function filterPoints(start, end) {
+    if (!start) return start;
     if (!end) end = start;
 
-    var node = start,
+    var p = start,
         again;
     do {
         again = false;
 
-        if (!node.steiner && (equals(data, node.i, node.next.i) || orient(data, node.prev.i, node.i, node.next.i) === 0)) {
-
-            // remove node
-            node.prev.next = node.next;
-            node.next.prev = node.prev;
-
-            if (node.prevZ) node.prevZ.nextZ = node.nextZ;
-            if (node.nextZ) node.nextZ.prevZ = node.prevZ;
-
-            node = end = node.prev;
-
-            if (node === node.next) return null;
+        if (!p.steiner && (equals(p, p.next) || area(p.prev, p, p.next) === 0)) {
+            removeNode(p);
+            p = end = p.prev;
+            if (p === p.next) return null;
             again = true;
 
         } else {
-            node = node.next;
+            p = p.next;
         }
-    } while (again || node !== end);
+    } while (again || p !== end);
 
     return end;
 }
 
 // main ear slicing loop which triangulates a polygon (given as a linked list)
-function earcutLinked(data, ear, triangles, dim, minX, minY, size, pass) {
+function earcutLinked(ear, triangles, dim, minX, minY, size, pass) {
     if (!ear) return;
 
     // interlink polygon nodes in z-order
-    if (!pass && minX !== undefined) indexCurve(data, ear, minX, minY, size);
+    if (!pass && size) indexCurve(ear, minX, minY, size);
 
     var stop = ear,
         prev, next;
@@ -3113,18 +3144,13 @@ function earcutLinked(data, ear, triangles, dim, minX, minY, size, pass) {
         prev = ear.prev;
         next = ear.next;
 
-        if (isEar(data, ear, minX, minY, size)) {
+        if (size ? isEarHashed(ear, minX, minY, size) : isEar(ear)) {
             // cut off the triangle
             triangles.push(prev.i / dim);
             triangles.push(ear.i / dim);
             triangles.push(next.i / dim);
 
-            // remove ear node
-            next.prev = prev;
-            prev.next = next;
-
-            if (ear.prevZ) ear.prevZ.nextZ = ear.nextZ;
-            if (ear.nextZ) ear.nextZ.prevZ = ear.prevZ;
+            removeNode(ear);
 
             // skipping the next vertice leads to less sliver triangles
             ear = next.next;
@@ -3139,16 +3165,16 @@ function earcutLinked(data, ear, triangles, dim, minX, minY, size, pass) {
         if (ear === stop) {
             // try filtering points and slicing again
             if (!pass) {
-                earcutLinked(data, filterPoints(data, ear), triangles, dim, minX, minY, size, 1);
+                earcutLinked(filterPoints(ear), triangles, dim, minX, minY, size, 1);
 
             // if this didn't work, try curing all small self-intersections locally
             } else if (pass === 1) {
-                ear = cureLocalIntersections(data, ear, triangles, dim);
-                earcutLinked(data, ear, triangles, dim, minX, minY, size, 2);
+                ear = cureLocalIntersections(ear, triangles, dim);
+                earcutLinked(ear, triangles, dim, minX, minY, size, 2);
 
             // as a last resort, try splitting the remaining polygon into two
             } else if (pass === 2) {
-                splitEarcut(data, ear, triangles, dim, minX, minY, size);
+                splitEarcut(ear, triangles, dim, minX, minY, size);
             }
 
             break;
@@ -3157,163 +3183,109 @@ function earcutLinked(data, ear, triangles, dim, minX, minY, size, pass) {
 }
 
 // check whether a polygon node forms a valid ear with adjacent nodes
-function isEar(data, ear, minX, minY, size) {
+function isEar(ear) {
+    var a = ear.prev,
+        b = ear,
+        c = ear.next;
 
-    var a = ear.prev.i,
-        b = ear.i,
-        c = ear.next.i,
+    if (area(a, b, c) >= 0) return false; // reflex, can't be an ear
 
-        ax = data[a], ay = data[a + 1],
-        bx = data[b], by = data[b + 1],
-        cx = data[c], cy = data[c + 1],
+    // now make sure we don't have other points inside the potential ear
+    var p = ear.next.next;
 
-        abd = ax * by - ay * bx,
-        acd = ax * cy - ay * cx,
-        cbd = cx * by - cy * bx,
-        A = abd - acd - cbd;
+    while (p !== ear.prev) {
+        if (pointInTriangle(a.x, a.y, b.x, b.y, c.x, c.y, p.x, p.y) &&
+            area(p.prev, p, p.next) >= 0) return false;
+        p = p.next;
+    }
 
-    if (A <= 0) return false; // reflex, can't be an ear
+    return true;
+}
 
-    // now make sure we don't have other points inside the potential ear;
-    // the code below is a bit verbose and repetitive but this is done for performance
+function isEarHashed(ear, minX, minY, size) {
+    var a = ear.prev,
+        b = ear,
+        c = ear.next;
 
-    var cay = cy - ay,
-        acx = ax - cx,
-        aby = ay - by,
-        bax = bx - ax,
-        i, px, py, s, t, k, node;
+    if (area(a, b, c) >= 0) return false; // reflex, can't be an ear
 
-    // if we use z-order curve hashing, iterate through the curve
-    if (minX !== undefined) {
+    // triangle bbox; min & max are calculated like this for speed
+    var minTX = a.x < b.x ? (a.x < c.x ? a.x : c.x) : (b.x < c.x ? b.x : c.x),
+        minTY = a.y < b.y ? (a.y < c.y ? a.y : c.y) : (b.y < c.y ? b.y : c.y),
+        maxTX = a.x > b.x ? (a.x > c.x ? a.x : c.x) : (b.x > c.x ? b.x : c.x),
+        maxTY = a.y > b.y ? (a.y > c.y ? a.y : c.y) : (b.y > c.y ? b.y : c.y);
 
-        // triangle bbox; min & max are calculated like this for speed
-        var minTX = ax < bx ? (ax < cx ? ax : cx) : (bx < cx ? bx : cx),
-            minTY = ay < by ? (ay < cy ? ay : cy) : (by < cy ? by : cy),
-            maxTX = ax > bx ? (ax > cx ? ax : cx) : (bx > cx ? bx : cx),
-            maxTY = ay > by ? (ay > cy ? ay : cy) : (by > cy ? by : cy),
+    // z-order range for the current triangle bbox;
+    var minZ = zOrder(minTX, minTY, minX, minY, size),
+        maxZ = zOrder(maxTX, maxTY, minX, minY, size);
 
-            // z-order range for the current triangle bbox;
-            minZ = zOrder(minTX, minTY, minX, minY, size),
-            maxZ = zOrder(maxTX, maxTY, minX, minY, size);
+    // first look for points inside the triangle in increasing z-order
+    var p = ear.nextZ;
 
-        // first look for points inside the triangle in increasing z-order
-        node = ear.nextZ;
+    while (p && p.z <= maxZ) {
+        if (p !== ear.prev && p !== ear.next &&
+            pointInTriangle(a.x, a.y, b.x, b.y, c.x, c.y, p.x, p.y) &&
+            area(p.prev, p, p.next) >= 0) return false;
+        p = p.nextZ;
+    }
 
-        while (node && node.z <= maxZ) {
-            i = node.i;
-            node = node.nextZ;
-            if (i === a || i === c) continue;
+    // then look for points in decreasing z-order
+    p = ear.prevZ;
 
-            px = data[i];
-            py = data[i + 1];
-
-            s = cay * px + acx * py - acd;
-            if (s >= 0) {
-                t = aby * px + bax * py + abd;
-                if (t >= 0) {
-                    k = A - s - t;
-                    if ((k >= 0) && ((s && t) || (s && k) || (t && k))) return false;
-                }
-            }
-        }
-
-        // then look for points in decreasing z-order
-        node = ear.prevZ;
-
-        while (node && node.z >= minZ) {
-            i = node.i;
-            node = node.prevZ;
-            if (i === a || i === c) continue;
-
-            px = data[i];
-            py = data[i + 1];
-
-            s = cay * px + acx * py - acd;
-            if (s >= 0) {
-                t = aby * px + bax * py + abd;
-                if (t >= 0) {
-                    k = A - s - t;
-                    if ((k >= 0) && ((s && t) || (s && k) || (t && k))) return false;
-                }
-            }
-        }
-
-    // if we don't use z-order curve hash, simply iterate through all other points
-    } else {
-        node = ear.next.next;
-
-        while (node !== ear.prev) {
-            i = node.i;
-            node = node.next;
-
-            px = data[i];
-            py = data[i + 1];
-
-            s = cay * px + acx * py - acd;
-            if (s >= 0) {
-                t = aby * px + bax * py + abd;
-                if (t >= 0) {
-                    k = A - s - t;
-                    if ((k >= 0) && ((s && t) || (s && k) || (t && k))) return false;
-                }
-            }
-        }
+    while (p && p.z >= minZ) {
+        if (p !== ear.prev && p !== ear.next &&
+            pointInTriangle(a.x, a.y, b.x, b.y, c.x, c.y, p.x, p.y) &&
+            area(p.prev, p, p.next) >= 0) return false;
+        p = p.prevZ;
     }
 
     return true;
 }
 
 // go through all polygon nodes and cure small local self-intersections
-function cureLocalIntersections(data, start, triangles, dim) {
-    var node = start;
+function cureLocalIntersections(start, triangles, dim) {
+    var p = start;
     do {
-        var a = node.prev,
-            b = node.next.next;
+        var a = p.prev,
+            b = p.next.next;
 
         // a self-intersection where edge (v[i-1],v[i]) intersects (v[i+1],v[i+2])
-        if (a.i !== b.i && intersects(data, a.i, node.i, node.next.i, b.i) &&
-                locallyInside(data, a, b) && locallyInside(data, b, a)) {
+        if (intersects(a, p, p.next, b) && locallyInside(a, b) && locallyInside(b, a)) {
 
             triangles.push(a.i / dim);
-            triangles.push(node.i / dim);
+            triangles.push(p.i / dim);
             triangles.push(b.i / dim);
 
             // remove two nodes involved
-            a.next = b;
-            b.prev = a;
+            removeNode(p);
+            removeNode(p.next);
 
-            var az = node.prevZ,
-                bz = node.nextZ && node.nextZ.nextZ;
-
-            if (az) az.nextZ = bz;
-            if (bz) bz.prevZ = az;
-
-            node = start = b;
+            p = start = b;
         }
-        node = node.next;
-    } while (node !== start);
+        p = p.next;
+    } while (p !== start);
 
-    return node;
+    return p;
 }
 
 // try splitting polygon into two and triangulate them independently
-function splitEarcut(data, start, triangles, dim, minX, minY, size) {
+function splitEarcut(start, triangles, dim, minX, minY, size) {
     // look for a valid diagonal that divides the polygon into two
     var a = start;
     do {
         var b = a.next.next;
         while (b !== a.prev) {
-            if (a.i !== b.i && isValidDiagonal(data, a, b)) {
+            if (a.i !== b.i && isValidDiagonal(a, b)) {
                 // split the polygon in two by the diagonal
                 var c = splitPolygon(a, b);
 
                 // filter colinear points around the cuts
-                a = filterPoints(data, a, a.next);
-                c = filterPoints(data, c, c.next);
+                a = filterPoints(a, a.next);
+                c = filterPoints(c, c.next);
 
                 // run earcut on each half
-                earcutLinked(data, a, triangles, dim, minX, minY, size);
-                earcutLinked(data, c, triangles, dim, minX, minY, size);
+                earcutLinked(a, triangles, dim, minX, minY, size);
+                earcutLinked(c, triangles, dim, minX, minY, size);
                 return;
             }
             b = b.next;
@@ -3332,121 +3304,98 @@ function eliminateHoles(data, holeIndices, outerNode, dim) {
         end = i < len - 1 ? holeIndices[i + 1] * dim : data.length;
         list = linkedList(data, start, end, dim, false);
         if (list === list.next) list.steiner = true;
-        list = filterPoints(data, list);
-        if (list) queue.push(getLeftmost(data, list));
+        queue.push(getLeftmost(list));
     }
 
-    queue.sort(function (a, b) {
-        return data[a.i] - data[b.i];
-    });
+    queue.sort(compareX);
 
     // process holes from left to right
     for (i = 0; i < queue.length; i++) {
-        eliminateHole(data, queue[i], outerNode);
-        outerNode = filterPoints(data, outerNode, outerNode.next);
+        eliminateHole(queue[i], outerNode);
+        outerNode = filterPoints(outerNode, outerNode.next);
     }
 
     return outerNode;
 }
 
+function compareX(a, b) {
+    return a.x - b.x;
+}
+
 // find a bridge between vertices that connects hole with an outer ring and and link it
-function eliminateHole(data, holeNode, outerNode) {
-    outerNode = findHoleBridge(data, holeNode, outerNode);
+function eliminateHole(hole, outerNode) {
+    outerNode = findHoleBridge(hole, outerNode);
     if (outerNode) {
-        var b = splitPolygon(outerNode, holeNode);
-        filterPoints(data, b, b.next);
+        var b = splitPolygon(outerNode, hole);
+        filterPoints(b, b.next);
     }
 }
 
 // David Eberly's algorithm for finding a bridge between hole and outer polygon
-function findHoleBridge(data, holeNode, outerNode) {
-    var node = outerNode,
-        i = holeNode.i,
-        px = data[i],
-        py = data[i + 1],
-        qMax = -Infinity,
-        mNode, a, b;
+function findHoleBridge(hole, outerNode) {
+    var p = outerNode,
+        hx = hole.x,
+        hy = hole.y,
+        qx = -Infinity,
+        m;
 
     // find a segment intersected by a ray from the hole's leftmost point to the left;
     // segment's endpoint with lesser x will be potential connection point
     do {
-        a = node.i;
-        b = node.next.i;
-
-        if (py <= data[a + 1] && py >= data[b + 1]) {
-            var qx = data[a] + (py - data[a + 1]) * (data[b] - data[a]) / (data[b + 1] - data[a + 1]);
-            if (qx <= px && qx > qMax) {
-                qMax = qx;
-                mNode = data[a] < data[b] ? node : node.next;
+        if (hy <= p.y && hy >= p.next.y) {
+            var x = p.x + (hy - p.y) * (p.next.x - p.x) / (p.next.y - p.y);
+            if (x <= hx && x > qx) {
+                qx = x;
+                m = p.x < p.next.x ? p : p.next;
             }
         }
-        node = node.next;
-    } while (node !== outerNode);
+        p = p.next;
+    } while (p !== outerNode);
 
-    if (!mNode) return null;
+    if (!m) return null;
 
-    // look for points strictly inside the triangle of hole point, segment intersection and endpoint;
+    // look for points inside the triangle of hole point, segment intersection and endpoint;
     // if there are no points found, we have a valid connection;
     // otherwise choose the point of the minimum angle with the ray as connection point
 
-    var bx = data[mNode.i],
-        by = data[mNode.i + 1],
-        pbd = px * by - py * bx,
-        pcd = px * py - py * qMax,
-        cpy = py - py,
-        pcx = px - qMax,
-        pby = py - by,
-        bpx = bx - px,
-        A = pbd - pcd - (qMax * by - py * bx),
-        sign = A <= 0 ? -1 : 1,
-        stop = mNode,
+    var stop = m,
         tanMin = Infinity,
-        mx, my, amx, s, t, tan;
+        tan;
 
-    node = mNode.next;
+    p = m.next;
 
-    while (node !== stop) {
+    while (p !== stop) {
+        if (hx >= p.x && p.x >= m.x &&
+                pointInTriangle(hy < m.y ? hx : qx, hy, m.x, m.y, hy < m.y ? qx : hx, hy, p.x, p.y)) {
 
-        mx = data[node.i];
-        my = data[node.i + 1];
-        amx = px - mx;
+            tan = Math.abs(hy - p.y) / (hx - p.x); // tangential
 
-        if (amx >= 0 && mx >= bx) {
-            s = (cpy * mx + pcx * my - pcd) * sign;
-            if (s >= 0) {
-                t = (pby * mx + bpx * my + pbd) * sign;
-
-                if (t >= 0 && A * sign - s - t >= 0) {
-                    tan = Math.abs(py - my) / amx; // tangential
-                    if (tan < tanMin && locallyInside(data, node, holeNode)) {
-                        mNode = node;
-                        tanMin = tan;
-                    }
-                }
+            if ((tan < tanMin || (tan === tanMin && p.x > m.x)) && locallyInside(p, hole)) {
+                m = p;
+                tanMin = tan;
             }
         }
 
-        node = node.next;
+        p = p.next;
     }
 
-    return mNode;
+    return m;
 }
 
 // interlink polygon nodes in z-order
-function indexCurve(data, start, minX, minY, size) {
-    var node = start;
-
+function indexCurve(start, minX, minY, size) {
+    var p = start;
     do {
-        if (node.z === null) node.z = zOrder(data[node.i], data[node.i + 1], minX, minY, size);
-        node.prevZ = node.prev;
-        node.nextZ = node.next;
-        node = node.next;
-    } while (node !== start);
+        if (p.z === null) p.z = zOrder(p.x, p.y, minX, minY, size);
+        p.prevZ = p.prev;
+        p.nextZ = p.next;
+        p = p.next;
+    } while (p !== start);
 
-    node.prevZ.nextZ = null;
-    node.prevZ = null;
+    p.prevZ.nextZ = null;
+    p.prevZ = null;
 
-    sortLinked(node);
+    sortLinked(p);
 }
 
 // Simon Tatham's linked list merge sort algorithm
@@ -3513,14 +3462,15 @@ function sortLinked(list) {
 
 // z-order of a point given coords and size of the data bounding box
 function zOrder(x, y, minX, minY, size) {
-    // coords are transformed into (0..1000) integer range
-    x = 1000 * (x - minX) / size;
+    // coords are transformed into non-negative 15-bit integer range
+    x = 32767 * (x - minX) / size;
+    y = 32767 * (y - minY) / size;
+
     x = (x | (x << 8)) & 0x00FF00FF;
     x = (x | (x << 4)) & 0x0F0F0F0F;
     x = (x | (x << 2)) & 0x33333333;
     x = (x | (x << 1)) & 0x55555555;
 
-    y = 1000 * (y - minY) / size;
     y = (y | (y << 8)) & 0x00FF00FF;
     y = (y | (y << 4)) & 0x0F0F0F0F;
     y = (y | (y << 2)) & 0x33333333;
@@ -3530,81 +3480,76 @@ function zOrder(x, y, minX, minY, size) {
 }
 
 // find the leftmost node of a polygon ring
-function getLeftmost(data, start) {
-    var node = start,
+function getLeftmost(start) {
+    var p = start,
         leftmost = start;
     do {
-        if (data[node.i] < data[leftmost.i]) leftmost = node;
-        node = node.next;
-    } while (node !== start);
+        if (p.x < leftmost.x) leftmost = p;
+        p = p.next;
+    } while (p !== start);
 
     return leftmost;
 }
 
-// check if a diagonal between two polygon nodes is valid (lies in polygon interior)
-function isValidDiagonal(data, a, b) {
-    return a.next.i !== b.i && a.prev.i !== b.i &&
-           !intersectsPolygon(data, a, a.i, b.i) &&
-           locallyInside(data, a, b) && locallyInside(data, b, a) &&
-           middleInside(data, a, a.i, b.i);
+// check if a point lies within a convex triangle
+function pointInTriangle(ax, ay, bx, by, cx, cy, px, py) {
+    return (cx - px) * (ay - py) - (ax - px) * (cy - py) >= 0 &&
+           (ax - px) * (by - py) - (bx - px) * (ay - py) >= 0 &&
+           (bx - px) * (cy - py) - (cx - px) * (by - py) >= 0;
 }
 
-// winding order of triangle formed by 3 given points
-function orient(data, p, q, r) {
-    var o = (data[q + 1] - data[p + 1]) * (data[r] - data[q]) - (data[q] - data[p]) * (data[r + 1] - data[q + 1]);
-    return o > 0 ? 1 :
-           o < 0 ? -1 : 0;
+// check if a diagonal between two polygon nodes is valid (lies in polygon interior)
+function isValidDiagonal(a, b) {
+    return equals(a, b) || a.next.i !== b.i && a.prev.i !== b.i && !intersectsPolygon(a, b) &&
+           locallyInside(a, b) && locallyInside(b, a) && middleInside(a, b);
+}
+
+// signed area of a triangle
+function area(p, q, r) {
+    return (q.y - p.y) * (r.x - q.x) - (q.x - p.x) * (r.y - q.y);
 }
 
 // check if two points are equal
-function equals(data, p1, p2) {
-    return data[p1] === data[p2] && data[p1 + 1] === data[p2 + 1];
+function equals(p1, p2) {
+    return p1.x === p2.x && p1.y === p2.y;
 }
 
 // check if two segments intersect
-function intersects(data, p1, q1, p2, q2) {
-    return orient(data, p1, q1, p2) !== orient(data, p1, q1, q2) &&
-           orient(data, p2, q2, p1) !== orient(data, p2, q2, q1);
+function intersects(p1, q1, p2, q2) {
+    return area(p1, q1, p2) > 0 !== area(p1, q1, q2) > 0 &&
+           area(p2, q2, p1) > 0 !== area(p2, q2, q1) > 0;
 }
 
 // check if a polygon diagonal intersects any polygon segments
-function intersectsPolygon(data, start, a, b) {
-    var node = start;
+function intersectsPolygon(a, b) {
+    var p = a;
     do {
-        var p1 = node.i,
-            p2 = node.next.i;
-
-        if (p1 !== a && p2 !== a && p1 !== b && p2 !== b && intersects(data, p1, p2, a, b)) return true;
-
-        node = node.next;
-    } while (node !== start);
+        if (p.i !== a.i && p.next.i !== a.i && p.i !== b.i && p.next.i !== b.i &&
+                intersects(p, p.next, a, b)) return true;
+        p = p.next;
+    } while (p !== a);
 
     return false;
 }
 
 // check if a polygon diagonal is locally inside the polygon
-function locallyInside(data, a, b) {
-    return orient(data, a.prev.i, a.i, a.next.i) === -1 ?
-        orient(data, a.i, b.i, a.next.i) !== -1 && orient(data, a.i, a.prev.i, b.i) !== -1 :
-        orient(data, a.i, b.i, a.prev.i) === -1 || orient(data, a.i, a.next.i, b.i) === -1;
+function locallyInside(a, b) {
+    return area(a.prev, a, a.next) < 0 ?
+        area(a, b, a.next) >= 0 && area(a, a.prev, b) >= 0 :
+        area(a, b, a.prev) < 0 || area(a, a.next, b) < 0;
 }
 
 // check if the middle point of a polygon diagonal is inside the polygon
-function middleInside(data, start, a, b) {
-    var node = start,
+function middleInside(a, b) {
+    var p = a,
         inside = false,
-        px = (data[a] + data[b]) / 2,
-        py = (data[a + 1] + data[b + 1]) / 2;
+        px = (a.x + b.x) / 2,
+        py = (a.y + b.y) / 2;
     do {
-        var p1 = node.i,
-            p2 = node.next.i;
-
-        if (((data[p1 + 1] > py) !== (data[p2 + 1] > py)) &&
-            (px < (data[p2] - data[p1]) * (py - data[p1 + 1]) / (data[p2 + 1] - data[p1 + 1]) + data[p1]))
-                inside = !inside;
-
-        node = node.next;
-    } while (node !== start);
+        if (((p.y > py) !== (p.next.y > py)) && (px < (p.next.x - p.x) * (py - p.y) / (p.next.y - p.y) + p.x))
+            inside = !inside;
+        p = p.next;
+    } while (p !== a);
 
     return inside;
 }
@@ -3612,8 +3557,8 @@ function middleInside(data, start, a, b) {
 // link two polygon vertices with a bridge; if the vertices belong to the same ring, it splits polygon into two;
 // if one belongs to the outer ring and another to a hole, it merges it into a single ring
 function splitPolygon(a, b) {
-    var a2 = new Node(a.i),
-        b2 = new Node(b.i),
+    var a2 = new Node(a.i, a.x, a.y),
+        b2 = new Node(b.i, b.x, b.y),
         an = a.next,
         bp = b.prev;
 
@@ -3633,25 +3578,37 @@ function splitPolygon(a, b) {
 }
 
 // create a node and optionally link it with previous one (in a circular doubly linked list)
-function insertNode(i, last) {
-    var node = new Node(i);
+function insertNode(i, x, y, last) {
+    var p = new Node(i, x, y);
 
     if (!last) {
-        node.prev = node;
-        node.next = node;
+        p.prev = p;
+        p.next = p;
 
     } else {
-        node.next = last.next;
-        node.prev = last;
-        last.next.prev = node;
-        last.next = node;
+        p.next = last.next;
+        p.prev = last;
+        last.next.prev = p;
+        last.next = p;
     }
-    return node;
+    return p;
 }
 
-function Node(i) {
-    // vertex coordinates
+function removeNode(p) {
+    p.next.prev = p.prev;
+    p.prev.next = p.next;
+
+    if (p.prevZ) p.prevZ.nextZ = p.nextZ;
+    if (p.nextZ) p.nextZ.prevZ = p.prevZ;
+}
+
+function Node(i, x, y) {
+    // vertice index in coordinates array
     this.i = i;
+
+    // vertex coordinates
+    this.x = x;
+    this.y = y;
 
     // previous and next vertice nodes in a polygon ring
     this.prev = null;
@@ -3976,7 +3933,7 @@ module.exports = Object.assign || function (target, source) {
 },{}],12:[function(require,module,exports){
 module.exports={
   "name": "pixi.js",
-  "version": "3.0.8",
+  "version": "3.0.9",
   "description": "Pixi.js is a fast lightweight 2D library that works across all devices.",
   "author": "Mat Groves",
   "contributors": [
@@ -4006,13 +3963,12 @@ module.exports={
     "README.md"
   ],
   "dependencies": {
-    "async": "^1.4.2",
+    "async": "^1.5.0",
     "brfs": "^1.4.1",
-    "earcut": "^2.0.2",
+    "earcut": "^2.0.7",
     "eventemitter3": "^1.1.1",
-    "gulp-header": "^1.7.1",
     "object-assign": "^4.0.1",
-    "resource-loader": "^1.6.2"
+    "resource-loader": "^1.6.4"
   },
   "devDependencies": {
     "browserify": "^11.1.0",
@@ -4022,6 +3978,7 @@ module.exports={
     "gulp-cached": "^1.1.0",
     "gulp-concat": "^2.6.0",
     "gulp-debug": "^2.1.0",
+    "gulp-header": "^1.7.1",
     "gulp-jshint": "^1.11.2",
     "gulp-mirror": "^0.4.0",
     "gulp-plumber": "^1.0.1",
@@ -4049,6 +4006,473 @@ module.exports={
 }
 
 },{}],13:[function(require,module,exports){
+var core = require('../core');
+
+// add some extra variables to the container..
+Object.assign(
+    core.DisplayObject.prototype,
+    require('./accessibleTarget')
+);
+
+
+/**
+ * The Accessibility manager reacreates the ability to tab and and have content read by screen readers. This is very important as it can possibly help people with disabilities access pixi content.
+ * Much like interaction any DisplayObject can be made accessible. This manager will map the events as if the mouse was being used, minimizing the efferot required to implement.
+ *
+ * @class
+ * @memberof PIXI
+ * @param renderer {PIXI.CanvasRenderer|PIXI.WebGLRenderer} A reference to the current renderer
+ */
+function AccessibilityManager(renderer)
+{
+	// first we create a div that will sit over the pixi element. This is where the div overlays will go.
+    var div = document.createElement('div');
+    
+    div.style.width = 100 + 'px';
+    div.style.height = 100 + 'px';
+    div.style.position = 'absolute';
+    div.style.top = 0;
+    div.style.left = 0;
+   //
+    div.style.zIndex = 2;
+   	
+   	/**
+   	 * This is the dom element that will sit over the pixi element. This is where the div overlays will go.
+   	 * 
+   	 * @type {HTMLElement}
+   	 * @private
+   	 */
+   	this.div = div;
+
+   	/**
+   	 * A simple pool for storing divs.
+   	 * 
+   	 * @type {Array}
+   	 * @private
+   	 */
+ 	this.pool = [];
+
+ 	/**
+ 	 * This is a tick used to check if an object is no longer being rendered.
+ 	 * 
+ 	 * @type {Number}
+ 	 * @private
+ 	 */
+   	this.renderId = 0;
+
+   	/**
+   	 * Setting this to true will visually show the divs
+   	 * 
+   	 * @type {Boolean}
+   	 */
+   	this.debug = false;
+
+  	/**
+     * The renderer this accessibility manager works for.
+     *
+     * @member {PIXI.SystemRenderer}
+     */
+   	this.renderer = renderer;
+
+   	/**
+     * The array of currently active accessible items.
+     *
+     * @member {Array}
+     * @private
+     */
+   	this.children = [];
+   	
+   	/**
+     * pre bind the functions..
+     */
+   	this._onKeyDown = this._onKeyDown.bind(this);
+   	this._onMouseMove = this._onMouseMove.bind(this);
+   	
+   	/**
+     * stores the state of the manager. If there are no accessible objects or the mouse is moving the will be false.
+     *
+     * @member {Array}
+     * @private
+     */
+   	this.isActive = false;
+
+
+   	// let listen for tab.. once pressed we can fire up and show the accessibility layer
+   	window.addEventListener('keydown', this._onKeyDown, false);
+}
+
+
+AccessibilityManager.prototype.constructor = AccessibilityManager;
+module.exports = AccessibilityManager;
+
+/**
+ * Activating will cause the Accessibility layer to be shown. This is called when a user preses the tab key
+ * @private
+ */
+AccessibilityManager.prototype.activate = function()
+{
+	if(this.isActive)
+	{
+		return;
+	}
+
+	this.isActive = true;
+
+	window.document.addEventListener('mousemove', this._onMouseMove, true);
+	window.removeEventListener('keydown', this._onKeyDown, false);
+
+	this.renderer.on('postrender', this.update, this);
+
+	this.renderer.view.parentNode.appendChild(this.div);	
+};
+
+/**
+ * Deactivating will cause the Accessibility layer to be hidden. This is called when a user moves the mouse
+ * @private
+ */
+AccessibilityManager.prototype.deactivate = function()
+{
+	if(!this.isActive)
+	{
+		return;
+	}
+
+	this.isActive = false;
+
+	window.document.removeEventListener('mousemove', this._onMouseMove);
+	window.addEventListener('keydown', this._onKeyDown, false);
+
+	this.renderer.off('postrender', this.update);
+
+	this.div.parentNode.removeChild(this.div);
+
+};
+
+/**
+ * This recursive function will run throught he scene graph and add any new accessible objects to the DOM layer.
+ * @param element {PIXI.Container|PIXI.Sprite|PIXI.extras.TilingSprite} the DisplayObject to check.
+ * @private
+ */
+AccessibilityManager.prototype.updateAccessibleObjects = function(displayObject)
+{
+	if(!displayObject.visible)
+	{
+		return;
+	}
+
+	if(displayObject.accessible && displayObject.interactive)
+	{
+		if(!displayObject._accessibleActive)
+		{
+			this.addChild(displayObject);
+		}
+	   	
+	   	displayObject.renderId = this.renderId;
+	}
+
+	var children = displayObject.children;
+
+	for (var i = children.length - 1; i >= 0; i--) {
+		
+		this.updateAccessibleObjects(children[i]);
+	}
+};
+
+
+/**
+ * Before each render this function will ensure that all divs are mapped correctly to their DisplayObjects
+ * @private
+ */
+AccessibilityManager.prototype.update = function()
+{
+
+	// update children...
+	this.updateAccessibleObjects(this.renderer._lastObjectRendered);
+
+	var rect = this.renderer.view.getBoundingClientRect();
+	var sx = rect.width  / this.renderer.width;
+	var sy = rect.height / this.renderer.height;
+
+	var div = this.div;
+
+	div.style.left = rect.left + 'px';
+	div.style.top = rect.top + 'px';
+	div.style.width = this.renderer.width + 'px';
+	div.style.height = this.renderer.height + 'px';
+
+	for (var i = 0; i < this.children.length; i++)
+	{
+
+		var child = this.children[i];
+
+		if(child.renderId !== this.renderId)
+		{
+			child._accessibleActive = false;
+
+            core.utils.removeItems(this.children, i, 1);
+			this.div.removeChild( child._accessibleDiv );
+			this.pool.push(child._accessibleDiv);
+			child._accessibleDiv = null;
+
+			i--;
+
+			if(this.children.length === 0)
+			{
+				this.deactivate();
+			}
+		}
+		else
+		{
+			// map div to display..
+			div = child._accessibleDiv;
+			var hitArea = child.hitArea;
+			var wt = child.worldTransform;
+
+			if(child.hitArea)
+			{
+				div.style.left = ((wt.tx + (hitArea.x * wt.a)) * sx) + 'px';
+				div.style.top =  ((wt.ty + (hitArea.y * wt.d)) * sy) +  'px';
+
+				div.style.width = (hitArea.width * wt.a * sx) + 'px';
+				div.style.height = (hitArea.height * wt.d * sy) + 'px';
+			
+			}
+			else
+			{
+				hitArea = child.getBounds();
+
+				this.capHitArea(hitArea);
+
+				div.style.left = (hitArea.x * sx) + 'px';
+				div.style.top =  (hitArea.y * sy) +  'px';
+
+				div.style.width = (hitArea.width * sx) + 'px';
+				div.style.height = (hitArea.height * sy) + 'px';
+			}		
+		}
+	}
+
+	// increment the render id..
+	this.renderId++;
+};
+
+AccessibilityManager.prototype.capHitArea = function (hitArea)
+{
+    if (hitArea.x < 0)
+    {
+        hitArea.width += hitArea.x;
+        hitArea.x = 0;
+    }
+
+    if (hitArea.y < 0)
+    {
+        hitArea.height += hitArea.y;
+        hitArea.y = 0;
+    }
+
+    if ( hitArea.x + hitArea.width > this.renderer.width )
+    {
+        hitArea.width = this.renderer.width - hitArea.x;
+    }
+
+    if ( hitArea.y + hitArea.height > this.renderer.height )
+    {
+        hitArea.height = this.renderer.height - hitArea.y;
+    }
+};
+
+
+/**
+ * Adds a DisplayObject to the accessibility manager
+ * @private
+ */
+AccessibilityManager.prototype.addChild = function(displayObject)
+{
+//	this.activate();
+	
+	var div = this.pool.pop();
+
+	if(!div)
+	{
+		div = document.createElement('button'); 
+
+	    div.style.width = 100 + 'px';
+	    div.style.height = 100 + 'px';
+	    div.style.backgroundColor = this.debug ? 'rgba(255,0,0,0.5)' : 'transparent';
+	    div.style.position = 'absolute';
+	    div.style.zIndex = 2;
+	    div.style.borderStyle = 'none';
+
+	    
+	    div.addEventListener('click', this._onClick.bind(this));
+	    div.addEventListener('focus', this._onFocus.bind(this));
+	    div.addEventListener('focusout', this._onFocusOut.bind(this));
+	}
+	   	
+
+
+
+	div.title = displayObject.accessibleTitle || 'displayObject ' + this.tabIndex;
+
+	//
+	
+	displayObject._accessibleActive = true;
+	displayObject._accessibleDiv = div;
+	div.displayObject = displayObject;
+
+
+	this.children.push(displayObject);
+	this.div.appendChild( displayObject._accessibleDiv );
+	displayObject._accessibleDiv.tabIndex = displayObject.tabIndex;
+};
+
+
+/**
+ * Maps the div button press to pixi's InteractionManager (click)
+ * @private
+ */
+AccessibilityManager.prototype._onClick = function(e)
+{
+	var interactionManager = this.renderer.plugins.interaction;
+	interactionManager.dispatchEvent(e.target.displayObject, 'click', interactionManager.eventData);
+};
+
+/**
+ * Maps the div focus events to pixis InteractionManager (mouseover)
+ * @private
+ */
+AccessibilityManager.prototype._onFocus = function(e)
+{
+	var interactionManager = this.renderer.plugins.interaction;
+	interactionManager.dispatchEvent(e.target.displayObject, 'mouseover', interactionManager.eventData);
+};
+
+/**
+ * Maps the div focus events to pixis InteractionManager (mouseout)
+ * @private
+ */
+AccessibilityManager.prototype._onFocusOut = function(e)
+{
+	var interactionManager = this.renderer.plugins.interaction;
+	interactionManager.dispatchEvent(e.target.displayObject, 'mouseout', interactionManager.eventData);
+};
+
+/**
+ * Is called when a key is pressed
+ *
+ * @private
+ */
+AccessibilityManager.prototype._onKeyDown = function(e)
+{
+	if(e.keyCode !== 9)
+	{
+		return;
+	}
+
+	this.activate();
+};
+
+/**
+ * Is called when the mouse moves across the renderer element
+ *
+ * @private
+ */
+AccessibilityManager.prototype._onMouseMove = function()
+{
+	this.deactivate();
+};
+
+
+/**
+ * Destroys the accessibility manager
+ *
+ */
+AccessibilityManager.prototype.destroy = function () 
+{
+	this.div = null;
+
+	for (var i = 0; i < this.children.length; i++)
+	{
+		this.children[i].div = null;
+	}
+
+	
+	window.document.removeEventListener('mousemove', this._onMouseMove);
+	window.removeEventListener('keydown', this._onKeyDown);
+		
+	this.pool = null;
+	this.children = null;
+	this.renderer = null;
+
+};
+
+core.WebGLRenderer.registerPlugin('accessibility', AccessibilityManager);
+core.CanvasRenderer.registerPlugin('accessibility', AccessibilityManager);
+
+
+},{"../core":23,"./accessibleTarget":14}],14:[function(require,module,exports){
+/**
+ * Default property values of accessible objects
+ * used by {@link PIXI.accessibility.AccessibilityManager}.
+ *
+ * @mixin
+ * @memberof PIXI
+ * @example
+ *      function MyObject() {}
+ *
+ *      Object.assign(
+ *          MyObject.prototype,
+ *          PIXI.accessibility.accessibleTarget
+ *      );
+ */
+var accessibleTarget = {
+    
+    /**
+     * @todo Needs docs.
+     */
+    accessible:false,
+
+    /**
+     * @todo Needs docs.
+     */
+    accessibleTitle:null,
+
+    /**
+     * @todo Needs docs.
+     */
+    tabIndex:0,
+
+    /**
+     * @todo Needs docs.
+     */
+    _accessibleActive:false,
+
+    /**
+     * @todo Needs docs.
+     */
+    _accessibleDiv:false
+
+};
+
+module.exports = accessibleTarget;
+
+},{}],15:[function(require,module,exports){
+/**
+ * @file        Main export of the PIXI accessibility library
+ * @author      Mat Groves <mat@goodboydigital.com>
+ * @copyright   2013-2015 GoodBoyDigital
+ * @license     {@link https://github.com/pixijs/pixi.js/blob/master/LICENSE|MIT License}
+ */
+
+/**
+ * @namespace PIXI.interaction
+ */
+module.exports = {
+    accessibleTarget:     require('./accessibleTarget'),
+    AccessibilityManager: require('./AccessibilityManager')
+};
+
+},{"./AccessibilityManager":13,"./accessibleTarget":14}],16:[function(require,module,exports){
 /**
  * Constant values used in pixi
  *
@@ -4271,8 +4695,9 @@ var CONST = {
 
 module.exports = CONST;
 
-},{"../../package.json":12}],14:[function(require,module,exports){
+},{"../../package.json":12}],17:[function(require,module,exports){
 var math = require('../math'),
+    utils = require('../utils'),
     DisplayObject = require('./DisplayObject'),
     RenderTexture = require('../textures/RenderTexture'),
     _tempMatrix = new math.Matrix();
@@ -4377,13 +4802,43 @@ Container.prototype.onChildrenChange = function () {};
 
 /**
  * Adds a child to the container.
- *
+ * 
+ * You can also add multple items like so: myContainer.addChild(thinkOne, thingTwo, thingThree)
  * @param child {PIXI.DisplayObject} The DisplayObject to add to the container
  * @return {PIXI.DisplayObject} The child that was added.
  */
 Container.prototype.addChild = function (child)
-{
-    return this.addChildAt(child, this.children.length);
+{ 
+    var argumentsLength = arguments.length;
+
+    // if there is only one argument we can bypass looping through the them
+    if(argumentsLength > 1)
+    {
+        // loop through the arguments property and add all children
+        // use it the right way (.length and [i]) so that this function can still be optimised by JS runtimes
+        for (var i = 0; i < argumentsLength; i++)
+        {
+            this.addChild( arguments[i] );
+        }
+    }     
+    else
+    {
+        // if the child has a parent then lets remove it as Pixi objects can only exist in one place
+        if (child.parent)
+        {
+            child.parent.removeChild(child);
+        }
+
+        child.parent = this;
+        
+        this.children.push(child);
+
+        // TODO - lets either do all callbacks or all events.. not both!
+        this.onChildrenChange(this.children.length-1);
+        child.emit('added', this);
+    }
+
+    return child;
 };
 
 /**
@@ -4395,12 +4850,6 @@ Container.prototype.addChild = function (child)
  */
 Container.prototype.addChildAt = function (child, index)
 {
-    // prevent adding self as child
-    if (child === this)
-    {
-        return child;
-    }
-
     if (index >= 0 && index <= this.children.length)
     {
         if (child.parent)
@@ -4411,8 +4860,9 @@ Container.prototype.addChildAt = function (child, index)
         child.parent = this;
 
         this.children.splice(index, 0, child);
-        this.onChildrenChange(index);
 
+        // TODO - lets either do all callbacks or all events.. not both!
+        this.onChildrenChange(index);
         child.emit('added', this);
 
         return child;
@@ -4482,7 +4932,7 @@ Container.prototype.setChildIndex = function (child, index)
 
     var currentIndex = this.getChildIndex(child);
 
-    this.children.splice(currentIndex, 1); //remove from old position
+    utils.removeItems(this.children, currentIndex, 1); // remove from old position
     this.children.splice(index, 0, child); //add at new position
     this.onChildrenChange(index);
 };
@@ -4511,14 +4961,36 @@ Container.prototype.getChildAt = function (index)
  */
 Container.prototype.removeChild = function (child)
 {
-    var index = this.children.indexOf(child);
+    var argumentsLength = arguments.length;
 
-    if (index === -1)
+    // if there is only one argument we can bypass looping through the them
+    if(argumentsLength > 1)
     {
-        return;
+        // loop through the arguments property and add all children
+        // use it the right way (.length and [i]) so that this function can still be optimised by JS runtimes
+        for (var i = 0; i < argumentsLength; i++)
+        {
+            this.removeChild( arguments[i] );
+        }
+    }     
+    else
+    {   
+        var index = this.children.indexOf(child);
+
+        if (index === -1)
+        {
+            return;
+        }
+
+        child.parent = null;
+        utils.removeItems(this.children, index, 1);
+
+        // TODO - lets either do all callbacks or all events.. not both!
+        this.onChildrenChange(index);
+        child.emit('removed', this);
     }
 
-    return this.removeChildAt(index);
+    return child;
 };
 
 /**
@@ -4532,9 +5004,10 @@ Container.prototype.removeChildAt = function (index)
     var child = this.getChildAt(index);
 
     child.parent = null;
-    this.children.splice(index, 1);
-    this.onChildrenChange(index);
+    utils.removeItems(this.children, index, 1);
 
+    // TODO - lets either do all callbacks or all events.. not both!
+    this.onChildrenChange(index);
     child.emit('removed', this);
 
     return child;
@@ -4866,7 +5339,7 @@ Container.prototype.destroy = function (destroyChildren)
     this.children = null;
 };
 
-},{"../math":23,"../textures/RenderTexture":61,"./DisplayObject":15}],15:[function(require,module,exports){
+},{"../math":26,"../textures/RenderTexture":64,"../utils":70,"./DisplayObject":18}],18:[function(require,module,exports){
 var math = require('../math'),
     RenderTexture = require('../textures/RenderTexture'),
     EventEmitter = require('eventemitter3'),
@@ -4907,6 +5380,14 @@ function DisplayObject()
      * @member {PIXI.Point}
      */
     this.pivot = new math.Point(0, 0);
+
+
+    /**
+     * The skew factor for the object in radians.
+     *
+     * @member {PIXI.Point}
+     */
+    this.skew = new math.Point(0, 0);
 
     /**
      * The rotation of the object in radians.
@@ -5133,7 +5614,6 @@ Object.defineProperties(DisplayObject.prototype, {
  */
 DisplayObject.prototype.updateTransform = function ()
 {
-
     // create some matrix refs for easy access
     var pt = this.parent.worldTransform;
     var wt = this.worldTransform;
@@ -5141,55 +5621,83 @@ DisplayObject.prototype.updateTransform = function ()
     // temporary matrix variables
     var a, b, c, d, tx, ty;
 
-    // so if rotation is between 0 then we can simplify the multiplication process...
-    if (this.rotation % CONST.PI_2)
+    // looks like we are skewing
+    if(this.skew.x || this.skew.y)
     {
-        // check to see if the rotation is the same as the previous render. This means we only need to use sin and cos when rotation actually changes
-        if (this.rotation !== this.rotationCache)
-        {
-            this.rotationCache = this.rotation;
-            this._sr = Math.sin(this.rotation);
-            this._cr = Math.cos(this.rotation);
-        }
+        // I'm assuming that skewing is not going to be very common
+        // With that in mind, we can do a full setTransform using the temp matrix
+        _tempMatrix.setTransform(
+            this.position.x,
+            this.position.y,
+            this.pivot.x,
+            this.pivot.y,
+            this.scale.x,
+            this.scale.y,
+            this.rotation,
+            this.skew.x,
+            this.skew.y
+        );
 
-        // get the matrix values of the displayobject based on its transform properties..
-        a  =  this._cr * this.scale.x;
-        b  =  this._sr * this.scale.x;
-        c  = -this._sr * this.scale.y;
-        d  =  this._cr * this.scale.y;
-        tx =  this.position.x;
-        ty =  this.position.y;
-
-        // check for pivot.. not often used so geared towards that fact!
-        if (this.pivot.x || this.pivot.y)
-        {
-            tx -= this.pivot.x * a + this.pivot.y * c;
-            ty -= this.pivot.x * b + this.pivot.y * d;
-        }
-
-        // concat the parent matrix with the objects transform.
-        wt.a  = a  * pt.a + b  * pt.c;
-        wt.b  = a  * pt.b + b  * pt.d;
-        wt.c  = c  * pt.a + d  * pt.c;
-        wt.d  = c  * pt.b + d  * pt.d;
-        wt.tx = tx * pt.a + ty * pt.c + pt.tx;
-        wt.ty = tx * pt.b + ty * pt.d + pt.ty;
+        // now concat the matrix (inlined so that we can avoid using copy)
+        wt.a  = _tempMatrix.a  * pt.a + _tempMatrix.b  * pt.c;
+        wt.b  = _tempMatrix.a  * pt.b + _tempMatrix.b  * pt.d;
+        wt.c  = _tempMatrix.c  * pt.a + _tempMatrix.d  * pt.c;
+        wt.d  = _tempMatrix.c  * pt.b + _tempMatrix.d  * pt.d;
+        wt.tx = _tempMatrix.tx * pt.a + _tempMatrix.ty * pt.c + pt.tx;
+        wt.ty = _tempMatrix.tx * pt.b + _tempMatrix.ty * pt.d + pt.ty;
     }
     else
     {
-        // lets do the fast version as we know there is no rotation..
-        a  = this.scale.x;
-        d  = this.scale.y;
+        // so if rotation is between 0 then we can simplify the multiplication process...
+        if (this.rotation % CONST.PI_2)
+        {
+            // check to see if the rotation is the same as the previous render. This means we only need to use sin and cos when rotation actually changes
+            if (this.rotation !== this.rotationCache)
+            {
+                this.rotationCache = this.rotation;
+                this._sr = Math.sin(this.rotation);
+                this._cr = Math.cos(this.rotation);
+            }
 
-        tx = this.position.x - this.pivot.x * a;
-        ty = this.position.y - this.pivot.y * d;
+            // get the matrix values of the displayobject based on its transform properties..
+            a  =  this._cr * this.scale.x;
+            b  =  this._sr * this.scale.x;
+            c  = -this._sr * this.scale.y;
+            d  =  this._cr * this.scale.y;
+            tx =  this.position.x;
+            ty =  this.position.y;
 
-        wt.a  = a  * pt.a;
-        wt.b  = a  * pt.b;
-        wt.c  = d  * pt.c;
-        wt.d  = d  * pt.d;
-        wt.tx = tx * pt.a + ty * pt.c + pt.tx;
-        wt.ty = tx * pt.b + ty * pt.d + pt.ty;
+            // check for pivot.. not often used so geared towards that fact!
+            if (this.pivot.x || this.pivot.y)
+            {
+                tx -= this.pivot.x * a + this.pivot.y * c;
+                ty -= this.pivot.x * b + this.pivot.y * d;
+            }
+
+            // concat the parent matrix with the objects transform.
+            wt.a  = a  * pt.a + b  * pt.c;
+            wt.b  = a  * pt.b + b  * pt.d;
+            wt.c  = c  * pt.a + d  * pt.c;
+            wt.d  = c  * pt.b + d  * pt.d;
+            wt.tx = tx * pt.a + ty * pt.c + pt.tx;
+            wt.ty = tx * pt.b + ty * pt.d + pt.ty;
+        }
+        else
+        {
+            // lets do the fast version as we know there is no rotation..
+            a  = this.scale.x;
+            d  = this.scale.y;
+
+            tx = this.position.x - this.pivot.x * a;
+            ty = this.position.y - this.pivot.y * d;
+
+            wt.a  = a  * pt.a;
+            wt.b  = a  * pt.b;
+            wt.c  = d  * pt.c;
+            wt.d  = d  * pt.d;
+            wt.tx = tx * pt.a + ty * pt.c + pt.tx;
+            wt.ty = tx * pt.b + ty * pt.d + pt.ty;
+        }
     }
 
     // multiply the alphas..
@@ -5256,9 +5764,10 @@ DisplayObject.prototype.toGlobal = function (position)
  *
  * @param position {PIXI.Point} The world origin to calculate from
  * @param [from] {PIXI.DisplayObject} The DisplayObject to calculate the global position from
+ * @param [point] {PIXI.Point} A Point object in which to store the value, optional (otherwise will create a new Point)
  * @return {PIXI.Point} A point object representing the position of this object
  */
-DisplayObject.prototype.toLocal = function (position, from)
+DisplayObject.prototype.toLocal = function (position, from, point)
 {
     if (from)
     {
@@ -5280,7 +5789,7 @@ DisplayObject.prototype.toLocal = function (position, from)
     }
 
     // simply apply the matrix..
-    return this.worldTransform.applyInverse(position);
+    return this.worldTransform.applyInverse(position, point);
 };
 
 /**
@@ -5345,6 +5854,34 @@ DisplayObject.prototype.setParent = function (container)
 };
 
 /**
+ * Convenience function to set the postion, scale, skew and pivot at once.
+ *
+ * @param [x=0] {number} The X position
+ * @param [y=0] {number} The Y position
+ * @param [scaleX=1] {number} The X scale value
+ * @param [scaleY=1] {number} The Y scale value
+ * @param [rotation=0] {number} The rotation
+ * @param [skewX=0] {number} The X skew value
+ * @param [skewY=0] {number} The Y skew value
+ * @param [pivotX=0] {number} The X pivot value
+ * @param [pivotY=0] {number} The Y pivot value
+ * @return {PIXI.DisplayObject}
+ */
+DisplayObject.prototype.setTransform = function(x, y, scaleX, scaleY, rotation, skewX, skewY, pivotX, pivotY) //jshint ignore:line
+{
+    this.position.x = x || 0;
+    this.position.y = y || 0;
+    this.scale.x = !scaleX ? 1 : scaleX;
+    this.scale.y = !scaleY ? 1 : scaleY;
+    this.rotation = rotation || 0;
+    this.skew.x = skewX || 0;
+    this.skew.y = skewY || 0;
+    this.pivot.x = pivotX || 0;
+    this.pivot.y = pivotY || 0;
+    return this;
+};
+
+/**
  * Base destroy method for generic display objects
  *
  */
@@ -5354,6 +5891,7 @@ DisplayObject.prototype.destroy = function ()
     this.position = null;
     this.scale = null;
     this.pivot = null;
+    this.skew = null;
 
     this.parent = null;
 
@@ -5365,7 +5903,7 @@ DisplayObject.prototype.destroy = function ()
     this.filterArea = null;
 };
 
-},{"../const":13,"../math":23,"../textures/RenderTexture":61,"eventemitter3":10}],16:[function(require,module,exports){
+},{"../const":16,"../math":26,"../textures/RenderTexture":64,"eventemitter3":10}],19:[function(require,module,exports){
 var Container = require('../display/Container'),
     Texture = require('../textures/Texture'),
     CanvasBuffer = require('../renderers/canvas/utils/CanvasBuffer'),
@@ -6550,7 +7088,7 @@ Graphics.prototype.destroy = function () {
     this._localBounds = null;
 };
 
-},{"../const":13,"../display/Container":14,"../math":23,"../renderers/canvas/utils/CanvasBuffer":35,"../renderers/canvas/utils/CanvasGraphics":36,"../textures/Texture":62,"./GraphicsData":17}],17:[function(require,module,exports){
+},{"../const":16,"../display/Container":17,"../math":26,"../renderers/canvas/utils/CanvasBuffer":38,"../renderers/canvas/utils/CanvasGraphics":39,"../textures/Texture":65,"./GraphicsData":20}],20:[function(require,module,exports){
 /**
  * A GraphicsData object.
  *
@@ -6643,7 +7181,7 @@ GraphicsData.prototype.destroy = function () {
     this.shape = null;
 };
 
-},{}],18:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 var utils = require('../../utils'),
     math = require('../../math'),
     CONST = require('../../const'),
@@ -6721,7 +7259,7 @@ GraphicsRenderer.prototype.render = function(graphics)
     var shader = renderer.shaderManager.plugins.primitiveShader,
         webGLData;
 
-    if (graphics.dirty)
+    if (graphics.dirty || !graphics._webGL[gl.id])
     {
         this.updateGraphics(graphics);
     }
@@ -7362,7 +7900,7 @@ GraphicsRenderer.prototype.buildLine = function (graphicsData, webGLData)
         py = (a2*c1 - a1*c2)/denom;
 
 
-        pdist = (px -p2x) * (px -p2x) + (py -p2y) + (py -p2y);
+        pdist = (px -p2x) * (px -p2x) + (py -p2y) * (py -p2y);
 
 
         if (pdist > 140 * 140)
@@ -7548,7 +8086,7 @@ GraphicsRenderer.prototype.buildPoly = function (graphicsData, webGLData)
     return true;
 };
 
-},{"../../const":13,"../../math":23,"../../renderers/webgl/WebGLRenderer":39,"../../renderers/webgl/utils/ObjectRenderer":53,"../../utils":67,"./WebGLGraphicsData":19,"earcut":9}],19:[function(require,module,exports){
+},{"../../const":16,"../../math":26,"../../renderers/webgl/WebGLRenderer":42,"../../renderers/webgl/utils/ObjectRenderer":56,"../../utils":70,"./WebGLGraphicsData":22,"earcut":9}],22:[function(require,module,exports){
 /**
  * An object containing WebGL specific properties to be used by the WebGL renderer
  *
@@ -7666,7 +8204,7 @@ WebGLGraphicsData.prototype.destroy = function () {
     this.glIndices = null;
 };
 
-},{}],20:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
 /**
  * @file        Main export of the PIXI core library
  * @author      Mat Groves <mat@goodboydigital.com>
@@ -7715,6 +8253,7 @@ var core = module.exports = Object.assign(require('./const'), require('./math'),
 
     // renderers - webgl
     WebGLRenderer:          require('./renderers/webgl/WebGLRenderer'),
+    WebGLManager:          require('./renderers/webgl/managers/WebGLManager'),
     ShaderManager:          require('./renderers/webgl/managers/ShaderManager'),
     Shader:                 require('./renderers/webgl/shaders/Shader'),
     ObjectRenderer:         require('./renderers/webgl/utils/ObjectRenderer'),
@@ -7758,7 +8297,11 @@ var core = module.exports = Object.assign(require('./const'), require('./math'),
     }
 });
 
-},{"./const":13,"./display/Container":14,"./display/DisplayObject":15,"./graphics/Graphics":16,"./graphics/GraphicsData":17,"./graphics/webgl/GraphicsRenderer":18,"./math":23,"./particles/ParticleContainer":29,"./particles/webgl/ParticleRenderer":31,"./renderers/canvas/CanvasRenderer":34,"./renderers/canvas/utils/CanvasBuffer":35,"./renderers/canvas/utils/CanvasGraphics":36,"./renderers/webgl/WebGLRenderer":39,"./renderers/webgl/filters/AbstractFilter":40,"./renderers/webgl/filters/FXAAFilter":41,"./renderers/webgl/filters/SpriteMaskFilter":42,"./renderers/webgl/managers/ShaderManager":46,"./renderers/webgl/shaders/Shader":51,"./renderers/webgl/utils/ObjectRenderer":53,"./renderers/webgl/utils/RenderTarget":55,"./sprites/Sprite":57,"./sprites/webgl/SpriteRenderer":58,"./text/Text":59,"./textures/BaseTexture":60,"./textures/RenderTexture":61,"./textures/Texture":62,"./textures/TextureUvs":63,"./textures/VideoBaseTexture":64,"./ticker":66,"./utils":67}],21:[function(require,module,exports){
+},{"./const":16,"./display/Container":17,"./display/DisplayObject":18,"./graphics/Graphics":19,"./graphics/GraphicsData":20,"./graphics/webgl/GraphicsRenderer":21,"./math":26,"./particles/ParticleContainer":32,"./particles/webgl/ParticleRenderer":34,"./renderers/canvas/CanvasRenderer":37,"./renderers/canvas/utils/CanvasBuffer":38,"./renderers/canvas/utils/CanvasGraphics":39,"./renderers/webgl/WebGLRenderer":42,"./renderers/webgl/filters/AbstractFilter":43,"./renderers/webgl/filters/FXAAFilter":44,"./renderers/webgl/filters/SpriteMaskFilter":45,"./renderers/webgl/managers/ShaderManager":49,"./renderers/webgl/managers/WebGLManager":51,"./renderers/webgl/shaders/Shader":54,"./renderers/webgl/utils/ObjectRenderer":56,"./renderers/webgl/utils/RenderTarget":58,"./sprites/Sprite":60,"./sprites/webgl/SpriteRenderer":61,"./text/Text":62,"./textures/BaseTexture":63,"./textures/RenderTexture":64,"./textures/Texture":65,"./textures/TextureUvs":66,"./textures/VideoBaseTexture":67,"./ticker":69,"./utils":70}],24:[function(require,module,exports){
+// @todo - ignore the too many parameters warning for now
+// should either fix it or change the jshint config
+// jshint -W072
+
 var Point = require('./Point');
 
 /**
@@ -7835,10 +8378,37 @@ Matrix.prototype.fromArray = function (array)
     this.ty = array[5];
 };
 
+
+/**
+ * sets the matrix properties
+ *
+ * @param {number} a
+ * @param {number} b
+ * @param {number} c
+ * @param {number} d
+ * @param {number} tx
+ * @param {number} ty
+ *
+ * @return {PIXI.Matrix} This matrix. Good for chaining method calls.
+ */
+Matrix.prototype.set = function (a, b, c, d, tx, ty)
+{
+    this.a = a;
+    this.b = b;
+    this.c = c;
+    this.d = d;
+    this.tx = tx;
+    this.ty = ty;
+
+    return this;
+};
+
+
 /**
  * Creates an array from the current Matrix object.
  *
  * @param transpose {boolean} Whether we need to transpose the matrix or not
+ * @param [out] {Array} If provided the array will be assigned to out
  * @return {number[]} the newly created array which contains the matrix
  */
 Matrix.prototype.toArray = function (transpose, out)
@@ -8007,6 +8577,48 @@ Matrix.prototype.append = function (matrix)
 };
 
 /**
+ * Sets the matrix based on all the available properties
+ *
+ * @param {number} x
+ * @param {number} y
+ * @param {number} pivotX
+ * @param {number} pivotY
+ * @param {number} scaleX
+ * @param {number} scaleY
+ * @param {number} rotation
+ * @param {number} skewX
+ * @param {number} skewY
+ *
+ * @return {PIXI.Matrix} This matrix. Good for chaining method calls.
+ */
+Matrix.prototype.setTransform = function (x, y, pivotX, pivotY, scaleX, scaleY, rotation, skewX, skewY)
+{
+    var a, b, c, d, sr, cr, cy, sy, nsx, cx;
+
+    sr  = Math.sin(rotation);
+    cr  = Math.cos(rotation);
+    cy  = Math.cos(skewY);
+    sy  = Math.sin(skewY);
+    nsx = -Math.sin(skewX);
+    cx  =  Math.cos(skewX);
+
+    a  =  cr * scaleX;
+    b  =  sr * scaleX;
+    c  = -sr * scaleY;
+    d  =  cr * scaleY;
+
+    this.a  = cy * a + sy * c;
+    this.b  = cy * b + sy * d;
+    this.c  = nsx * a + cx * c;
+    this.d  = nsx * b + cx * d;
+
+    this.tx = x + ( pivotX * a + pivotY * c );
+    this.ty = y + ( pivotX * b + pivotY * d );
+
+    return this;
+};
+
+/**
  * Prepends the given Matrix to this Matrix.
  *
  * @param {PIXI.Matrix} matrix
@@ -8125,7 +8737,7 @@ Matrix.IDENTITY = new Matrix();
  */
 Matrix.TEMP_MATRIX = new Matrix();
 
-},{"./Point":22}],22:[function(require,module,exports){
+},{"./Point":25}],25:[function(require,module,exports){
 /**
  * The Point object represents a location in a two-dimensional coordinate system, where x represents
  * the horizontal axis and y represents the vertical axis.
@@ -8195,7 +8807,7 @@ Point.prototype.set = function (x, y)
     this.y = y || ( (y !== 0) ? this.x : 0 ) ;
 };
 
-},{}],23:[function(require,module,exports){
+},{}],26:[function(require,module,exports){
 /**
  * Math classes and utilities mixed into PIXI namespace.
  *
@@ -8217,7 +8829,7 @@ module.exports = {
     RoundedRectangle: require('./shapes/RoundedRectangle')
 };
 
-},{"./Matrix":21,"./Point":22,"./shapes/Circle":24,"./shapes/Ellipse":25,"./shapes/Polygon":26,"./shapes/Rectangle":27,"./shapes/RoundedRectangle":28}],24:[function(require,module,exports){
+},{"./Matrix":24,"./Point":25,"./shapes/Circle":27,"./shapes/Ellipse":28,"./shapes/Polygon":29,"./shapes/Rectangle":30,"./shapes/RoundedRectangle":31}],27:[function(require,module,exports){
 var Rectangle = require('./Rectangle'),
     CONST = require('../../const');
 
@@ -8305,7 +8917,7 @@ Circle.prototype.getBounds = function ()
     return new Rectangle(this.x - this.radius, this.y - this.radius, this.radius * 2, this.radius * 2);
 };
 
-},{"../../const":13,"./Rectangle":27}],25:[function(require,module,exports){
+},{"../../const":16,"./Rectangle":30}],28:[function(require,module,exports){
 var Rectangle = require('./Rectangle'),
     CONST = require('../../const');
 
@@ -8400,7 +9012,7 @@ Ellipse.prototype.getBounds = function ()
     return new Rectangle(this.x - this.width, this.y - this.height, this.width, this.height);
 };
 
-},{"../../const":13,"./Rectangle":27}],26:[function(require,module,exports){
+},{"../../const":16,"./Rectangle":30}],29:[function(require,module,exports){
 var Point = require('../Point'),
     CONST = require('../../const');
 
@@ -8503,7 +9115,7 @@ Polygon.prototype.contains = function (x, y)
     return inside;
 };
 
-},{"../../const":13,"../Point":22}],27:[function(require,module,exports){
+},{"../../const":16,"../Point":25}],30:[function(require,module,exports){
 var CONST = require('../../const');
 
 /**
@@ -8597,7 +9209,7 @@ Rectangle.prototype.contains = function (x, y)
     return false;
 };
 
-},{"../../const":13}],28:[function(require,module,exports){
+},{"../../const":16}],31:[function(require,module,exports){
 var CONST = require('../../const');
 
 /**
@@ -8689,7 +9301,7 @@ RoundedRectangle.prototype.contains = function (x, y)
     return false;
 };
 
-},{"../../const":13}],29:[function(require,module,exports){
+},{"../../const":16}],32:[function(require,module,exports){
 var Container = require('../display/Container'),
     CONST = require('../const');
 
@@ -8888,6 +9500,12 @@ ParticleContainer.prototype.renderCanvas = function (renderer)
     var finalWidth = 0;
     var finalHeight = 0;
 
+    var compositeOperation = renderer.blendModes[this.blendMode];
+    if (compositeOperation !== context.globalCompositeOperation)
+    {
+        context.globalCompositeOperation = compositeOperation;
+    }
+
     context.globalAlpha = this.worldAlpha;
 
     this.displayObjectUpdateTransform();
@@ -9002,7 +9620,7 @@ ParticleContainer.prototype.destroy = function () {
     this._buffers = null;
 };
 
-},{"../const":13,"../display/Container":14}],30:[function(require,module,exports){
+},{"../const":16,"../display/Container":17}],33:[function(require,module,exports){
 
 /**
  * @author Mat Groves
@@ -9222,7 +9840,7 @@ ParticleBuffer.prototype.destroy = function ()
     this.gl.deleteBuffer(this.staticBuffer);
 };
 
-},{}],31:[function(require,module,exports){
+},{}],34:[function(require,module,exports){
 var ObjectRenderer = require('../../renderers/webgl/utils/ObjectRenderer'),
     WebGLRenderer = require('../../renderers/webgl/WebGLRenderer'),
     ParticleShader = require('./ParticleShader'),
@@ -9698,7 +10316,7 @@ ParticleRenderer.prototype.destroy = function ()
     this.tempMatrix = null;
 };
 
-},{"../../math":23,"../../renderers/webgl/WebGLRenderer":39,"../../renderers/webgl/utils/ObjectRenderer":53,"./ParticleBuffer":30,"./ParticleShader":32}],32:[function(require,module,exports){
+},{"../../math":26,"../../renderers/webgl/WebGLRenderer":42,"../../renderers/webgl/utils/ObjectRenderer":56,"./ParticleBuffer":33,"./ParticleShader":35}],35:[function(require,module,exports){
 var TextureShader = require('../../renderers/webgl/shaders/TextureShader');
 
 /**
@@ -9776,7 +10394,7 @@ ParticleShader.prototype.constructor = ParticleShader;
 
 module.exports = ParticleShader;
 
-},{"../../renderers/webgl/shaders/TextureShader":52}],33:[function(require,module,exports){
+},{"../../renderers/webgl/shaders/TextureShader":55}],36:[function(require,module,exports){
 var utils = require('../utils'),
     math = require('../math'),
     CONST = require('../const'),
@@ -10037,7 +10655,7 @@ SystemRenderer.prototype.destroy = function (removeView) {
     this._backgroundColorString = null;
 };
 
-},{"../const":13,"../math":23,"../utils":67,"eventemitter3":10}],34:[function(require,module,exports){
+},{"../const":16,"../math":26,"../utils":70,"eventemitter3":10}],37:[function(require,module,exports){
 var SystemRenderer = require('../SystemRenderer'),
     CanvasMaskManager = require('./utils/CanvasMaskManager'),
     utils = require('../../utils'),
@@ -10151,6 +10769,8 @@ utils.pluginTarget.mixin(CanvasRenderer);
  */
 CanvasRenderer.prototype.render = function (object)
 {
+    this.emit('prerender');
+
     var cacheParent = object.parent;
 
     this._lastObjectRendered = object;
@@ -10188,6 +10808,8 @@ CanvasRenderer.prototype.render = function (object)
     }
 
     this.renderDisplayObject(object, this.context);
+
+    this.emit('postrender');
 };
 
 /**
@@ -10301,7 +10923,7 @@ CanvasRenderer.prototype._mapBlendModes = function ()
     }
 };
 
-},{"../../const":13,"../../math":23,"../../utils":67,"../SystemRenderer":33,"./utils/CanvasMaskManager":37}],35:[function(require,module,exports){
+},{"../../const":16,"../../math":26,"../../utils":70,"../SystemRenderer":36,"./utils/CanvasMaskManager":40}],38:[function(require,module,exports){
 /**
  * Creates a Canvas element of the given size.
  *
@@ -10401,7 +11023,7 @@ CanvasBuffer.prototype.destroy = function ()
     this.canvas = null;
 };
 
-},{}],36:[function(require,module,exports){
+},{}],39:[function(require,module,exports){
 var CONST = require('../../../const');
 
 /**
@@ -10755,7 +11377,7 @@ CanvasGraphics.updateGraphicsTint = function (graphics)
 };
 
 
-},{"../../../const":13}],37:[function(require,module,exports){
+},{"../../../const":16}],40:[function(require,module,exports){
 var CanvasGraphics = require('./CanvasGraphics');
 
 /**
@@ -10817,7 +11439,7 @@ CanvasMaskManager.prototype.popMask = function (renderer)
 
 CanvasMaskManager.prototype.destroy = function () {};
 
-},{"./CanvasGraphics":36}],38:[function(require,module,exports){
+},{"./CanvasGraphics":39}],41:[function(require,module,exports){
 var utils = require('../../../utils');
 
 /**
@@ -11069,7 +11691,7 @@ CanvasTinter.canUseMultiply = utils.canUseNewCanvasBlendModes();
  */
 CanvasTinter.tintMethod = CanvasTinter.canUseMultiply ? CanvasTinter.tintWithMultiply :  CanvasTinter.tintWithPerPixel;
 
-},{"../../../utils":67}],39:[function(require,module,exports){
+},{"../../../utils":70}],42:[function(require,module,exports){
 var SystemRenderer = require('../SystemRenderer'),
     ShaderManager = require('./managers/ShaderManager'),
     MaskManager = require('./managers/MaskManager'),
@@ -11223,6 +11845,9 @@ function WebGLRenderer(width, height, options)
     // map some webGL blend modes..
     this._mapGlModes();
 
+    // track textures in the renderer so we can no longer listen to them on destruction.
+    this._managedTextures = [];
+
     /**
      * An array of render targets
      * @member {PIXI.RenderTarget[]}
@@ -11302,6 +11927,9 @@ WebGLRenderer.prototype._initContext = function ()
  */
 WebGLRenderer.prototype.render = function (object)
 {
+
+    this.emit('prerender');
+
     // no point rendering if our context has been blown up!
     if (this.gl.isContextLost())
     {
@@ -11348,6 +11976,8 @@ WebGLRenderer.prototype.render = function (object)
     }
 
     this.renderDisplayObject(object, this.renderTarget);//this.projection);
+
+    this.emit('postrender');
 };
 
 /**
@@ -11454,6 +12084,7 @@ WebGLRenderer.prototype.updateTexture = function (texture)
         texture._glTextures[gl.id] = gl.createTexture();
         texture.on('update', this.updateTexture, this);
         texture.on('dispose', this.destroyTexture, this);
+        this._managedTextures.push(texture);
     }
 
 
@@ -11494,7 +12125,7 @@ WebGLRenderer.prototype.updateTexture = function (texture)
  *
  * @param texture {PIXI.BaseTexture|PIXI.Texture} the texture to destroy
  */
-WebGLRenderer.prototype.destroyTexture = function (texture)
+WebGLRenderer.prototype.destroyTexture = function (texture, _skipRemove)
 {
     texture = texture.baseTexture || texture;
 
@@ -11506,6 +12137,15 @@ WebGLRenderer.prototype.destroyTexture = function (texture)
     if (texture._glTextures[this.gl.id])
     {
         this.gl.deleteTexture(texture._glTextures[this.gl.id]);
+        delete texture._glTextures[this.gl.id];
+
+        if (!_skipRemove)
+        {
+            var i = this._managedTextures.indexOf(texture);
+            if (i !== -1) {
+                utils.removeItems(this._managedTextures, i, 1);
+            }
+        }
     }
 };
 
@@ -11529,9 +12169,13 @@ WebGLRenderer.prototype.handleContextRestored = function ()
     this._initContext();
 
     // empty all the old gl textures as they are useless now
-    for (var key in utils.BaseTextureCache)
+    for (var i = 0; i < this._managedTextures.length; ++i)
     {
-        utils.BaseTextureCache[key]._glTextures.length = 0;
+        var texture = this._managedTextures[i];
+        if (texture._glTextures[this.gl.id])
+        {
+            delete texture._glTextures[this.gl.id];
+        }
     }
 };
 
@@ -11548,8 +12192,11 @@ WebGLRenderer.prototype.destroy = function (removeView)
     this.view.removeEventListener('webglcontextlost', this.handleContextLost);
     this.view.removeEventListener('webglcontextrestored', this.handleContextRestored);
 
-    for (var key in utils.BaseTextureCache) {
-        var texture = utils.BaseTextureCache[key];
+    // destroy managed textures
+    for (var i = 0; i < this._managedTextures.length; ++i)
+    {
+        var texture = this._managedTextures[i];
+        this.destroyTexture(texture, true);
         texture.off('update', this.updateTexture, this);
         texture.off('dispose', this.destroyTexture, this);
     }
@@ -11576,6 +12223,8 @@ WebGLRenderer.prototype.destroy = function (removeView)
     this.handleContextRestored = null;
 
     this._contextOptions = null;
+
+    this._managedTextures = null;
 
     this.drawCount = 0;
 
@@ -11630,7 +12279,7 @@ WebGLRenderer.prototype._mapGlModes = function ()
     }
 };
 
-},{"../../const":13,"../../utils":67,"../SystemRenderer":33,"./filters/FXAAFilter":41,"./managers/BlendModeManager":43,"./managers/FilterManager":44,"./managers/MaskManager":45,"./managers/ShaderManager":46,"./managers/StencilManager":47,"./utils/ObjectRenderer":53,"./utils/RenderTarget":55}],40:[function(require,module,exports){
+},{"../../const":16,"../../utils":70,"../SystemRenderer":36,"./filters/FXAAFilter":44,"./managers/BlendModeManager":46,"./managers/FilterManager":47,"./managers/MaskManager":48,"./managers/ShaderManager":49,"./managers/StencilManager":50,"./utils/ObjectRenderer":56,"./utils/RenderTarget":58}],43:[function(require,module,exports){
 var DefaultShader = require('../shaders/TextureShader');
 
 /**
@@ -11742,7 +12391,7 @@ AbstractFilter.prototype.syncUniform = function (uniform)
     }
 };
 
-},{"../shaders/TextureShader":52}],41:[function(require,module,exports){
+},{"../shaders/TextureShader":55}],44:[function(require,module,exports){
 var AbstractFilter = require('./AbstractFilter');
 // @see https://github.com/substack/brfs/issues/25
 
@@ -11797,7 +12446,7 @@ FXAAFilter.prototype.applyFilter = function (renderer, input, output)
     filterManager.applyFilter(shader, input, output);
 };
 
-},{"./AbstractFilter":40}],42:[function(require,module,exports){
+},{"./AbstractFilter":43}],45:[function(require,module,exports){
 var AbstractFilter = require('./AbstractFilter'),
     math =  require('../../../math');
 
@@ -11894,7 +12543,7 @@ Object.defineProperties(SpriteMaskFilter.prototype, {
     }
 });
 
-},{"../../../math":23,"./AbstractFilter":40}],43:[function(require,module,exports){
+},{"../../../math":26,"./AbstractFilter":43}],46:[function(require,module,exports){
 var WebGLManager = require('./WebGLManager');
 
 /**
@@ -11938,7 +12587,7 @@ BlendModeManager.prototype.setBlendMode = function (blendMode)
     return true;
 };
 
-},{"./WebGLManager":48}],44:[function(require,module,exports){
+},{"./WebGLManager":51}],47:[function(require,module,exports){
 var WebGLManager = require('./WebGLManager'),
     RenderTarget = require('../utils/RenderTarget'),
     CONST = require('../../../const'),
@@ -12390,7 +13039,7 @@ FilterManager.prototype.destroy = function ()
     this.texturePool = null;
 };
 
-},{"../../../const":13,"../../../math":23,"../utils/Quad":54,"../utils/RenderTarget":55,"./WebGLManager":48}],45:[function(require,module,exports){
+},{"../../../const":16,"../../../math":26,"../utils/Quad":57,"../utils/RenderTarget":58,"./WebGLManager":51}],48:[function(require,module,exports){
 var WebGLManager = require('./WebGLManager'),
     AlphaMaskFilter = require('../filters/SpriteMaskFilter');
 
@@ -12505,7 +13154,7 @@ MaskManager.prototype.popStencilMask = function (target, maskData)
 };
 
 
-},{"../filters/SpriteMaskFilter":42,"./WebGLManager":48}],46:[function(require,module,exports){
+},{"../filters/SpriteMaskFilter":45,"./WebGLManager":51}],49:[function(require,module,exports){
 var WebGLManager = require('./WebGLManager'),
     TextureShader = require('../shaders/TextureShader'),
     ComplexPrimitiveShader = require('../shaders/ComplexPrimitiveShader'),
@@ -12674,7 +13323,7 @@ ShaderManager.prototype.destroy = function ()
     this.tempAttribState = null;
 };
 
-},{"../../../utils":67,"../shaders/ComplexPrimitiveShader":49,"../shaders/PrimitiveShader":50,"../shaders/TextureShader":52,"./WebGLManager":48}],47:[function(require,module,exports){
+},{"../../../utils":70,"../shaders/ComplexPrimitiveShader":52,"../shaders/PrimitiveShader":53,"../shaders/TextureShader":55,"./WebGLManager":51}],50:[function(require,module,exports){
 var WebGLManager = require('./WebGLManager'),
     utils = require('../../../utils');
 
@@ -13020,7 +13669,7 @@ WebGLMaskManager.prototype.popMask = function (maskData)
 };
 
 
-},{"../../../utils":67,"./WebGLManager":48}],48:[function(require,module,exports){
+},{"../../../utils":70,"./WebGLManager":51}],51:[function(require,module,exports){
 /**
  * @class
  * @memberof PIXI
@@ -13061,7 +13710,7 @@ WebGLManager.prototype.destroy = function ()
     this.renderer = null;
 };
 
-},{}],49:[function(require,module,exports){
+},{}],52:[function(require,module,exports){
 var Shader = require('./Shader');
 
 /**
@@ -13123,7 +13772,7 @@ ComplexPrimitiveShader.prototype = Object.create(Shader.prototype);
 ComplexPrimitiveShader.prototype.constructor = ComplexPrimitiveShader;
 module.exports = ComplexPrimitiveShader;
 
-},{"./Shader":51}],50:[function(require,module,exports){
+},{"./Shader":54}],53:[function(require,module,exports){
 var Shader = require('./Shader');
 
 /**
@@ -13186,7 +13835,7 @@ PrimitiveShader.prototype = Object.create(Shader.prototype);
 PrimitiveShader.prototype.constructor = PrimitiveShader;
 module.exports = PrimitiveShader;
 
-},{"./Shader":51}],51:[function(require,module,exports){
+},{"./Shader":54}],54:[function(require,module,exports){
 /*global console */
 var utils = require('../../../utils');
 
@@ -13750,7 +14399,7 @@ Shader.prototype._glCompile = function (type, src)
     return shader;
 };
 
-},{"../../../utils":67}],52:[function(require,module,exports){
+},{"../../../utils":70}],55:[function(require,module,exports){
 var Shader = require('./Shader');
 
 /**
@@ -13861,7 +14510,7 @@ TextureShader.defaultFragmentSrc = [
     '}'
 ].join('\n');
 
-},{"./Shader":51}],53:[function(require,module,exports){
+},{"./Shader":54}],56:[function(require,module,exports){
 var WebGLManager = require('../managers/WebGLManager');
 
 /**
@@ -13919,7 +14568,7 @@ ObjectRenderer.prototype.render = function (object) // jshint unused:false
     // render the object
 };
 
-},{"../managers/WebGLManager":48}],54:[function(require,module,exports){
+},{"../managers/WebGLManager":51}],57:[function(require,module,exports){
 /**
  * Helper class to create a quad
  *
@@ -14074,7 +14723,7 @@ module.exports = Quad;
 
 
 
-},{}],55:[function(require,module,exports){
+},{}],58:[function(require,module,exports){
 var math = require('../../../math'),
     utils = require('../../../utils'),
     CONST = require('../../../const'),
@@ -14396,7 +15045,7 @@ RenderTarget.prototype.destroy = function ()
     this.texture = null;
 };
 
-},{"../../../const":13,"../../../math":23,"../../../utils":67,"./StencilMaskStack":56}],56:[function(require,module,exports){
+},{"../../../const":16,"../../../math":26,"../../../utils":70,"./StencilMaskStack":59}],59:[function(require,module,exports){
 /**
  * Generic Mask Stack data structure
  * @class
@@ -14429,7 +15078,7 @@ function StencilMaskStack()
 StencilMaskStack.prototype.constructor = StencilMaskStack;
 module.exports = StencilMaskStack;
 
-},{}],57:[function(require,module,exports){
+},{}],60:[function(require,module,exports){
 var math = require('../math'),
     Texture = require('../textures/Texture'),
     Container = require('../display/Container'),
@@ -14545,7 +15194,8 @@ Object.defineProperties(Sprite.prototype, {
         },
         set: function (value)
         {
-            this.scale.x = utils.sign(this.scale.x) * value / this.texture._frame.width;
+            var sign = utils.sign(this.scale.x) || 1;
+            this.scale.x = sign * value / this.texture._frame.width;
             this._width = value;
         }
     },
@@ -14563,7 +15213,8 @@ Object.defineProperties(Sprite.prototype, {
         },
         set: function (value)
         {
-            this.scale.y = utils.sign(this.scale.y) * value / this.texture._frame.height;
+            var sign = utils.sign(this.scale.y) || 1;
+            this.scale.y = sign * value / this.texture._frame.height;
             this._height = value;
         }
     },
@@ -14671,7 +15322,8 @@ Sprite.prototype.getBounds = function (matrix)
             minY,
             maxY;
 
-
+        //TODO - I am SURE this can be optimised, but the below is not accurate enough..
+        /*
         if (b === 0 && c === 0)
         {
             // scale may be negative!
@@ -14694,38 +15346,41 @@ Sprite.prototype.getBounds = function (matrix)
         }
         else
         {
-            var x1 = a * w1 + c * h1 + tx;
-            var y1 = d * h1 + b * w1 + ty;
+        */
+       
+        var x1 = a * w1 + c * h1 + tx;
+        var y1 = d * h1 + b * w1 + ty;
 
-            var x2 = a * w0 + c * h1 + tx;
-            var y2 = d * h1 + b * w0 + ty;
+        var x2 = a * w0 + c * h1 + tx;
+        var y2 = d * h1 + b * w0 + ty;
 
-            var x3 = a * w0 + c * h0 + tx;
-            var y3 = d * h0 + b * w0 + ty;
+        var x3 = a * w0 + c * h0 + tx;
+        var y3 = d * h0 + b * w0 + ty;
 
-            var x4 =  a * w1 + c * h0 + tx;
-            var y4 =  d * h0 + b * w1 + ty;
+        var x4 =  a * w1 + c * h0 + tx;
+        var y4 =  d * h0 + b * w1 + ty;
 
-            minX = x1;
-            minX = x2 < minX ? x2 : minX;
-            minX = x3 < minX ? x3 : minX;
-            minX = x4 < minX ? x4 : minX;
+        minX = x1;
+        minX = x2 < minX ? x2 : minX;
+        minX = x3 < minX ? x3 : minX;
+        minX = x4 < minX ? x4 : minX;
 
-            minY = y1;
-            minY = y2 < minY ? y2 : minY;
-            minY = y3 < minY ? y3 : minY;
-            minY = y4 < minY ? y4 : minY;
+        minY = y1;
+        minY = y2 < minY ? y2 : minY;
+        minY = y3 < minY ? y3 : minY;
+        minY = y4 < minY ? y4 : minY;
 
-            maxX = x1;
-            maxX = x2 > maxX ? x2 : maxX;
-            maxX = x3 > maxX ? x3 : maxX;
-            maxX = x4 > maxX ? x4 : maxX;
+        maxX = x1;
+        maxX = x2 > maxX ? x2 : maxX;
+        maxX = x3 > maxX ? x3 : maxX;
+        maxX = x4 > maxX ? x4 : maxX;
 
-            maxY = y1;
-            maxY = y2 > maxY ? y2 : maxY;
-            maxY = y3 > maxY ? y3 : maxY;
-            maxY = y4 > maxY ? y4 : maxY;
-        }
+        maxY = y1;
+        maxY = y2 > maxY ? y2 : maxY;
+        maxY = y3 > maxY ? y3 : maxY;
+        maxY = y4 > maxY ? y4 : maxY;
+
+        //}
 
         // check for children
         if(this.children.length)
@@ -14842,21 +15497,29 @@ Sprite.prototype._renderCanvas = function (renderer)
 
         if(texture.rotate)
         {
-
-            // cheeky rotation!
-            var a = wt.a;
-            var b = wt.b;
-
-            wt.a  = -wt.c;
-            wt.b  = -wt.d;
-            wt.c  =  a;
-            wt.d  =  b;
-
             width = texture.crop.height;
             height = texture.crop.width;
 
             dx = (texture.trim) ? texture.trim.y - this.anchor.y * texture.trim.height : this.anchor.y * -texture._frame.height;
             dy = (texture.trim) ? texture.trim.x - this.anchor.x * texture.trim.width : this.anchor.x * -texture._frame.width;
+       
+            dx += width;
+
+            wt.tx = dy * wt.a + dx * wt.c + wt.tx;
+            wt.ty = dy * wt.b + dx * wt.d + wt.ty;
+
+            var temp = wt.a;
+            wt.a  = -wt.c;
+            wt.c  =  temp;
+
+            temp = wt.b;
+            wt.b  = -wt.d;
+            wt.d  =  temp;
+
+            // the anchor has already been applied above, so lets set it to zero
+            dx = 0;
+            dy = 0;
+
         }
         else
         {
@@ -14998,7 +15661,7 @@ Sprite.fromImage = function (imageId, crossorigin, scaleMode)
     return new Sprite(Texture.fromImage(imageId, crossorigin, scaleMode));
 };
 
-},{"../const":13,"../display/Container":14,"../math":23,"../renderers/canvas/utils/CanvasTinter":38,"../textures/Texture":62,"../utils":67}],58:[function(require,module,exports){
+},{"../const":16,"../display/Container":17,"../math":26,"../renderers/canvas/utils/CanvasTinter":41,"../textures/Texture":65,"../utils":70}],61:[function(require,module,exports){
 var ObjectRenderer = require('../../renderers/webgl/utils/ObjectRenderer'),
     WebGLRenderer = require('../../renderers/webgl/WebGLRenderer'),
     CONST = require('../../const');
@@ -15217,24 +15880,27 @@ SpriteRenderer.prototype.render = function (sprite)
 
     if (this.renderer.roundPixels)
     {
-        // xy
-        positions[index] = a * w1 + c * h1 + tx | 0;
-        positions[index+1] = d * h1 + b * w1 + ty | 0;
+        var resolution = this.renderer.resolution;
 
         // xy
-        positions[index+5] = a * w0 + c * h1 + tx | 0;
-        positions[index+6] = d * h1 + b * w0 + ty | 0;
+        positions[index] = (((a * w1 + c * h1 + tx) * resolution) | 0) / resolution;
+        positions[index+1] = (((d * h1 + b * w1 + ty) * resolution) | 0) / resolution;
+
+        // xy
+        positions[index+5] = (((a * w0 + c * h1 + tx) * resolution) | 0) / resolution;
+        positions[index+6] = (((d * h1 + b * w0 + ty) * resolution) | 0) / resolution;
 
          // xy
-        positions[index+10] = a * w0 + c * h0 + tx | 0;
-        positions[index+11] = d * h0 + b * w0 + ty | 0;
+        positions[index+10] = (((a * w0 + c * h0 + tx) * resolution) | 0) / resolution;
+        positions[index+11] = (((d * h0 + b * w0 + ty) * resolution) | 0) / resolution;
 
         // xy
-        positions[index+15] = a * w1 + c * h0 + tx | 0;
-        positions[index+16] = d * h0 + b * w1 + ty | 0;
+        positions[index+15] = (((a * w1 + c * h0 + tx) * resolution) | 0) / resolution;
+        positions[index+16] = (((d * h0 + b * w1 + ty) * resolution) | 0) / resolution;
     }
     else
     {
+
         // xy
         positions[index] = a * w1 + c * h1 + tx;
         positions[index+1] = d * h1 + b * w1 + ty;
@@ -15468,7 +16134,7 @@ SpriteRenderer.prototype.destroy = function ()
     this.shader = null;
 };
 
-},{"../../const":13,"../../renderers/webgl/WebGLRenderer":39,"../../renderers/webgl/utils/ObjectRenderer":53}],59:[function(require,module,exports){
+},{"../../const":16,"../../renderers/webgl/WebGLRenderer":42,"../../renderers/webgl/utils/ObjectRenderer":56}],62:[function(require,module,exports){
 var Sprite = require('../sprites/Sprite'),
     Texture = require('../textures/Texture'),
     math = require('../math'),
@@ -15502,6 +16168,7 @@ var Sprite = require('../sprites/Sprite'),
  * @param [style.dropShadowColor='#000000'] {string} A fill style to be used on the dropshadow e.g 'red', '#00FF00'
  * @param [style.dropShadowAngle=Math.PI/4] {number} Set a angle of the drop shadow
  * @param [style.dropShadowDistance=5] {number} Set a distance of the drop shadow
+ * @param [style.dropShadowBlur=0] {number} Set a shadow blur radius
  * @param [style.padding=0] {number} Occasionally some fonts are cropped on top or bottom. Adding some padding will
  *      prevent this from happening by adding padding to the top and bottom of text height.
  * @param [style.textBaseline='alphabetic'] {string} The baseline of the text that is rendered.
@@ -15627,6 +16294,7 @@ Object.defineProperties(Text.prototype, {
      * @param [style.dropShadowColor='#000000'] {string|number} A fill style to be used on the dropshadow e.g 'red', '#00FF00'
      * @param [style.dropShadowAngle=Math.PI/6] {number} Set a angle of the drop shadow
      * @param [style.dropShadowDistance=5] {number} Set a distance of the drop shadow
+     * @param [style.dropShadowBlur=0] {number} Set a shadow blur radius
      * @param [style.padding=0] {number} Occasionally some fonts are cropped on top or bottom. Adding some padding will
      *      prevent this from happening by adding padding to the top and bottom of text height.
      * @param [style.textBaseline='alphabetic'] {string} The baseline of the text that is rendered.
@@ -15667,8 +16335,9 @@ Object.defineProperties(Text.prototype, {
 
             style.dropShadow = style.dropShadow || false;
             style.dropShadowColor = style.dropShadowColor || '#000000';
-            style.dropShadowAngle = style.dropShadowAngle || Math.PI / 6;
-            style.dropShadowDistance = style.dropShadowDistance || 5;
+            style.dropShadowAngle = style.dropShadowAngle !== undefined ? style.dropShadowAngle : Math.PI / 6;
+            style.dropShadowDistance = style.dropShadowDistance !== undefined ? style.dropShadowDistance : 5;
+            style.dropShadowBlur = style.dropShadowBlur !== undefined ? style.dropShadowBlur : 0; //shadowBlur is '0' by default according to HTML
 
             style.padding = style.padding || 0;
 
@@ -15775,7 +16444,12 @@ Text.prototype.updateText = function ()
 
     if (style.dropShadow)
     {
-        this.context.fillStyle = style.dropShadowColor;
+        if (style.dropShadowBlur > 0) {
+            this.context.shadowColor = style.dropShadowColor;
+            this.context.shadowBlur = style.dropShadowBlur;
+        } else {
+            this.context.fillStyle = style.dropShadowColor;
+        }
 
         var xShadowOffset = Math.cos(style.dropShadowAngle) * style.dropShadowDistance;
         var yShadowOffset = Math.sin(style.dropShadowAngle) * style.dropShadowDistance;
@@ -16081,7 +16755,7 @@ Text.prototype.destroy = function (destroyBaseTexture)
     this._texture.destroy(destroyBaseTexture === undefined ? true : destroyBaseTexture);
 };
 
-},{"../const":13,"../math":23,"../sprites/Sprite":57,"../textures/Texture":62,"../utils":67}],60:[function(require,module,exports){
+},{"../const":16,"../math":26,"../sprites/Sprite":60,"../textures/Texture":65,"../utils":70}],63:[function(require,module,exports){
 var utils = require('../utils'),
     CONST = require('../const'),
     EventEmitter = require('eventemitter3');
@@ -16219,7 +16893,7 @@ function BaseTexture(source, scaleMode, resolution)
      * @member {object<number, WebGLTexture>}
      * @private
      */
-    this._glTextures = [];
+    this._glTextures = {};
 
     // if no source passed don't try to load
     if (source)
@@ -16430,7 +17104,8 @@ BaseTexture.prototype.dispose = function ()
 {
     this.emit('dispose', this);
 
-    this._glTextures.length = 0;
+    // this should no longer be needed, the renderers should cleanup all the gl textures.
+    // this._glTextures = {};
 };
 
 /**
@@ -16515,7 +17190,7 @@ BaseTexture.fromCanvas = function (canvas, scaleMode)
     return baseTexture;
 };
 
-},{"../const":13,"../utils":67,"eventemitter3":10}],61:[function(require,module,exports){
+},{"../const":16,"../utils":70,"eventemitter3":10}],64:[function(require,module,exports){
 var BaseTexture = require('./BaseTexture'),
     Texture = require('./Texture'),
     RenderTarget = require('../renderers/webgl/utils/RenderTarget'),
@@ -16649,7 +17324,7 @@ function RenderTexture(renderer, width, height, scaleMode, resolution)
         var gl = this.renderer.gl;
 
         this.textureBuffer = new RenderTarget(gl, this.width, this.height, baseTexture.scaleMode, this.resolution);//, this.baseTexture.scaleMode);
-        this.baseTexture._glTextures[gl.id] =  this.textureBuffer.texture;
+        this.baseTexture._glTextures[gl.id] = this.textureBuffer.texture;
 
         //TODO refactor filter manager.. as really its no longer a manager if we use it here..
         this.filterManager = new FilterManager(this.renderer);
@@ -16820,8 +17495,8 @@ RenderTexture.prototype.renderCanvas = function (displayObject, matrix, clear, u
         wt.append(matrix);
     }
 
-    displayObject.worldTransform = wt;
     var cachedWt = displayObject.worldTransform;
+    displayObject.worldTransform = wt;
 
     // setWorld Alpha to ensure that the object is renderer at full opacity
     displayObject.worldAlpha = 1;
@@ -16840,7 +17515,7 @@ RenderTexture.prototype.renderCanvas = function (displayObject, matrix, clear, u
         this.textureBuffer.clear();
     }
 
-   
+
 //    this.textureBuffer.
     var context = this.textureBuffer.context;
 
@@ -16852,11 +17527,11 @@ RenderTexture.prototype.renderCanvas = function (displayObject, matrix, clear, u
 
     this.renderer.resolution = realResolution;
 
-     displayObject.worldTransform = cachedWt;
-
- //   context.setTransform(1, 0, 0, 1, 0, 0);
-   // context.fillStyle ="#FF0000"
-//    context.fillRect(0, 0, 800, 600);
+    if(displayObject.worldTransform === wt)
+    {
+        // fixes cacheAsBitmap Happening during the above..
+        displayObject.worldTransform = cachedWt;
+    }
 
 };
 
@@ -16994,7 +17669,7 @@ RenderTexture.prototype.getPixel = function (x, y)
     }
 };
 
-},{"../const":13,"../math":23,"../renderers/canvas/utils/CanvasBuffer":35,"../renderers/webgl/managers/FilterManager":44,"../renderers/webgl/utils/RenderTarget":55,"./BaseTexture":60,"./Texture":62}],62:[function(require,module,exports){
+},{"../const":16,"../math":26,"../renderers/canvas/utils/CanvasBuffer":38,"../renderers/webgl/managers/FilterManager":47,"../renderers/webgl/utils/RenderTarget":58,"./BaseTexture":63,"./Texture":65}],65:[function(require,module,exports){
 var BaseTexture = require('./BaseTexture'),
     VideoBaseTexture = require('./VideoBaseTexture'),
     TextureUvs = require('./TextureUvs'),
@@ -17420,7 +18095,7 @@ Texture.removeTextureFromCache = function (id)
  */
 Texture.EMPTY = new Texture(new BaseTexture());
 
-},{"../math":23,"../utils":67,"./BaseTexture":60,"./TextureUvs":63,"./VideoBaseTexture":64,"eventemitter3":10}],63:[function(require,module,exports){
+},{"../math":26,"../utils":70,"./BaseTexture":63,"./TextureUvs":66,"./VideoBaseTexture":67,"eventemitter3":10}],66:[function(require,module,exports){
 
 /**
  * A standard object to store the Uvs of a texture
@@ -17489,7 +18164,7 @@ TextureUvs.prototype.set = function (frame, baseFrame, rotate)
     }
 };
 
-},{}],64:[function(require,module,exports){
+},{}],67:[function(require,module,exports){
 var BaseTexture = require('./BaseTexture'),
     utils = require('../utils');
 
@@ -17726,7 +18401,7 @@ function createSource(path, type)
     return source;
 }
 
-},{"../utils":67,"./BaseTexture":60}],65:[function(require,module,exports){
+},{"../utils":70,"./BaseTexture":63}],68:[function(require,module,exports){
 var CONST = require('../const'),
     EventEmitter = require('eventemitter3'),
     // Internal event used by composed emitter
@@ -18081,7 +18756,7 @@ Ticker.prototype.update = function update(currentTime)
 
 module.exports = Ticker;
 
-},{"../const":13,"eventemitter3":10}],66:[function(require,module,exports){
+},{"../const":16,"eventemitter3":10}],69:[function(require,module,exports){
 var Ticker = require('./Ticker');
 
 /**
@@ -18137,7 +18812,7 @@ module.exports = {
     Ticker: Ticker
 };
 
-},{"./Ticker":65}],67:[function(require,module,exports){
+},{"./Ticker":68}],70:[function(require,module,exports){
 var CONST = require('../const');
 
 /**
@@ -18371,8 +19046,34 @@ var utils = module.exports = {
      * @param n {number}
      * @returns {number} 0 if n is 0, -1 if n is negative, 1 if n i positive
      */
-    sign: function (n) {
+    sign: function (n)
+    {
         return n ? (n < 0 ? -1 : 1) : 0;
+    },
+
+    /**
+     * removeItems
+     *
+     * @param {array} arr The target array
+     * @param {number} startIdx The index to begin removing from (inclusive)
+     * @param {number} removeCount How many items to remove
+     */
+    removeItems: function (arr, startIdx, removeCount)
+    {
+        var length = arr.length;
+
+        if (startIdx >= length || removeCount === 0)
+        {
+            return;
+        }
+
+        removeCount = (startIdx+removeCount > length ? length-startIdx : removeCount);
+        for (var i = startIdx, len = length-removeCount; i < len; ++i)
+        {
+            arr[i] = arr[i + removeCount];
+        }
+
+        arr.length = len;
     },
 
     /**
@@ -18388,7 +19089,7 @@ var utils = module.exports = {
     BaseTextureCache: {}
 };
 
-},{"../const":13,"./pluginTarget":68,"async":1,"eventemitter3":10}],68:[function(require,module,exports){
+},{"../const":16,"./pluginTarget":71,"async":1,"eventemitter3":10}],71:[function(require,module,exports){
 /**
  * Mixins functionality to make an object have "plugins".
  *
@@ -18458,7 +19159,7 @@ module.exports = {
     }
 };
 
-},{}],69:[function(require,module,exports){
+},{}],72:[function(require,module,exports){
 /*global console */
 var core = require('./core'),
     mesh = require('./mesh'),
@@ -18809,7 +19510,7 @@ core.utils.uuid = function ()
     return core.utils.uid();
 };
 
-},{"./core":20,"./extras":76,"./filters":93,"./mesh":117}],70:[function(require,module,exports){
+},{"./core":23,"./extras":79,"./filters":96,"./mesh":121}],73:[function(require,module,exports){
 var core = require('../core');
 
 /**
@@ -19065,7 +19766,7 @@ BitmapText.prototype.updateText = function ()
 
         if (lastSpace !== -1 && this.maxWidth > 0 && pos.x * scale > this.maxWidth)
         {
-            chars.splice(lastSpace, i - lastSpace);
+            core.utils.removeItems(chars, lastSpace, i - lastSpace);
             i = lastSpace;
             lastSpace = -1;
 
@@ -19197,7 +19898,7 @@ BitmapText.prototype.validate = function()
 
 BitmapText.fonts = {};
 
-},{"../core":20}],71:[function(require,module,exports){
+},{"../core":23}],74:[function(require,module,exports){
 var core = require('../core');
 
 /**
@@ -19517,7 +20218,7 @@ MovieClip.fromImages = function (images)
 
     return new MovieClip(textures);
 };
-},{"../core":20}],72:[function(require,module,exports){
+},{"../core":23}],75:[function(require,module,exports){
 var core = require('../core'),
     // a sprite use dfor rendering textures..
     tempPoint = new core.Point(),
@@ -19969,7 +20670,7 @@ TilingSprite.fromImage = function (imageId, width, height, crossorigin, scaleMod
     return new TilingSprite(core.Texture.fromImage(imageId, crossorigin, scaleMode),width,height);
 };
 
-},{"../core":20,"../core/renderers/canvas/utils/CanvasTinter":38}],73:[function(require,module,exports){
+},{"../core":23,"../core/renderers/canvas/utils/CanvasTinter":41}],76:[function(require,module,exports){
 var core = require('../core'),
     DisplayObject = core.DisplayObject,
     _tempMatrix = new core.Matrix();
@@ -19988,7 +20689,7 @@ Object.defineProperties(DisplayObject.prototype, {
     /**
      * Set this to true if you want this display object to be cached as a bitmap.
      * This basically takes a snap shot of the display object as it is at that moment. It can provide a performance benefit for complex static displayObjects.
-     * To remove simply set this property to 'null'
+     * To remove simply set this property to 'false'
      *
      * @member {boolean}
      * @memberof PIXI.DisplayObject#
@@ -20241,7 +20942,7 @@ DisplayObject.prototype._cacheAsBitmapDestroy = function ()
     this._originalDestroy();
 };
 
-},{"../core":20}],74:[function(require,module,exports){
+},{"../core":23}],77:[function(require,module,exports){
 var core = require('../core');
 
 /**
@@ -20271,7 +20972,7 @@ core.Container.prototype.getChildByName = function (name)
     return null;
 };
 
-},{"../core":20}],75:[function(require,module,exports){
+},{"../core":23}],78:[function(require,module,exports){
 var core = require('../core');
 
 /**
@@ -20301,7 +21002,7 @@ core.DisplayObject.prototype.getGlobalPosition = function (point)
     return point;
 };
 
-},{"../core":20}],76:[function(require,module,exports){
+},{"../core":23}],79:[function(require,module,exports){
 /**
  * @file        Main export of the PIXI extras library
  * @author      Mat Groves <mat@goodboydigital.com>
@@ -20322,7 +21023,7 @@ module.exports = {
     BitmapText:     require('./BitmapText')
 };
 
-},{"./BitmapText":70,"./MovieClip":71,"./TilingSprite":72,"./cacheAsBitmap":73,"./getChildByName":74,"./getGlobalPosition":75}],77:[function(require,module,exports){
+},{"./BitmapText":73,"./MovieClip":74,"./TilingSprite":75,"./cacheAsBitmap":76,"./getChildByName":77,"./getGlobalPosition":78}],80:[function(require,module,exports){
 var core = require('../../core');
 // @see https://github.com/substack/brfs/issues/25
 
@@ -20379,7 +21080,7 @@ Object.defineProperties(AsciiFilter.prototype, {
     }
 });
 
-},{"../../core":20}],78:[function(require,module,exports){
+},{"../../core":23}],81:[function(require,module,exports){
 var core = require('../../core'),
     BlurXFilter = require('../blur/BlurXFilter'),
     BlurYFilter = require('../blur/BlurYFilter');
@@ -20480,7 +21181,7 @@ Object.defineProperties(BloomFilter.prototype, {
     }
 });
 
-},{"../../core":20,"../blur/BlurXFilter":81,"../blur/BlurYFilter":82}],79:[function(require,module,exports){
+},{"../../core":23,"../blur/BlurXFilter":84,"../blur/BlurYFilter":85}],82:[function(require,module,exports){
 var core = require('../../core');
 
 
@@ -20622,7 +21323,7 @@ Object.defineProperties(BlurDirFilter.prototype, {
     }
 });
 
-},{"../../core":20}],80:[function(require,module,exports){
+},{"../../core":23}],83:[function(require,module,exports){
 var core = require('../../core'),
     BlurXFilter = require('./BlurXFilter'),
     BlurYFilter = require('./BlurYFilter');
@@ -20732,7 +21433,7 @@ Object.defineProperties(BlurFilter.prototype, {
     }
 });
 
-},{"../../core":20,"./BlurXFilter":81,"./BlurYFilter":82}],81:[function(require,module,exports){
+},{"../../core":23,"./BlurXFilter":84,"./BlurYFilter":85}],84:[function(require,module,exports){
 var core = require('../../core');
 // @see https://github.com/substack/brfs/issues/25
 
@@ -20825,7 +21526,7 @@ Object.defineProperties(BlurXFilter.prototype, {
     }
 });
 
-},{"../../core":20}],82:[function(require,module,exports){
+},{"../../core":23}],85:[function(require,module,exports){
 var core = require('../../core');
 // @see https://github.com/substack/brfs/issues/25
 
@@ -20911,7 +21612,7 @@ Object.defineProperties(BlurYFilter.prototype, {
     }
 });
 
-},{"../../core":20}],83:[function(require,module,exports){
+},{"../../core":23}],86:[function(require,module,exports){
 var core = require('../../core');
 // @see https://github.com/substack/brfs/issues/25
 
@@ -20941,7 +21642,7 @@ SmartBlurFilter.prototype = Object.create(core.AbstractFilter.prototype);
 SmartBlurFilter.prototype.constructor = SmartBlurFilter;
 module.exports = SmartBlurFilter;
 
-},{"../../core":20}],84:[function(require,module,exports){
+},{"../../core":23}],87:[function(require,module,exports){
 var core = require('../../core');
 // @see https://github.com/substack/brfs/issues/25
 
@@ -21477,7 +22178,7 @@ Object.defineProperties(ColorMatrixFilter.prototype, {
     }
 });
 
-},{"../../core":20}],85:[function(require,module,exports){
+},{"../../core":23}],88:[function(require,module,exports){
 var core = require('../../core');
 // @see https://github.com/substack/brfs/issues/25
 
@@ -21526,7 +22227,7 @@ Object.defineProperties(ColorStepFilter.prototype, {
     }
 });
 
-},{"../../core":20}],86:[function(require,module,exports){
+},{"../../core":23}],89:[function(require,module,exports){
 var core = require('../../core');
 // @see https://github.com/substack/brfs/issues/25
 
@@ -21617,7 +22318,7 @@ Object.defineProperties(ConvolutionFilter.prototype, {
     }
 });
 
-},{"../../core":20}],87:[function(require,module,exports){
+},{"../../core":23}],90:[function(require,module,exports){
 var core = require('../../core');
 // @see https://github.com/substack/brfs/issues/25
 
@@ -21643,7 +22344,7 @@ CrossHatchFilter.prototype = Object.create(core.AbstractFilter.prototype);
 CrossHatchFilter.prototype.constructor = CrossHatchFilter;
 module.exports = CrossHatchFilter;
 
-},{"../../core":20}],88:[function(require,module,exports){
+},{"../../core":23}],91:[function(require,module,exports){
 var core = require('../../core');
 // @see https://github.com/substack/brfs/issues/25
 
@@ -21727,7 +22428,7 @@ Object.defineProperties(DisplacementFilter.prototype, {
     }
 });
 
-},{"../../core":20}],89:[function(require,module,exports){
+},{"../../core":23}],92:[function(require,module,exports){
 var core = require('../../core');
 // @see https://github.com/substack/brfs/issues/25
 
@@ -21799,7 +22500,7 @@ Object.defineProperties(DotScreenFilter.prototype, {
     }
 });
 
-},{"../../core":20}],90:[function(require,module,exports){
+},{"../../core":23}],93:[function(require,module,exports){
 var core = require('../../core');
 
 // @see https://github.com/substack/brfs/issues/25
@@ -21890,7 +22591,7 @@ Object.defineProperties(BlurYTintFilter.prototype, {
     }
 });
 
-},{"../../core":20}],91:[function(require,module,exports){
+},{"../../core":23}],94:[function(require,module,exports){
 var core = require('../../core'),
     BlurXFilter = require('../blur/BlurXFilter'),
     BlurYTintFilter = require('./BlurYTintFilter');
@@ -22083,7 +22784,7 @@ Object.defineProperties(DropShadowFilter.prototype, {
     }
 });
 
-},{"../../core":20,"../blur/BlurXFilter":81,"./BlurYTintFilter":90}],92:[function(require,module,exports){
+},{"../../core":23,"../blur/BlurXFilter":84,"./BlurYTintFilter":93}],95:[function(require,module,exports){
 var core = require('../../core');
 // @see https://github.com/substack/brfs/issues/25
 
@@ -22132,7 +22833,7 @@ Object.defineProperties(GrayFilter.prototype, {
     }
 });
 
-},{"../../core":20}],93:[function(require,module,exports){
+},{"../../core":23}],96:[function(require,module,exports){
 /**
  * @file        Main export of the PIXI filters library
  * @author      Mat Groves <mat@goodboydigital.com>
@@ -22171,7 +22872,7 @@ module.exports = {
     TwistFilter:        require('./twist/TwistFilter')
 };
 
-},{"./ascii/AsciiFilter":77,"./bloom/BloomFilter":78,"./blur/BlurDirFilter":79,"./blur/BlurFilter":80,"./blur/BlurXFilter":81,"./blur/BlurYFilter":82,"./blur/SmartBlurFilter":83,"./color/ColorMatrixFilter":84,"./color/ColorStepFilter":85,"./convolution/ConvolutionFilter":86,"./crosshatch/CrossHatchFilter":87,"./displacement/DisplacementFilter":88,"./dot/DotScreenFilter":89,"./dropshadow/DropShadowFilter":91,"./gray/GrayFilter":92,"./invert/InvertFilter":94,"./noise/NoiseFilter":95,"./pixelate/PixelateFilter":96,"./rgb/RGBSplitFilter":97,"./sepia/SepiaFilter":98,"./shockwave/ShockwaveFilter":99,"./tiltshift/TiltShiftFilter":101,"./tiltshift/TiltShiftXFilter":102,"./tiltshift/TiltShiftYFilter":103,"./twist/TwistFilter":104}],94:[function(require,module,exports){
+},{"./ascii/AsciiFilter":80,"./bloom/BloomFilter":81,"./blur/BlurDirFilter":82,"./blur/BlurFilter":83,"./blur/BlurXFilter":84,"./blur/BlurYFilter":85,"./blur/SmartBlurFilter":86,"./color/ColorMatrixFilter":87,"./color/ColorStepFilter":88,"./convolution/ConvolutionFilter":89,"./crosshatch/CrossHatchFilter":90,"./displacement/DisplacementFilter":91,"./dot/DotScreenFilter":92,"./dropshadow/DropShadowFilter":94,"./gray/GrayFilter":95,"./invert/InvertFilter":97,"./noise/NoiseFilter":98,"./pixelate/PixelateFilter":99,"./rgb/RGBSplitFilter":100,"./sepia/SepiaFilter":101,"./shockwave/ShockwaveFilter":102,"./tiltshift/TiltShiftFilter":104,"./tiltshift/TiltShiftXFilter":105,"./tiltshift/TiltShiftYFilter":106,"./twist/TwistFilter":107}],97:[function(require,module,exports){
 var core = require('../../core');
 // @see https://github.com/substack/brfs/issues/25
 
@@ -22221,7 +22922,7 @@ Object.defineProperties(InvertFilter.prototype, {
     }
 });
 
-},{"../../core":20}],95:[function(require,module,exports){
+},{"../../core":23}],98:[function(require,module,exports){
 var core = require('../../core');
 // @see https://github.com/substack/brfs/issues/25
 
@@ -22276,7 +22977,7 @@ Object.defineProperties(NoiseFilter.prototype, {
     }
 });
 
-},{"../../core":20}],96:[function(require,module,exports){
+},{"../../core":23}],99:[function(require,module,exports){
 var core = require('../../core');
 // @see https://github.com/substack/brfs/issues/25
 
@@ -22327,7 +23028,7 @@ Object.defineProperties(PixelateFilter.prototype, {
     }
 });
 
-},{"../../core":20}],97:[function(require,module,exports){
+},{"../../core":23}],100:[function(require,module,exports){
 var core = require('../../core');
 // @see https://github.com/substack/brfs/issues/25
 
@@ -22413,7 +23114,7 @@ Object.defineProperties(RGBSplitFilter.prototype, {
     }
 });
 
-},{"../../core":20}],98:[function(require,module,exports){
+},{"../../core":23}],101:[function(require,module,exports){
 var core = require('../../core');
 // @see https://github.com/substack/brfs/issues/25
 
@@ -22463,7 +23164,7 @@ Object.defineProperties(SepiaFilter.prototype, {
     }
 });
 
-},{"../../core":20}],99:[function(require,module,exports){
+},{"../../core":23}],102:[function(require,module,exports){
 var core = require('../../core');
 // @see https://github.com/substack/brfs/issues/25
 
@@ -22551,7 +23252,7 @@ Object.defineProperties(ShockwaveFilter.prototype, {
     }
 });
 
-},{"../../core":20}],100:[function(require,module,exports){
+},{"../../core":23}],103:[function(require,module,exports){
 var core = require('../../core');
 // @see https://github.com/substack/brfs/issues/25
 
@@ -22676,7 +23377,7 @@ Object.defineProperties(TiltShiftAxisFilter.prototype, {
     }
 });
 
-},{"../../core":20}],101:[function(require,module,exports){
+},{"../../core":23}],104:[function(require,module,exports){
 var core = require('../../core'),
     TiltShiftXFilter = require('./TiltShiftXFilter'),
     TiltShiftYFilter = require('./TiltShiftYFilter');
@@ -22786,7 +23487,7 @@ Object.defineProperties(TiltShiftFilter.prototype, {
     }
 });
 
-},{"../../core":20,"./TiltShiftXFilter":102,"./TiltShiftYFilter":103}],102:[function(require,module,exports){
+},{"../../core":23,"./TiltShiftXFilter":105,"./TiltShiftYFilter":106}],105:[function(require,module,exports){
 var TiltShiftAxisFilter = require('./TiltShiftAxisFilter');
 
 /**
@@ -22824,7 +23525,7 @@ TiltShiftXFilter.prototype.updateDelta = function ()
     this.uniforms.delta.value.y = dy / d;
 };
 
-},{"./TiltShiftAxisFilter":100}],103:[function(require,module,exports){
+},{"./TiltShiftAxisFilter":103}],106:[function(require,module,exports){
 var TiltShiftAxisFilter = require('./TiltShiftAxisFilter');
 
 /**
@@ -22862,7 +23563,7 @@ TiltShiftYFilter.prototype.updateDelta = function ()
     this.uniforms.delta.value.y = dx / d;
 };
 
-},{"./TiltShiftAxisFilter":100}],104:[function(require,module,exports){
+},{"./TiltShiftAxisFilter":103}],107:[function(require,module,exports){
 var core = require('../../core');
 // @see https://github.com/substack/brfs/issues/25
 
@@ -22947,7 +23648,7 @@ Object.defineProperties(TwistFilter.prototype, {
     }
 });
 
-},{"../../core":20}],105:[function(require,module,exports){
+},{"../../core":23}],108:[function(require,module,exports){
 (function (global){
 // run the polyfills
 require('./polyfill');
@@ -22960,6 +23661,7 @@ core.filters        = require('./filters');
 core.interaction    = require('./interaction');
 core.loaders        = require('./loaders');
 core.mesh           = require('./mesh');
+core.accessibility  = require('./accessibility');
 
 // export a premade loader instance
 /**
@@ -22979,7 +23681,7 @@ global.PIXI = core;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"./core":20,"./deprecation":69,"./extras":76,"./filters":93,"./interaction":108,"./loaders":111,"./mesh":117,"./polyfill":122}],106:[function(require,module,exports){
+},{"./accessibility":15,"./core":23,"./deprecation":72,"./extras":79,"./filters":96,"./interaction":111,"./loaders":114,"./mesh":121,"./polyfill":126}],109:[function(require,module,exports){
 var core = require('../core');
 
 /**
@@ -23020,15 +23722,15 @@ module.exports = InteractionData;
  *
  * @param displayObject {PIXI.DisplayObject} The DisplayObject that you would like the local coords off
  * @param [point] {PIXI.Point} A Point object in which to store the value, optional (otherwise will create a new point)
- * param [globalPos] {PIXI.Point} A Point object containing your custom global coords, optional (otherwise will use the current global coords)
+ * @param [globalPos] {PIXI.Point} A Point object containing your custom global coords, optional (otherwise will use the current global coords)
  * @return {PIXI.Point} A point containing the coordinates of the InteractionData position relative to the DisplayObject
  */
 InteractionData.prototype.getLocalPosition = function (displayObject, point, globalPos)
 {
-    return displayObject.toLocal(globalPos ? globalPos : this.global, point);
+    return displayObject.worldTransform.applyInverse(globalPos || this.global, point);
 };
 
-},{"../core":20}],107:[function(require,module,exports){
+},{"../core":23}],110:[function(require,module,exports){
 var core = require('../core'),
     InteractionData = require('./InteractionData');
 
@@ -23378,45 +24080,68 @@ InteractionManager.prototype.mapPositionToPoint = function ( point, x, y )
  * @param  {boolean} hitTest this indicates if the objects inside should be hit test against the point
  * @return {boolean} returns true if the displayObject hit the point
  */
-InteractionManager.prototype.processInteractive = function (point, displayObject, func, hitTest, interactive )
+InteractionManager.prototype.processInteractive = function (point, displayObject, func, hitTest, interactive)
 {
     if(!displayObject || !displayObject.visible)
     {
         return false;
     }
 
-    var children = displayObject.children;
+    // Took a little while to rework this function correctly! But now it is done and nice and optimised. ^_^
+    // 
+    // This function will now loop through all objects and then only hit test the objects it HAS to, not all of them. MUCH faster..
+    // An object will be hit test if the following is true:
+    // 
+    // 1: It is interactive.
+    // 2: It belongs to a parent that is interactive AND one of the parents children have not already been hit.
+    // 
+    // As another little optimisation once an interactive object has been hit we can carry on through the scenegraph, but we know that there will be no more hits! So we can avoid extra hit tests
+    // A final optimisation is that an object is not hit test directly if a child has already been hit.
+    
+    var hit = false,
+        interactiveParent = interactive = displayObject.interactive || interactive;
 
-    var hit = false;
-
-    // if the object is interactive we must hit test all its children..
-    interactive = interactive || displayObject.interactive;
-
-    if(displayObject.interactiveChildren)
+    // if the displayobject has a hitArea, then it does not need to hitTest children.
+    if(displayObject.hitArea)
     {
-
-        for (var i = children.length-1; i >= 0; i--)
-        {
-            if(! hit  && hitTest)
-            {
-                hit = this.processInteractive(point, children[i], func, true, interactive );
-            }
-            else
-            {
-                // now we know we can miss it all!
-                this.processInteractive(point, children[i], func, false, false );
-            }
-        }
-
+        interactiveParent = false;
     }
 
+    // ** FREE TIP **! If an object is not interacttive or has no buttons in it (such as a game scene!) set interactiveChildren to false for that displayObject.
+    // This will allow pixi to completly ignore and bypass checking the displayObjects children.
+    if(displayObject.interactiveChildren)
+    {       
+        var children = displayObject.children;
+        
+        for (var i = children.length-1; i >= 0; i--)
+        {
+            // time to get recursive.. if this function will return if somthing is hit..
+            if( this.processInteractive(point, children[i], func, hitTest, interactiveParent) )
+            {
+                hit = true;
+
+                // we no longer need to hit test any more objects in this container as we we now know the parent has been hit
+                interactiveParent = false;
+                
+                // If the child is interactive , that means that the object hit was actually interactive and not just the child of an interactive object. 
+                // This means we no longer need to hit test anything else. We still need to run through all objects, but we don't need to perform any hit tests.
+                if(children[i].interactive)
+                {
+                    hitTest = false;
+                }
+            }
+        }
+    }
+
+    // no point running this if the item is not interactive or does not have an interactive parent.
     if(interactive)
     {
-        if(hitTest)
-        {
+        // if we are hit testing (as in we have no hit any objects yet)
+        // We also don't need to worry about hit testing if once of the displayObjects children has already been hit!
+        if(hitTest && !hit)
+        {  
             if(displayObject.hitArea)
             {
-                // lets use the hit object first!
                 displayObject.worldTransform.applyInverse(point,  this._tempPoint);
                 hit = displayObject.hitArea.contains( this._tempPoint.x, this._tempPoint.y );
             }
@@ -23428,14 +24153,13 @@ InteractionManager.prototype.processInteractive = function (point, displayObject
 
         if(displayObject.interactive)
         {
-            func(displayObject, hit);
+            func(displayObject, hit); 
         }
     }
 
     return hit;
+  
 };
-
-
 
 
 /**
@@ -23471,7 +24195,7 @@ InteractionManager.prototype.onMouseDown = function (event)
 InteractionManager.prototype.processMouseDown = function ( displayObject, hit )
 {
     var e = this.mouse.originalEvent;
-
+    
     var isRightButton = e.button === 2 || e.which === 3;
 
     if(hit)
@@ -23676,7 +24400,6 @@ InteractionManager.prototype.onTouchStart = function (event)
  */
 InteractionManager.prototype.processTouchStart = function ( displayObject, hit )
 {
-    //console.log("hit" + hit)
     if(hit)
     {
         displayObject._touchDown = true;
@@ -23883,7 +24606,7 @@ InteractionManager.prototype.destroy = function () {
 core.WebGLRenderer.registerPlugin('interaction', InteractionManager);
 core.CanvasRenderer.registerPlugin('interaction', InteractionManager);
 
-},{"../core":20,"./InteractionData":106,"./interactiveTarget":109}],108:[function(require,module,exports){
+},{"../core":23,"./InteractionData":109,"./interactiveTarget":112}],111:[function(require,module,exports){
 /**
  * @file        Main export of the PIXI interactions library
  * @author      Mat Groves <mat@goodboydigital.com>
@@ -23900,7 +24623,7 @@ module.exports = {
     interactiveTarget:  require('./interactiveTarget')
 };
 
-},{"./InteractionData":106,"./InteractionManager":107,"./interactiveTarget":109}],109:[function(require,module,exports){
+},{"./InteractionData":109,"./InteractionManager":110,"./interactiveTarget":112}],112:[function(require,module,exports){
 /**
  * Default property values of interactive objects
  * used by {@link PIXI.interaction.InteractionManager}.
@@ -23949,7 +24672,7 @@ var interactiveTarget = {
 
 module.exports = interactiveTarget;
 
-},{}],110:[function(require,module,exports){
+},{}],113:[function(require,module,exports){
 var Resource = require('resource-loader').Resource,
     core = require('../core'),
     extras = require('../extras'),
@@ -24058,7 +24781,8 @@ module.exports = function ()
         else {
             var loadOptions = {
                 crossOrigin: resource.crossOrigin,
-                loadType: Resource.LOAD_TYPE.IMAGE
+                loadType: Resource.LOAD_TYPE.IMAGE,
+                metadata: resource.metadata.imageMetadata
             };
             // load the texture for the font
             this.add(resource.name + '_image', textureUrl, loadOptions, function (res) {
@@ -24069,7 +24793,7 @@ module.exports = function ()
     };
 };
 
-},{"../core":20,"../extras":76,"path":2,"resource-loader":129}],111:[function(require,module,exports){
+},{"../core":23,"../extras":79,"path":2,"resource-loader":133}],114:[function(require,module,exports){
 /**
  * @file        Main export of the PIXI loaders library
  * @author      Mat Groves <mat@goodboydigital.com>
@@ -24090,7 +24814,7 @@ module.exports = {
     Resource:           require('resource-loader').Resource
 };
 
-},{"./bitmapFontParser":110,"./loader":112,"./spritesheetParser":113,"./textureParser":114,"resource-loader":129}],112:[function(require,module,exports){
+},{"./bitmapFontParser":113,"./loader":115,"./spritesheetParser":116,"./textureParser":117,"resource-loader":133}],115:[function(require,module,exports){
 var ResourceLoader = require('resource-loader'),
     textureParser = require('./textureParser'),
     spritesheetParser = require('./spritesheetParser'),
@@ -24152,7 +24876,7 @@ var Resource = ResourceLoader.Resource;
 
 Resource.setExtensionXhrType('fnt', Resource.XHR_RESPONSE_TYPE.DOCUMENT);
 
-},{"./bitmapFontParser":110,"./spritesheetParser":113,"./textureParser":114,"resource-loader":129}],113:[function(require,module,exports){
+},{"./bitmapFontParser":113,"./spritesheetParser":116,"./textureParser":117,"resource-loader":133}],116:[function(require,module,exports){
 var Resource = require('resource-loader').Resource,
     path = require('path'),
     core = require('../core');
@@ -24169,7 +24893,8 @@ module.exports = function ()
 
         var loadOptions = {
             crossOrigin: resource.crossOrigin,
-            loadType: Resource.LOAD_TYPE.IMAGE
+            loadType: Resource.LOAD_TYPE.IMAGE,
+            metadata: resource.metadata.imageMetadata
         };
 
         var route = path.dirname(resource.url.replace(this.baseUrl, ''));
@@ -24235,7 +24960,7 @@ module.exports = function ()
     };
 };
 
-},{"../core":20,"path":2,"resource-loader":129}],114:[function(require,module,exports){
+},{"../core":23,"path":2,"resource-loader":133}],117:[function(require,module,exports){
 var core = require('../core');
 
 module.exports = function ()
@@ -24257,7 +24982,7 @@ module.exports = function ()
     };
 };
 
-},{"../core":20}],115:[function(require,module,exports){
+},{"../core":23}],118:[function(require,module,exports){
 var core = require('../core'),
     tempPoint = new core.Point(),
     tempPolygon = new core.Polygon();
@@ -24290,9 +25015,9 @@ function Mesh(texture, vertices, uvs, indices, drawMode)
      *
      * @member {Float32Array}
      */
-    this.uvs = uvs || new Float32Array([0, 1,
-        1, 1,
+    this.uvs = uvs || new Float32Array([0, 0,
         1, 0,
+        1, 1,
         0, 1]);
 
     /**
@@ -24309,7 +25034,7 @@ function Mesh(texture, vertices, uvs, indices, drawMode)
      * @member {Uint16Array} An array containing the indices of the vertices
      */
     //  TODO auto generate this based on draw mode!
-    this.indices = indices || new Uint16Array([0, 1, 2, 3]);
+    this.indices = indices || new Uint16Array([0, 1, 3, 2]);
 
     /**
      * Whether the Mesh is dirty or not
@@ -24344,6 +25069,13 @@ function Mesh(texture, vertices, uvs, indices, drawMode)
 
     // run texture setter;
     this.texture = texture;
+
+     /**
+     * The default shader that is used if a mesh doesn't have a more specific one.
+     *
+     * @member {PIXI.Shader}
+     */
+    this.shader = null;
 }
 
 // constructor
@@ -24726,7 +25458,133 @@ Mesh.DRAW_MODES = {
     TRIANGLES: 1
 };
 
-},{"../core":20}],116:[function(require,module,exports){
+},{"../core":23}],119:[function(require,module,exports){
+var Mesh = require('./Mesh');
+
+/**
+ * The Plane allows you to draw a texture across several points and them manipulate these points
+ *
+ *```js
+ * for (var i = 0; i < 20; i++) {
+ *     points.push(new PIXI.Point(i * 50, 0));
+ * };
+ * var Plane = new PIXI.Plane(PIXI.Texture.fromImage("snake.png"), points);
+ *  ```
+ *
+ * @class
+ * @extends PIXI.mesh.Mesh
+ * @memberof PIXI.mesh
+ * @param {PIXI.Texture} texture - The texture to use on the Plane.
+ * @param {int} segmentsX - The number ox x segments
+ * @param {int} segmentsY - The number of y segments
+ *
+ */
+function Plane(texture, segmentsX, segmentsY)
+{
+    Mesh.call(this, texture);
+
+    /**
+     * Tracker for if the Plane is ready to be drawn. Needed because Mesh ctor can
+     * call _onTextureUpdated which could call refresh too early.
+     *
+     * @member {boolean}
+     * @private
+     */
+    this._ready = true;
+
+    this.segmentsX =  segmentsX || 10;
+    this.segmentsY = segmentsY || 10;
+
+    this.drawMode = Mesh.DRAW_MODES.TRIANGLES;
+    this.refresh();
+
+}
+
+
+// constructor
+Plane.prototype = Object.create( Mesh.prototype );
+Plane.prototype.constructor = Plane;
+module.exports = Plane;
+
+/**
+ * Refreshes
+ *
+ */
+Plane.prototype.refresh = function()
+{
+    var total = this.segmentsX * this.segmentsY;
+    var verts = [];
+    var colors = [];
+    var uvs = [];
+    var indices = [];
+    var texture = this.texture;
+
+  //  texture.width = 800 texture.width || 800;
+ //   texture.height = 800//texture.height || 800;
+
+    var segmentsXSub = this.segmentsX - 1;
+    var segmentsYSub = this.segmentsY - 1;
+    var i = 0;
+
+    // TODO MAP UVS..
+    var sizeX = texture.width / segmentsXSub;
+    var sizeY = texture.height / segmentsYSub;
+
+    for (i = 0; i < total; i++) {
+
+        var x = (i % this.segmentsX);
+        var y = ( (i / this.segmentsX ) | 0 );
+
+
+        verts.push((x * sizeX),
+                   (y * sizeY));
+
+        uvs.push(x / (this.segmentsX-1), y/ (this.segmentsY-1));
+    }
+
+    //  cons
+
+    var totalSub = segmentsXSub * segmentsYSub;
+
+    for (i = 0; i < totalSub; i++) {
+
+        var xpos = i % segmentsXSub;
+        var ypos = (i / segmentsXSub ) | 0;
+
+
+        var  value = (ypos * this.segmentsX) + xpos;
+        var  value2 = (ypos * this.segmentsX) + xpos + 1;
+        var  value3 = ((ypos+1) * this.segmentsX) + xpos;
+        var  value4 = ((ypos+1) * this.segmentsX) + xpos + 1;
+
+        indices.push(value, value2, value3);
+        indices.push(value2, value4, value3);
+    }
+
+
+    //console.log(indices)
+    this.vertices = new Float32Array(verts);
+    this.uvs = new Float32Array(uvs);
+    this.colors = new Float32Array(colors);
+    this.indices = new Uint16Array(indices);
+};
+
+/**
+ * Clear texture UVs when new texture is set
+ *
+ * @private
+ */
+Plane.prototype._onTextureUpdate = function ()
+{
+    Mesh.prototype._onTextureUpdate.call(this);
+
+    // wait for the Plane ctor to finish before calling refresh
+    if (this._ready) {
+        this.refresh();
+    }
+};
+
+},{"./Mesh":118}],120:[function(require,module,exports){
 var Mesh = require('./Mesh');
 var core = require('../core');
 
@@ -24939,7 +25797,7 @@ Rope.prototype.updateTransform = function ()
     this.containerUpdateTransform();
 };
 
-},{"../core":20,"./Mesh":115}],117:[function(require,module,exports){
+},{"../core":23,"./Mesh":118}],121:[function(require,module,exports){
 /**
  * @file        Main export of the PIXI extras library
  * @author      Mat Groves <mat@goodboydigital.com>
@@ -24952,12 +25810,13 @@ Rope.prototype.updateTransform = function ()
  */
 module.exports = {
     Mesh:           require('./Mesh'),
+    Plane:           require('./Plane'),
     Rope:           require('./Rope'),
     MeshRenderer:   require('./webgl/MeshRenderer'),
     MeshShader:     require('./webgl/MeshShader')
 };
 
-},{"./Mesh":115,"./Rope":116,"./webgl/MeshRenderer":118,"./webgl/MeshShader":119}],118:[function(require,module,exports){
+},{"./Mesh":118,"./Plane":119,"./Rope":120,"./webgl/MeshRenderer":122,"./webgl/MeshShader":123}],122:[function(require,module,exports){
 var core = require('../../core'),
     Mesh = require('../Mesh');
 
@@ -24990,6 +25849,7 @@ function MeshRenderer(renderer)
      *
      * @member {Uint16Array}
      */
+    
     this.indices = new Uint16Array(15000);
 
     //TODO this could be a single buffer shared amongst all renderers as we reuse this set up in most renderers
@@ -25002,6 +25862,8 @@ function MeshRenderer(renderer)
         this.indices[i + 4] = j + 2;
         this.indices[i + 5] = j + 3;
     }
+
+    this.currentShader = null;
 }
 
 MeshRenderer.prototype = Object.create(core.ObjectRenderer.prototype);
@@ -25036,18 +25898,29 @@ MeshRenderer.prototype.render = function (mesh)
     var renderer = this.renderer,
         gl = renderer.gl,
         texture = mesh._texture.baseTexture,
-        shader = renderer.shaderManager.plugins.meshShader;
+        shader = mesh.shader;// || renderer.shaderManager.plugins.meshShader;
 
     var drawMode = mesh.drawMode === Mesh.DRAW_MODES.TRIANGLE_MESH ? gl.TRIANGLE_STRIP : gl.TRIANGLES;
 
     renderer.blendModeManager.setBlendMode(mesh.blendMode);
 
+    //TODO cache custom state..
+    if (!shader)
+    {
+        shader = renderer.shaderManager.plugins.meshShader;
+    }
+    else
+    {
+        shader = shader.shaders[gl.id] || shader.getShader(renderer);// : shader;
+    }
 
-    // set uniforms
-    gl.uniformMatrix3fv(shader.uniforms.translationMatrix._location, false, mesh.worldTransform.toArray(true));
+    this.renderer.shaderManager.setShader(shader);
 
-    gl.uniformMatrix3fv(shader.uniforms.projectionMatrix._location, false, renderer.currentRenderTarget.projectionMatrix.toArray(true));
-    gl.uniform1f(shader.uniforms.alpha._location, mesh.worldAlpha);
+    shader.uniforms.translationMatrix.value = mesh.worldTransform.toArray(true);
+    shader.uniforms.projectionMatrix.value = renderer.currentRenderTarget.projectionMatrix.toArray(true);
+    shader.uniforms.alpha.value = mesh.worldAlpha;
+
+    shader.syncUniforms();
 
     if (!mesh.dirty)
     {
@@ -25158,9 +26031,9 @@ MeshRenderer.prototype.flush = function ()
  */
 MeshRenderer.prototype.start = function ()
 {
-    var shader = this.renderer.shaderManager.plugins.meshShader;
+    
 
-    this.renderer.shaderManager.setShader(shader);
+    this.currentShader = null;
 };
 
 /**
@@ -25172,7 +26045,7 @@ MeshRenderer.prototype.destroy = function ()
     core.ObjectRenderer.prototype.destroy.call(this);
 };
 
-},{"../../core":20,"../Mesh":115}],119:[function(require,module,exports){
+},{"../../core":23,"../Mesh":118}],123:[function(require,module,exports){
 var core = require('../../core');
 
 /**
@@ -25233,7 +26106,7 @@ module.exports = MeshShader;
 
 core.ShaderManager.registerPlugin('meshShader', MeshShader);
 
-},{"../../core":20}],120:[function(require,module,exports){
+},{"../../core":23}],124:[function(require,module,exports){
 // References:
 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/sign
 
@@ -25249,7 +26122,7 @@ if (!Math.sign)
     };
 }
 
-},{}],121:[function(require,module,exports){
+},{}],125:[function(require,module,exports){
 // References:
 // https://github.com/sindresorhus/object-assign
 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/assign
@@ -25259,12 +26132,12 @@ if (!Object.assign)
     Object.assign = require('object-assign');
 }
 
-},{"object-assign":11}],122:[function(require,module,exports){
+},{"object-assign":11}],126:[function(require,module,exports){
 require('./Object.assign');
 require('./requestAnimationFrame');
 require('./Math.sign');
 
-},{"./Math.sign":120,"./Object.assign":121,"./requestAnimationFrame":123}],123:[function(require,module,exports){
+},{"./Math.sign":124,"./Object.assign":125,"./requestAnimationFrame":127}],127:[function(require,module,exports){
 (function (global){
 // References:
 // http://paulirish.com/2011/requestanimationframe-for-smart-animating/
@@ -25335,7 +26208,7 @@ if (!global.cancelAnimationFrame) {
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{}],124:[function(require,module,exports){
+},{}],128:[function(require,module,exports){
 (function (process){
 /*!
  * async
@@ -26463,7 +27336,7 @@ if (!global.cancelAnimationFrame) {
 
 }).call(this,require('_process'))
 
-},{"_process":3}],125:[function(require,module,exports){
+},{"_process":3}],129:[function(require,module,exports){
 'use strict';
 
 //
@@ -26725,7 +27598,7 @@ EventEmitter.prefixed = prefix;
 //
 module.exports = EventEmitter;
 
-},{}],126:[function(require,module,exports){
+},{}],130:[function(require,module,exports){
 var async       = require('async'),
     urlParser   = require('url'),
     Resource    = require('./Resource'),
@@ -27002,7 +27875,7 @@ Loader.prototype._handleBaseUrl = function (url) {
     if (
         this.baseUrl.length &&
         this.baseUrl.lastIndexOf('/') !== this.baseUrl.length - 1 &&
-        url.lastIndexOf('/') !== url.length - 1
+        url.charAt(0) !== '/'
     ) {
         return this.baseUrl + '/' + url;
     }
@@ -27183,7 +28056,7 @@ Loader.LOAD_TYPE = Resource.LOAD_TYPE;
 Loader.XHR_READY_STATE = Resource.XHR_READY_STATE;
 Loader.XHR_RESPONSE_TYPE = Resource.XHR_RESPONSE_TYPE;
 
-},{"./Resource":127,"async":124,"eventemitter3":125,"url":8}],127:[function(require,module,exports){
+},{"./Resource":131,"async":128,"eventemitter3":129,"url":8}],131:[function(require,module,exports){
 var EventEmitter = require('eventemitter3'),
     _url = require('url'),
     // tests is CORS is supported in XHR, if not we need to use XDR
@@ -27198,10 +28071,11 @@ var EventEmitter = require('eventemitter3'),
  * @param name {string} The name of the resource to load.
  * @param url {string|string[]} The url for this resource, for audio/video loads you can pass an array of sources.
  * @param [options] {object} The options for the load.
- * @param [options.crossOrigin] {boolean} Is this request cross-origin? Default is to determine automatically.
+ * @param [options.crossOrigin] {string|boolean} Is this request cross-origin? Default is to determine automatically.
  * @param [options.loadType=Resource.LOAD_TYPE.XHR] {Resource.LOAD_TYPE} How should this resource be loaded?
  * @param [options.xhrType=Resource.XHR_RESPONSE_TYPE.DEFAULT] {Resource.XHR_RESPONSE_TYPE} How should the data being
  *      loaded be interpreted when using XHR?
+ * @param [options.metadata] {object} Extra info for middleware.
  */
 function Resource(name, url, options) {
     EventEmitter.call(this);
@@ -27248,7 +28122,7 @@ function Resource(name, url, options) {
      *
      * @member {string}
      */
-    this.crossOrigin = options.crossOrigin === true ? 'anonymous' : null;
+    this.crossOrigin = options.crossOrigin === true ? 'anonymous' : options.crossOrigin;
 
     /**
      * The method of loading to use for this resource.
@@ -27263,6 +28137,13 @@ function Resource(name, url, options) {
      * @member {string}
      */
     this.xhrType = options.xhrType;
+
+    /**
+     * Extra info for middleware
+     *
+     * @member {object}
+     */
+    this.metadata = options.metadata || {};
 
     /**
      * The error that occurred while loading (if any).
@@ -27437,7 +28318,7 @@ Resource.prototype.load = function (cb) {
     }
 
     // if unset, determine the value
-    if (typeof this.crossOrigin !== 'string') {
+    if (this.crossOrigin === false || typeof this.crossOrigin !== 'string') {
         this.crossOrigin = this._determineCrossOrigin(this.url);
     }
 
@@ -27977,7 +28858,7 @@ function setExtMap(map, extname, val) {
     map[extname] = val;
 }
 
-},{"eventemitter3":125,"url":8}],128:[function(require,module,exports){
+},{"eventemitter3":129,"url":8}],132:[function(require,module,exports){
 module.exports = {
 
     // private property
@@ -28043,7 +28924,7 @@ module.exports = {
     }
 };
 
-},{}],129:[function(require,module,exports){
+},{}],133:[function(require,module,exports){
 module.exports = require('./Loader');
 
 module.exports.Resource = require('./Resource');
@@ -28057,7 +28938,7 @@ module.exports.middleware = {
     }
 };
 
-},{"./Loader":126,"./Resource":127,"./middlewares/caching/memory":130,"./middlewares/parsing/blob":131}],130:[function(require,module,exports){
+},{"./Loader":130,"./Resource":131,"./middlewares/caching/memory":134,"./middlewares/parsing/blob":135}],134:[function(require,module,exports){
 // a simple in-memory cache for resources
 var cache = {};
 
@@ -28073,13 +28954,13 @@ module.exports = function () {
             resource.once('complete', function () {
                cache[this.url] = this.data;
             });
-
-            next();
         }
+        
+        next();
     };
 };
 
-},{}],131:[function(require,module,exports){
+},{}],135:[function(require,module,exports){
 var Resource = require('../../Resource'),
     b64 = require('../../b64');
 
@@ -28139,7 +29020,7 @@ module.exports = function () {
     };
 };
 
-},{"../../Resource":127,"../../b64":128}]},{},[105])(105)
+},{"../../Resource":131,"../../b64":132}]},{},[108])(108)
 });
 
 
@@ -28331,7 +29212,7 @@ call a `setup` method when all the files have finished loading:
     ]);
     sounds.whenLoaded = setup;
 
-You can now access these loaded sounds in you application code like this:
+You can now access these loaded sounds in your application code like this:
 
 var shoot = sounds["sounds/shoot.wav"],
     music = sounds["sounds/music.wav"],
@@ -28808,6 +29689,7 @@ create a laser shooting sound:
       25,               //dissonance
       [0.2, 0.2, 2000], //echo: [delay, feedback, filter]
       undefined         //reverb: [duration, decay, reverse?]
+      3                 //Maximum duration of sound, in seconds
     );
 
 Experiment by changing these parameters to see what kinds of effects you can create, and build
@@ -28827,7 +29709,8 @@ function soundEffect(
   randomValue,         //A range, in Hz, within which to randomize the pitch
   dissonance,          //A value in Hz. It creates 2 dissonant frequencies above and below the target pitch
   echo,                //An array: [delayTimeInSeconds, feedbackTimeInSeconds, filterValueInHz]
-  reverb               //An array: [durationInSeconds, decayRateInSeconds, reverse]
+  reverb,              //An array: [durationInSeconds, decayRateInSeconds, reverse]
+  timeout              //A number, in seconds, which is the maximum duration for sound effects
 ) {
 
   //Set the default values
@@ -28844,6 +29727,7 @@ function soundEffect(
   if (dissonance === undefined) dissonance = 0;
   if (echo === undefined) echo = undefined;
   if (reverb === undefined) reverb = undefined;
+  if (timeout === undefined) timeout = undefined;
 
   //Create an oscillator, gain and pan nodes, and connect them
   //together to the destination
@@ -29055,6 +29939,13 @@ function soundEffect(
   //The `play` function
   function play(node) {
     node.start(actx.currentTime + wait);
+
+    //Oscillators have to be stopped otherwise they accumulate in 
+    //memory and tax the CPU. They'll be stopped after a default
+    //timeout of 2 seconds, which should be enough for most sound 
+    //effects. Override this in the `soundEffect` parameters if you
+    //need a longer sound
+    node.stop(actx.currentTime + wait + 2);
   }
 }
 

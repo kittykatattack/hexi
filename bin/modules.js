@@ -186,7 +186,7 @@ call a `setup` method when all the files have finished loading:
     ]);
     sounds.whenLoaded = setup;
 
-You can now access these loaded sounds in you application code like this:
+You can now access these loaded sounds in your application code like this:
 
 var shoot = sounds["sounds/shoot.wav"],
     music = sounds["sounds/music.wav"],
@@ -663,6 +663,7 @@ create a laser shooting sound:
       25,               //dissonance
       [0.2, 0.2, 2000], //echo: [delay, feedback, filter]
       undefined         //reverb: [duration, decay, reverse?]
+      3                 //Maximum duration of sound, in seconds
     );
 
 Experiment by changing these parameters to see what kinds of effects you can create, and build
@@ -682,7 +683,8 @@ function soundEffect(
   randomValue,         //A range, in Hz, within which to randomize the pitch
   dissonance,          //A value in Hz. It creates 2 dissonant frequencies above and below the target pitch
   echo,                //An array: [delayTimeInSeconds, feedbackTimeInSeconds, filterValueInHz]
-  reverb               //An array: [durationInSeconds, decayRateInSeconds, reverse]
+  reverb,              //An array: [durationInSeconds, decayRateInSeconds, reverse]
+  timeout              //A number, in seconds, which is the maximum duration for sound effects
 ) {
 
   //Set the default values
@@ -699,6 +701,7 @@ function soundEffect(
   if (dissonance === undefined) dissonance = 0;
   if (echo === undefined) echo = undefined;
   if (reverb === undefined) reverb = undefined;
+  if (timeout === undefined) timeout = undefined;
 
   //Create an oscillator, gain and pan nodes, and connect them
   //together to the destination
@@ -910,6 +913,13 @@ function soundEffect(
   //The `play` function
   function play(node) {
     node.start(actx.currentTime + wait);
+
+    //Oscillators have to be stopped otherwise they accumulate in 
+    //memory and tax the CPU. They'll be stopped after a default
+    //timeout of 2 seconds, which should be enough for most sound 
+    //effects. Override this in the `soundEffect` parameters if you
+    //need a longer sound
+    node.stop(actx.currentTime + wait + 2);
   }
 }
 
