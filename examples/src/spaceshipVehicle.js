@@ -49,37 +49,40 @@ function setup() {
   //Whether or not the ship should move forward
   ship.moveForward = false;
 
-  //Use Hexi's built-in arrow key objects to define the ship's
-  //movement
-  
+  //Define the arrow keys to help move the ship
+  let leftArrow = g.keyboard(37),
+      upArrow = g.keyboard(38),
+      rightArrow = g.keyboard(39),
+      downArrow = g.keyboard(40);
+      
   //Set the ship's `rotationSpeed` to -0.1 (to rotate left) if the
   //left arrow key is being pressed
-  g.leftArrow.press = () =>  {
+  leftArrow.press = () =>  {
     ship.rotationSpeed = -0.1;
   };
 
   //If the left arrow key is released and the right arrow
   //key isn't being pressed down, set the `rotationSpeed` to 0
-  g.leftArrow.release = () => {
-    if (!g.rightArrow.isDown) ship.rotationSpeed = 0;
+  leftArrow.release = () => {
+    if (!rightArrow.isDown) ship.rotationSpeed = 0;
   };
 
   //Do the same for the right arrow key, but set
   //the `rotationSpeed` to 0.1 (to rotate right)
-  g.rightArrow.press = () => {
+  rightArrow.press = () => {
     ship.rotationSpeed = 0.1;
   };
 
-  g.rightArrow.release = () => {
-    if (!g.leftArrow.isDown) ship.rotationSpeed = 0;
+  rightArrow.release = () => {
+    if (!leftArrow.isDown) ship.rotationSpeed = 0;
   };
 
   //Set `ship.moveForward` to `true` if the up arrow key is
   //pressed, and set it to `false` if it's released
-  g.upArrow.press = () => {
+  upArrow.press = () => {
     ship.moveForward = true;
   };
-  g.upArrow.release = () => {
+  upArrow.release = () => {
     ship.moveForward = false;
   };
 

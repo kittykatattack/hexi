@@ -50,34 +50,40 @@ function setup() {
   //Whether or not the tank should move forward
   tank.moveForward = false;
   
+  //Define the arrow keys to move the tank
+  let leftArrow = g.keyboard(37),
+      upArrow = g.keyboard(38),
+      rightArrow = g.keyboard(39),
+      downArrow = g.keyboard(40);
+      
   //Set the tank's `rotationSpeed` to -0.1 (to rotate left) if the
   //left arrow key is being pressed
-  g.leftArrow.press = () => {
+  leftArrow.press = () => {
     tank.rotationSpeed = -0.1;
   };
 
   //If the left arrow key is released and the right arrow
   //key isn't being pressed down, set the `rotationSpeed` to 0
-  g.leftArrow.release = () => {
-    if (!g.rightArrow.isDown) tank.rotationSpeed = 0;
+  leftArrow.release = () => {
+    if (!rightArrow.isDown) tank.rotationSpeed = 0;
   };
 
   //Do the same for the right arrow key, but set
   //the `rotationSpeed` to 0.1 (to rotate right)
-  g.rightArrow.press = () => {
+  rightArrow.press = () => {
     tank.rotationSpeed = 0.1;
   };
 
-  g.rightArrow.release = () => {
-    if (!g.leftArrow.isDown) tank.rotationSpeed = 0;
+  rightArrow.release = () => {
+    if (!leftArrow.isDown) tank.rotationSpeed = 0;
   };
 
   //Set `tank.moveForward` to `true` if the up arrow key is
   //pressed, and set it to `false` if it's released
-  g.upArrow.press = () => {
+  upArrow.press = () => {
     tank.moveForward = true;
   };
-  g.upArrow.release = () => {
+  upArrow.release = () => {
     tank.moveForward = false;
   };
 

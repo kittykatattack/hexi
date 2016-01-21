@@ -94,7 +94,8 @@ Of course, Hexi is completely free to use: for-anything, for-ever! It was writte
     5. [The fairy dust explosions](#thefairydustexplosions)
     6. [Use a particle emitter](#useaparticleemitter)
     7. [Creating and moving the pillars](#creatingandmovingthepillars)
-5. [A Guide to the examples](#aguidetotheexamples)
+5. [Integration with HTML and CSS](#html)
+6. [A Guide to the examples](#aguidetotheexamples)
 
 <a id='features'></a>
 Features
@@ -128,8 +129,7 @@ Here's Hexi's core feature list:
   actions.
   Intuitive `press`, `release`, `over`, `out` and `tap` methods for buttons and interactive
   sprites.
-- Easy-to-use keyboard key bindings. The arrow and space keys are
-  built-in, and you can easily define your own with the `keyboard`
+- Easy-to-use keyboard key bindings. Easily define your own with the `keyboard`
   method.
 - A built-in universal `pointer` that works with both the mouse and
   touch. Assign your own custom `press`, `release` and `tap` methods
@@ -196,6 +196,8 @@ Here's Hexi's core feature list:
   with moving sprites.
 - Create a `worldCamera` that follows sprites around a scrolling game
   world.
+- Seamless integration with HTML and CSS elements for creating rich
+  user interfaces. Use Hexi also works with Angular, React and Elm!
 
 <a id='features'></a>
 ### Hexi's modules
@@ -3399,6 +3401,142 @@ nested sprite’s position on the canvas.
 
 Make sure you check out the complete Flappy Fairy source code in the
 `examples` folder so that you can see all this code in its proper context.
+
+<a id='html'></a>
+#Integration with HTML and CSS
+
+Hexi works seamlessly with HTML and CSS. You can freely mix Hexi sprites and
+code with HTML elements, and use Hexi's architecture to build an HTML
+based application. And, you can use HTML to build a rich user
+interface for your Hexi games.
+
+How does it work? Hexi takes a completely hands-off approach. Just write plain old HTML and CSS, however you like,
+and then reference your HTML in your Hexi code. That's all! Hexi
+doesn't re-invent the wheel, so you can write as much low level HTML/CSS code you like and blend it 
+into your Hexi application however you choose.
+
+You can find a working example in the `html` folder in Hexi's `examples` in this code repository.
+It's a simple number guessing game:
+
+![Number guessing game](/tutorials/screenshots/32.png)
+
+The gray box that contains the button and text input field are HTML
+elements. Those HTML elements, including the button, are completely styled
+using CSS. The dynamic text and images are Hexi sprites. 
+
+There's also
+an invisible `<div>` element that's exactly the same size, and in
+exactly the same position, as Hexi's canvas. The big `<div>` element
+floats over the canvas and contains the gray box, button and input
+field. 
+
+Let's take a quick look at how this works. `main.html` file looks like
+this:
+```js
+<!doctype html>
+<meta charset="utf-8">
+<title>Html integration</title>
+<link rel="stylesheet" href="style.css">
+<body>
+
+<!-- UI -->
+<div id="ui">
+  <div id="box">
+    <button>Guess!</button>
+    <input id="input" type="text" placeholder="X..." maxlength="10" autofocus>
+  <div>
+</div>
+
+<!-- Hexi -->
+<script src="../../src/modules/pixi.js/bin/pixi.js"></script>
+<script src="../../bin/modules.js"></script>
+<script src="../../bin/core.js"></script>
+
+<!-- Main application file -->
+<script src="main.js"></script>
+</body>
+```
+The important part is the `UI` section, just below the `<body>` tag. A
+`div` with the id `ui` is used to enclose the box, button and input.
+
+The magic happens in the `style.css` file. Here's the most important
+part:
+```js
+canvas
+  { position : relative
+  }
+
+#ui
+  { position : absolute
+  ; left : 0
+  ; top : 0
+  ; width : 512px;
+  ; height : 512px;
+
+  /*Important: set the z-index to 1 so that it appears above Hexi's canvas*/
+  ; z-index: 1
+  }
+```
+Hexi's `canvas` is set to `relative` and the `ui` div is set to
+`absolute`. `ui` is also set to **exactly** the same width and height, `512px`,
+as Hexi's canvas. Very importantly, `ui` has a `z-index` of `1`
+to force it to display above the canvas. The other HTML elements (the
+box, button, and input field) are all positioned absolutely relative
+to the `ui` div - check the full CSS code for details.
+
+To access the button and input field in your Hexi code, just create
+references to them in Hexi's `setup` function:
+```js
+function setup() {
+
+  //Html elements
+  var button = document.querySelector("button");
+  button.addEventListener("click", buttonClickHandler, false);
+  var input = document.querySelector("#input");
+
+  //...The rest of the setup code creates Hexi sprites...
+```
+Then just create an ordinary function to handle the button clicks,
+like this:
+```js
+function buttonClickHandler(event) {
+
+  //Capture the player's input from the HTML text input field
+  if (input.value) playersGuess = parseInt(input.value);
+
+  //...the rest of the code...
+}
+```
+`input.value` gives you access to whatever the user entered in the
+input field. This is just plain old vanilla Web API code - nothing
+special!. You can use that value to change any Hexi sprite properties.
+Take a look at the source code for details, but there are no surprises.
+
+But the example code does have one trick up it's sleeve. The entire Hexi
+application scales up and aligns itself inside the browser. That means
+both Hexi's canvas and the UI div scale up **and** stay aligned. They
+even re-scale and re-align if the user changes the size of the browser window. How
+does that work? Here's the JavaScript code that does this (in the `main.js`
+file, just after Hexi's standard initialization code):
+```js
+//Scale Hexi's canvas
+g.scaleToWindow();
+
+//Scale the html UI <div> container
+scaleToWindow(document.querySelector("#ui"));
+window.addEventListener("resize", function(event){ 
+  scaleToWindow(document.querySelector("#ui"));
+});
+```
+Hexi's canvas is scaled internally by the Hexi engine, but the UI layer
+is scaled using the global `scaleToWindow` function. (You can find out
+about the `scaleToWindow` function [here](https://github.com/kittykatattack/scaleToWindow).)
+
+This loose integration between HTML and Hexi means you're free to customize this however you
+like. You can do crazy low-level HTML/CSS programming if you want to, mix the logic in 
+with your Hexi sprites, and design any kind of custom layout that you
+need. It's just HTML! And, yes, you can write your HTML
+with Angular, React or (Elm)[http://elm-lang.org] (Go Elm!!) if you want to.
 
 <a id='aguidetotheexamples'></a>
 #Coming soon: A guide to the examples

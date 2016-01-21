@@ -30069,26 +30069,27 @@ function scaleToWindow(canvas, backgroundColor) {
   
   //1. Scale the canvas to the correct size
   //Figure out the scale amount on each axis
-  scaleX = window.innerWidth / canvas.width;
-  scaleY = window.innerHeight / canvas.height;
+  scaleX = window.innerWidth / canvas.offsetWidth;
+  scaleY = window.innerHeight / canvas.offsetHeight;
 
   //Scale the canvas based on whichever value is less: `scaleX` or `scaleY`
   scale = Math.min(scaleX, scaleY);
   canvas.style.transformOrigin = "0 0";
   canvas.style.transform = "scale(" + scale + ")";
+  console.log(scaleX)
 
   //2. Center the canvas.
   //Decide whether to center the canvas vertically or horizontally.
   //Wide canvases should be centered vertically, and 
   //square or tall canvases should be centered horizontally
-  if (canvas.width > canvas.height) {
-    if (canvas.width * scale < window.innerWidth) {
+  if (canvas.offsetwidth > canvas.offsetHeight) {
+    if (canvas.offsetWidth * scale < window.innerWidth) {
       center = "horizontally";
     } else { 
       center = "vertically";
     }
   } else {
-    if (canvas.height * scale < window.innerHeight) {
+    if (canvas.offsetHeight * scale < window.innerHeight) {
       center = "vertically";
     } else { 
       center = "horizontally";
@@ -30098,14 +30099,14 @@ function scaleToWindow(canvas, backgroundColor) {
   //Center horizontally (for square or tall canvases)
   var margin;
   if (center === "horizontally") {
-    margin = (window.innerWidth - canvas.width * scale) / 2;
+    margin = (window.innerWidth - canvas.offsetWidth * scale) / 2;
     canvas.style.marginLeft = margin + "px";
     canvas.style.marginRight = margin + "px";
   }
 
   //Center vertically (for wide canvases) 
   if (center === "vertically") {
-    margin = (window.innerHeight - canvas.height * scale) / 2;
+    margin = (window.innerHeight - canvas.offsetHeight * scale) / 2;
     canvas.style.marginTop = margin + "px";
     canvas.style.marginBottom = margin + "px";
   }
@@ -38017,11 +38018,13 @@ var Hexi = (function () {
       };
 
       //Add the arrow key objects
+      /*
       this.upArrow = this.keyboard(38);
       this.rightArrow = this.keyboard(39);
       this.downArrow = this.keyboard(40);
       this.leftArrow = this.keyboard(37);
       this.spaceBar = this.keyboard(32);
+      */
 
       //Dust - Particle effects
       this.createParticles = function (x, y, spriteFunction, container, numberOfParticles, gravity, randomSpacing, minAngle, maxAngle, minSize, maxSize, minSpeed, maxSpeed, minScaleSpeed, maxScaleSpeed, minAlphaSpeed, maxAlphaSpeed, minRotationSpeed, maxRotationSpeed) {

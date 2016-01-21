@@ -670,11 +670,13 @@ class Hexi{
     this.arrowControl = (sprite, speed) => this.tink.arrowControl(sprite, speed);
 
     //Add the arrow key objects
+    /*
     this.upArrow = this.keyboard(38);
     this.rightArrow = this.keyboard(39);
     this.downArrow = this.keyboard(40);
     this.leftArrow = this.keyboard(37);
     this.spaceBar = this.keyboard(32);
+    */
 
     //Dust - Particle effects
     this.createParticles = (

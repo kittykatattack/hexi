@@ -1,0 +1,72 @@
+/* Remove default padding and margins */
+*
+  { padding : 0
+  ; margin : 0
+  }
+
+canvas
+  { position : relative
+  }
+
+#ui
+  { position : absolute
+  ; left : 0
+  ; top : 0
+  ; width : 512px;
+  ; height : 512px;
+
+  /*Important: set the z-index to 1 so that it appears above Hexi's canvas*/
+  ; z-index: 1
+  }
+
+#box
+  { position : absolute
+  ; width  : 300px
+  ; height : 100px
+  ; left : 100px
+  ; top : 300px
+  ; background-color : gray
+  ; display : flex
+  ; flex-direction : row
+  ; justify-content : space-around
+  ; align-items : center
+  ; box-shadow : 5px 5px 3px rgba(0, 0, 0, 0.5)
+  }
+
+button
+  { font-family : Arial, Helvetica, sans-serif
+  ; font-size : 18px
+  ; color : #fff
+  ; padding : 10px 20px
+  ; border : 2px solid #000
+  ; cursor : pointer
+  ; -webkit-border-radius : 10px
+  ; -moz-border-radius : 10px
+  ; border-radius : 10px
+  ; background : linear-gradient(to bottom, #a3a3a3, #000)
+  ; box-shadow : 5px 5px 3px rgba(0, 0, 0, 0.5)
+
+  ; -webkit-user-select : none
+  ; -moz-user-select : none
+  ; user-select : none 
+  }
+
+button:hover
+  { background : linear-gradient(to bottom, #acc7a3, #506651)
+  }
+
+button:active
+  { background : linear-gradient(to bottom, #85856, #c5c9a9)
+  }
+
+button:focus 
+  { outline: none;
+  }
+
+input
+  { font-family : Arial, Helvetica, sans-serif
+  ; font-size : 18px
+  ; color : #000
+  ; padding : 10px 20px
+  ; width : 30px
+  }

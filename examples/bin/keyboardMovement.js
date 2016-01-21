@@ -51,25 +51,23 @@ function play() {
 
 /*
 
-Hexi has a built-in key objects with keyboard bindings
-to the arrow keys and space bar. Access them like this:
-`g.leftArrow`, `g.rightArrow`, `g.upArrow`, `g.downArrow`,
-`g.spaceBar`. All these keys have `press` and
-`release` methods that you can define. Here's how to create your own
-custom key:
-
-   letr customKey = g.keyboard(asciiCode);
+//Alternatively, create some keyboard objects using Hexi's `keyboard` method.
+//You would usually use this code in the `setup` function
+let leftArrow = g.keyboard(37),
+    upArrow = g.keyboard(38),
+    rightArrow = g.keyboard(39),
+    downArrow = g.keyboard(40);
 
 Here's how to customize the `press` and `release` methods of   
-Hexi's pre-defined arrow keys to control an on-screen game character: 
+these new arrow keys: 
 
 //Assign key `press` methods
-g.leftArrow.press = () => {
+leftArrow.press = () => {
   //Change the cat's velocity when the key is pressed
   cat.vx = -5;
   cat.vy = 0;
 };
-g.leftArrow.release = () => {
+leftArrow.release = () => {
   //If the left arrow has been released, and the right arrow isn't down,
   //and the cat isn't moving vertically: 
   //Stop the cat
@@ -77,29 +75,29 @@ g.leftArrow.release = () => {
     cat.vx = 0;
   }
 };
-g.upArrow.press = () => {
+upArrow.press = () => {
   cat.vy = -5;
   cat.vx = 0;
 };
-g.upArrow.release = () => {
+upArrow.release = () => {
   if (!g.downArrow.isDown && cat.vx === 0) {
     cat.vy = 0;
   }
 };
-g.rightArrow.press = () => {
+rightArrow.press = () => {
   cat.vx = 5;
   cat.vy = 0;
 };
-g.rightArrow.release = () => {
+rightArrow.release = () => {
   if (!g.leftArrow.isDown && cat.vy === 0) {
     cat.vx = 0;
   }
 };
-g.downArrow.press = () => {
+downArrow.press = () => {
   cat.vy = 5;
   cat.vx = 0;
 };
-g.downArrow.release = () => {
+downArrow.release = () => {
   if (!g.upArrow.isDown && cat.vx === 0) {
     cat.vy = 0;
   }

@@ -73,30 +73,34 @@ function setup() {
   score = 0;
 
   //Assign the player's keyboard keys
+  var leftArrow = g.keyboard(37),
+      rightArrow = g.keyboard(39),
+      spaceBar = g.keyboard(32);
+
   //Left arrow key
-  g.leftArrow.press = function () {
-    if (g.rightArrow.isUp) {
+  leftArrow.press = function () {
+    if (rightArrow.isUp) {
       player.accelerationX = -0.2;
     }
   };
-  g.leftArrow.release = function () {
-    if (g.rightArrow.isUp) {
+  leftArrow.release = function () {
+    if (rightArrow.isUp) {
       player.accelerationX = 0;
     }
   };
   //Right arrow key
-  g.rightArrow.press = function () {
-    if (g.leftArrow.isUp) {
+  rightArrow.press = function () {
+    if (leftArrow.isUp) {
       player.accelerationX = 0.2;
     }
   };
-  g.rightArrow.release = function () {
-    if (g.leftArrow.isUp) {
+  rightArrow.release = function () {
+    if (leftArrow.isUp) {
       player.accelerationX = 0;
     }
   };
   //Space key (jump)
-  g.spaceBar.press = function () {
+  spaceBar.press = function () {
     if (player.isOnGround) {
       player.vy += player.jumpForce;
       player.isOnGround = false;

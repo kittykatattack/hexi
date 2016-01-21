@@ -75,16 +75,11 @@ function setup() {
   //Use the `show` method to display the elf's `right` state
   elf.show(elf.states.right);
  
-  //Create some keyboard objects.
-  //Hexi has already defined all these keyboard bindings for
-  //you (which you can access as `g.leftArrow` and `g.upArrow`, etc.)
-  //but this code demonstrates how you can create your own custom
-  //keyboard bindings, if you ever need to 
+  //Create some keyboard objects
   leftArrow = g.keyboard(37);
   upArrow = g.keyboard(38);
   rightArrow = g.keyboard(39);
   downArrow = g.keyboard(40);
-
   
   //Assign key `press` and release methods that
   //show and play the elf's different states
