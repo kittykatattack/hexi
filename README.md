@@ -3430,9 +3430,9 @@ exactly the same position, as Hexi's canvas. The big `<div>` element
 floats over the canvas and contains the gray box, button and input
 field. 
 
-Let's take a quick look at how this works. `main.html` file looks like
+Let's take a quick look at how this works. The `main.html` file looks like
 this:
-```js
+```html
 <!doctype html>
 <meta charset="utf-8">
 <title>Html integration</title>
@@ -3461,7 +3461,7 @@ The important part is the `UI` section, just below the `<body>` tag. A
 
 The magic happens in the `style.css` file. Here's the most important
 part:
-```js
+```css
 canvas
   { position : relative
   }
@@ -3470,8 +3470,8 @@ canvas
   { position : absolute
   ; left : 0
   ; top : 0
-  ; width : 512px;
-  ; height : 512px;
+  ; width : 512px
+  ; height : 512px
 
   /*Important: set the z-index to 1 so that it appears above Hexi's canvas*/
   ; z-index: 1
@@ -3536,7 +3536,7 @@ This loose integration between HTML and Hexi means you're free to customize this
 like. You can do crazy low-level HTML/CSS programming if you want to, mix the logic in 
 with your Hexi sprites, and design any kind of custom layout that you
 need. It's just HTML! And, yes, you can write your HTML
-with Angular, React or (Elm)[http://elm-lang.org] (Go Elm!!) if you want to.
+with Angular, React or [Elm](http://elm-lang.org) (Go Elm!!) if you want to.
 
 <a id='aguidetotheexamples'></a>
 #Coming soon: A guide to the examples
