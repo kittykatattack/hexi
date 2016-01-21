@@ -94,7 +94,7 @@ Of course, Hexi is completely free to use: for-anything, for-ever! It was writte
     5. [The fairy dust explosions](#thefairydustexplosions)
     6. [Use a particle emitter](#useaparticleemitter)
     7. [Creating and moving the pillars](#creatingandmovingthepillars)
-5. [Integration with HTML and CSS](#html)
+5. [Integration with HTML and CSS](#htmlIntegration)
 6. [A Guide to the examples](#aguidetotheexamples)
 
 <a id='features'></a>
@@ -3402,7 +3402,7 @@ nested sprite’s position on the canvas.
 Make sure you check out the complete Flappy Fairy source code in the
 `examples` folder so that you can see all this code in its proper context.
 
-<a id='html'></a>
+<a id='htmlIntegration'></a>
 #Integration with HTML and CSS
 
 Hexi works seamlessly with HTML and CSS. You can freely mix Hexi sprites and
