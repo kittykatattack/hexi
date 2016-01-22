@@ -3415,7 +3415,7 @@ and then reference your HTML in your Hexi code. That's all! Hexi
 doesn't re-invent the wheel, so you can write as much low level HTML/CSS code you like and blend it 
 into your Hexi application however you choose.
 
-You can find a working example in the `html` folder in Hexi's `examples` in this code repository.
+You can find a working example in the [`html` folder in Hexi's `examples`](https://github.com/kittykatattack/hexi/tree/master/examples/38_html) in this code repository.
 It's a simple number guessing game:
 
 ![Number guessing game](/tutorials/screenshots/32.png)
