@@ -37414,7 +37414,12 @@ function hexi(width, height, setup) {
     //(Position and rotation are on by default, unless you set Hexi's
     //`interpolate` property to `false`)
     */
-    interpolationProperties: { position: true, rotation: true, size: true, alpha: true },
+    interpolationProperties: {
+      position: true,
+      rotation: true,
+      size: true,
+      alpha: true
+    },
     interpolate: true
 
   });
@@ -37518,14 +37523,16 @@ var Hexi = (function () {
           return this.canvas.width / 2;
         },
 
-        enumerable: true, configurable: true
+        enumerable: true,
+        configurable: true
       },
       "halfHeight": {
         get: function get() {
           return this.canvas.height / 2;
         },
 
-        enumerable: true, configurable: true
+        enumerable: true,
+        configurable: true
       }
     });
 
@@ -37610,7 +37617,11 @@ var Hexi = (function () {
       interpolate: o.interpolate,
       fps: o.fps,
       renderFps: o.renderFps,
-      properties: { position: true, scale: true, tile: true }
+      properties: {
+        position: true,
+        scale: true,
+        tile: true
+      }
     });
   }
 
@@ -38304,6 +38315,11 @@ var Hexi = (function () {
       this.hitTestTile = function (sprite, mapArray, gidToCheck, world, pointsToCheck) {
         return _this3.tileUtilities.hitTestTile(sprite, mapArray, gidToCheck, world, pointsToCheck);
       };
+      this.getIndex = this.tileUtilities.getIndex(spriteX, spriteY, tilewidth, tileheight, mapWidthInTiles);
+      this.getTile = this.tileUtilities.getTile;
+      this.surroundingCells = this.tileUtilities.surroundingCells;
+      this.getPoints = this.tileUtilities.getPoints;
+      this.updateMap = this.tileUtilities.updateMap;
     }
 
     //Getters and setters
@@ -38884,42 +38900,48 @@ var Hexi = (function () {
             return o.getGlobalPosition().x;
           },
 
-          enumerable: true, configurable: true
+          enumerable: true,
+          configurable: true
         },
         "gy": {
           get: function get() {
             return o.getGlobalPosition().y;
           },
 
-          enumerable: true, configurable: true
+          enumerable: true,
+          configurable: true
         },
         "centerX": {
           get: function get() {
             return o.x + o.width / 2 - o.xAnchorOffset;
           },
 
-          enumerable: true, configurable: true
+          enumerable: true,
+          configurable: true
         },
         "centerY": {
           get: function get() {
             return o.y + o.height / 2 - o.yAnchorOffset;
           },
 
-          enumerable: true, configurable: true
+          enumerable: true,
+          configurable: true
         },
         "halfWidth": {
           get: function get() {
             return o.width / 2;
           },
 
-          enumerable: true, configurable: true
+          enumerable: true,
+          configurable: true
         },
         "halfHeight": {
           get: function get() {
             return o.height / 2;
           },
 
-          enumerable: true, configurable: true
+          enumerable: true,
+          configurable: true
         },
         "scaleModeNearest": {
           set: function set(value) {
@@ -38934,7 +38956,8 @@ var Hexi = (function () {
             }
           },
 
-          enumerable: true, configurable: true
+          enumerable: true,
+          configurable: true
         },
         "pivotX": {
           get: function get() {
@@ -38953,7 +38976,8 @@ var Hexi = (function () {
             o._previousPivotX = value;
           },
 
-          enumerable: true, configurable: true
+          enumerable: true,
+          configurable: true
         },
         "pivotY": {
           get: function get() {
@@ -38972,7 +38996,8 @@ var Hexi = (function () {
             o._previousPivotY = value;
           },
 
-          enumerable: true, configurable: true
+          enumerable: true,
+          configurable: true
         },
         "xAnchorOffset": {
           get: function get() {
@@ -38983,7 +39008,8 @@ var Hexi = (function () {
             }
           },
 
-          enumerable: true, configurable: true
+          enumerable: true,
+          configurable: true
         },
         "yAnchorOffset": {
           get: function get() {
@@ -38994,7 +39020,8 @@ var Hexi = (function () {
             }
           },
 
-          enumerable: true, configurable: true
+          enumerable: true,
+          configurable: true
         },
         "scaleX": {
           get: function get() {
@@ -39004,7 +39031,8 @@ var Hexi = (function () {
             o.scale.x = value;
           },
 
-          enumerable: true, configurable: true
+          enumerable: true,
+          configurable: true
         },
         "scaleY": {
           get: function get() {
@@ -39014,7 +39042,8 @@ var Hexi = (function () {
             o.scale.y = value;
           },
 
-          enumerable: true, configurable: true
+          enumerable: true,
+          configurable: true
         },
 
         //Depth layer
@@ -39034,7 +39063,8 @@ var Hexi = (function () {
             }
           },
 
-          enumerable: true, configurable: true
+          enumerable: true,
+          configurable: true
         },
 
         //Interactivity
@@ -39056,7 +39086,8 @@ var Hexi = (function () {
             }
           },
 
-          enumerable: true, configurable: true
+          enumerable: true,
+          configurable: true
         },
 
         //Drag and drop
@@ -39076,7 +39107,8 @@ var Hexi = (function () {
             }
           },
 
-          enumerable: true, configurable: true
+          enumerable: true,
+          configurable: true
         },
 
         //The `localBounds` and `globalBounds` methods return an object
@@ -39094,7 +39126,8 @@ var Hexi = (function () {
             };
           },
 
-          enumerable: true, configurable: true
+          enumerable: true,
+          configurable: true
         },
         "globalBounds": {
           get: function get() {
@@ -39106,7 +39139,8 @@ var Hexi = (function () {
             };
           },
 
-          enumerable: true, configurable: true
+          enumerable: true,
+          configurable: true
         },
 
         //`empty` is a convenience property that will return `true` or
@@ -39121,7 +39155,8 @@ var Hexi = (function () {
             }
           },
 
-          enumerable: true, configurable: true
+          enumerable: true,
+          configurable: true
         },
 
         //The `circular` property lets you define whether a sprite
@@ -39148,7 +39183,8 @@ var Hexi = (function () {
                     o.height = value;
                   },
 
-                  enumerable: true, configurable: true
+                  enumerable: true,
+                  configurable: true
                 },
                 "radius": {
                   get: function get() {
@@ -39159,7 +39195,8 @@ var Hexi = (function () {
                     o.height = value * 2;
                   },
 
-                  enumerable: true, configurable: true
+                  enumerable: true,
+                  configurable: true
                 }
               });
 
@@ -39176,7 +39213,8 @@ var Hexi = (function () {
             }
           },
 
-          enumerable: true, configurable: true
+          enumerable: true,
+          configurable: true
         }
       });
 
@@ -39205,7 +39243,8 @@ var Hexi = (function () {
             return o.width / 2;
           },
 
-          enumerable: true, configurable: true
+          enumerable: true,
+          configurable: true
         });
       }
     }

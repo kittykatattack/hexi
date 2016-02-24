@@ -101,13 +101,13 @@ function hexi(width, height, setup, thingsToLoad = undefined, load = undefined) 
   let hexi = new Hexi({
 
     //Required options:
-    width: width,                 //Width, in pixels
-    height: height,               //Height, in pixels
-    setup: setup,                 //Function to run when Hexi starts
+    width: width, //Width, in pixels
+    height: height, //Height, in pixels
+    setup: setup, //Function to run when Hexi starts
 
     //Optional options:
-    assets: thingsToLoad,         //Array of assets that should be loaded
-    load: load,                   //Function to run while Hexi is loading asssets
+    assets: thingsToLoad, //Array of assets that should be loaded
+    load: load, //Function to run while Hexi is loading asssets
     /*
     renderer: "auto",             //"auto", "canvas" or "webgl"
     backgroundColor: 0xCCCCCC,    //Hexadecimal color code
@@ -122,7 +122,12 @@ function hexi(width, height, setup, thingsToLoad = undefined, load = undefined) 
     //(Position and rotation are on by default, unless you set Hexi's
     //`interpolate` property to `false`)
     */
-    interpolationProperties: {position: true, rotation: true, size: true, alpha: true}, 
+    interpolationProperties: {
+      position: true,
+      rotation: true,
+      size: true,
+      alpha: true
+    },
     interpolate: true,
 
     //To change PIXI's renderer, set the `renderer` option to
@@ -145,7 +150,7 @@ function hexi(width, height, setup, thingsToLoad = undefined, load = undefined) 
 //2. THE HEXI CLASS CONSTRUCTOR
 //----------------------------
 
-class Hexi{
+class Hexi {
 
   /*
   Initialize Hexi's constructor with an options object literal called `o`. 
@@ -174,7 +179,7 @@ class Hexi{
   to Pixi's renderer when Hexi creates it.
 
   */
-  constructor(o){
+  constructor(o) {
 
     //Initialize all the helper modules.
     //(See Hexi's README.md on information about these libraries)
@@ -208,24 +213,24 @@ class Hexi{
     //Auto renderer (default)
     if (o.renderer === "auto" || o.renderer === undefined) {
       this.renderer = PIXI.autoDetectRenderer(
-        o.width, 
+        o.width,
         o.height,
         o,
         o.noWebGL
       );
 
-    //Canvas renderer
-    } else if(o.renderer === "canvas") {
+      //Canvas renderer
+    } else if (o.renderer === "canvas") {
       this.renderer = new PIXI.CanvasRenderer(
-        o.width, 
+        o.width,
         o.height,
         o
       );
 
-    //WebGL renderer
-    } else if(o.renderer === "webgl") {
+      //WebGL renderer
+    } else if (o.renderer === "webgl") {
       this.renderer = new PIXI.WebGLRenderer(
-        o.width, 
+        o.width,
         o.height,
         o
       );
@@ -238,12 +243,18 @@ class Hexi{
     //Add `halfWidth` and `halfHeight` properties to the canvas
     Object.defineProperties.bind(this, this.canvas, {
       "halfWidth": {
-        get(){return this.canvas.width / 2},
-        enumerable: true, configurable: true
+        get() {
+          return this.canvas.width / 2
+        },
+        enumerable: true,
+        configurable: true
       },
       "halfHeight": {
-        get(){return this.canvas.height / 2},
-        enumerable: true, configurable: true
+        get() {
+          return this.canvas.height / 2
+        },
+        enumerable: true,
+        configurable: true
       }
     });
 
@@ -252,10 +263,10 @@ class Hexi{
 
     //Add the FullScreen module and supply it with the canvas element
     this.fullScreen = new FullScreen(this.canvas);
-    
+
     //Note: Hexi's `update` function checks whether we're in full screen
     //mode and updates the global scale value accordingly
-    
+
     //Set the canvas's optional background color and border style
     if (o.backgroundColor) {
       this.renderer.backgroundColor = this.color(o.backgroundColor);
@@ -288,8 +299,8 @@ class Hexi{
     this.state = undefined;
 
     //Set the user-defined `load` and `setup` states
-    if(o.load !== undefined) this.loadState = o.load;
-    
+    if (o.load !== undefined) this.loadState = o.load;
+
     //The `setup` function is required, so throw an error if it's
     //missing
     if (!o.setup) {
@@ -302,12 +313,12 @@ class Hexi{
 
     //A variable to track the current percentage of loading assets 
     this.loadingProgress = 0;
-    
+
     //A variable to track the currently loading asset
     this.loadingFile = "";
 
     //Load any assets if they've been provided
-    if(o.assets !== undefined) {
+    if (o.assets !== undefined) {
       this.assetsToLoad = o.assets;
     }
 
@@ -322,7 +333,7 @@ class Hexi{
     //Create a new instance of Smoothie, which manages Hexi's game
     //loop and adds smooth sprite interpolation
     this.smoothie = new Smoothie({
-      engine: PIXI, 
+      engine: PIXI,
       renderer: this.renderer,
       root: this.stage,
       update: this.update.bind(this),
@@ -330,16 +341,20 @@ class Hexi{
       interpolate: o.interpolate,
       fps: o.fps,
       renderFps: o.renderFps,
-      properties: {position: true, scale: true, tile: true}
+      properties: {
+        position: true,
+        scale: true,
+        tile: true
+      }
     });
   }
 
   //3. HEXI'S ENGINE: START, LOAD AND SETUP
   //---------------------------------------
-  
+
   //The `start` method must be called by the user after Hexi has been
   //initialized to start the loading process and turn on the engine.
-  start(){
+  start() {
 
     //If there are assets to load, load them, and set the game's state
     //to the user-defined `loadState` (which can be supplied by the user in the
@@ -360,8 +375,7 @@ class Hexi{
       //`state` and, as you'll see ahead, called in a loop while the
       //assets load
       if (this.loadState) this.state = this.loadState;
-    }
-    else {
+    } else {
 
       //If there's nothing to load, run the `setup` state, which will
       //just run once
@@ -371,7 +385,7 @@ class Hexi{
     //Start the game loop
     this.smoothie.start();
   }
-  
+
   //Use the `load` method to load any files into Hexi. Pass it a 
   //callback function as the second argument to launch a function that
   //should run when all the assets have finished loading. Hexi's
@@ -387,7 +401,7 @@ class Hexi{
 
         //Find the file extension of the asset
         let extension = source.split(".").pop();
-        if(fileExtensionArray.indexOf(extension) !== -1){
+        if (fileExtensionArray.indexOf(extension) !== -1) {
           return true;
         }
       });
@@ -410,7 +424,7 @@ class Hexi{
     if (fontFiles.length > 0) {
       this.spanElements = [];
       fontFiles.forEach(source => {
-      
+
         //Loads the font files by writing CSS code to the HTML document head.
         //Use the font's filename as the `fontFamily` name. This code captures 
         //the font file's name without the extension or file path
@@ -418,12 +432,10 @@ class Hexi{
 
         //Push the font family name into Hexi's `fontFamilies` array
         if (this.fontFamilies) this.fontFamilies.push(fontFamily);
-        
+
         //Append an `@afont-face` style rule to the head of the HTML document
         let newStyle = document.createElement("style");
-        let fontFace
-          = "@font-face {font-family: '" + fontFamily
-          + "'; src: url('" + source + "');}";
+        let fontFace = "@font-face {font-family: '" + fontFamily + "'; src: url('" + source + "');}";
         newStyle.appendChild(document.createTextNode(fontFace));
         document.head.appendChild(newStyle);
 
@@ -440,7 +452,7 @@ class Hexi{
     }
 
     /* Load sound */
-    
+
     //Set default loading mechanism for sound file extensions to use XHR
     let Resource = PIXI.loaders.Resource;
     Resource.setExtensionLoadType("wav", Resource.LOAD_TYPE.XHR);
@@ -483,12 +495,12 @@ class Hexi{
   //to load, the loading state is finished and the setup state is run.
   //But, if there are sounds to load, the setup state will only run
   //after the sounds have been decoded.
-  validateAssets(){
+  validateAssets() {
     console.log("All assets loaded");
 
     //The `finishLoadingState` method will be called if everything has
     //finished loading and any possible sounds have been decoded
-    let finishLoadingState = () =>{
+    let finishLoadingState = () => {
 
       //Reset the `assetsToLoad` array
       this.assetsToLoad = [];
@@ -501,14 +513,14 @@ class Hexi{
 
       //Remove the loading progress bar if the user invoked the `loadingBar`
       //function
-      if(this._progressBarAdded) {
+      if (this._progressBarAdded) {
         this.progressBar.remove();
       }
 
       //If any fonts were tricked into loading 
       //make the <span> tags that use them invisible
       if (this.spanElements) {
-        this.spanElements.forEach(element =>{
+        this.spanElements.forEach(element => {
           element.style.display = "none";
         });
       }
@@ -526,14 +538,14 @@ class Hexi{
     //some point, then we know all the sounds have been decoded and we
     //can call the `finishLoadingState` function
     let soundsToDecode = 0,
-        soundsDecoded = 0;
+      soundsDecoded = 0;
 
     //First, create a list of the kind of sound files we want to check
     let soundExtensions = ["wav", "mp3", "ogg", "webm"];
 
     //The `decodeHandler` will run when each sound file is decoded
     let decodeHandler = () => {
-      
+
       //Count 1 more sound as having been decoded
       soundsDecoded += 1;
 
@@ -553,7 +565,7 @@ class Hexi{
 
       //If one of the resource file extensions matches the sound file
       //extensions, then we know we have a sound file
-      if(soundExtensions.indexOf(extension) !== -1){
+      if (soundExtensions.indexOf(extension) !== -1) {
 
         //Count one more sound to load
         soundsToDecode += 1;
@@ -561,7 +573,7 @@ class Hexi{
         //Create aliases for the sound's `xhr` object and `url` (its
         //file name)
         let xhr = this.loader.resources[resource].xhr,
-            url = this.loader.resources[resource].url;
+          url = this.loader.resources[resource].url;
 
         //Create a sound sprite using the `sound.js` module's
         //`makeSound` function. Notice the 4th argument is the loaded
@@ -581,14 +593,14 @@ class Hexi{
         this.soundObjects[soundSprite.name] = soundSprite;
       }
     });
-    
+
     //If there are no sound files, we can skip the decoding step and
     //just call `finishLoadingState` directly
     if (soundsToDecode === 0) {
       finishLoadingState();
     }
   }
- 
+
   //The `update` method is run by Hexi's game loop each frame.
   //It manages the game state and updates the modules
   update() {
@@ -600,7 +612,7 @@ class Hexi{
 
     //If the application is in full screen mode, make sure that Hexi
     //is using the correct scale value
-    if(document.fullscreenEnabled) {
+    if (document.fullscreenEnabled) {
       this.scale = this.fullScreen.fullscreenScale;
       this.pointer.scale = this.fullScreen.fullscreenScale;
     } else {
@@ -720,7 +732,7 @@ class Hexi{
       return this.charm.strobe(sprite, scaleFactor, startMagnitude, endMagnitude, frames, yoyo, delayBeforeRepeat);
     };
     this.wobble = (
-      sprite, scaleFactorX = 1.2, scaleFactorY = 1.2, frames = 10, xStartMagnitude = 10, xEndMagnitude = 10, 
+      sprite, scaleFactorX = 1.2, scaleFactorY = 1.2, frames = 10, xStartMagnitude = 10, xEndMagnitude = 10,
       yStartMagnitude = -10, yEndMagnitude = -10, friction = 0.98, yoyo = true, delayBeforeRepeat = 0
     ) => {
       return this.charm.wobble(
@@ -749,7 +761,7 @@ class Hexi{
     this.circleCollision = (c1, c2, bounce = false, global = false) => this.bump.circleCollision(c1, c2, bounce, global);
     this.movingCircleCollision = (c1, c2, global = false) => this.bump.movingCircleCollision(c1, c2, global);
     this.multipleCircleCollision = (arrayOfCircles, global = false) => this.bump.multipleCircleCollision(arrayOfCircles, global);
-    this.rectangleCollision = (r1, r2, bounce = false, global = true) => this.bump.rectangleCollision( r1, r2, bounce, global);
+    this.rectangleCollision = (r1, r2, bounce = false, global = true) => this.bump.rectangleCollision(r1, r2, bounce, global);
     this.hitTestRectangle = (r1, r2, global = false) => this.bump.hitTestRectangle(r1, r2, global);
     this.hitTestCircleRectangle = (c1, r1, global = false) => this.bump.hitTestCircleRectangle(c1, r1, global);
     this.hitTestCirclePoint = (c1, point, global = false) => this.bump.hitTestCirclePoint(c1, point, global);
@@ -810,34 +822,61 @@ class Hexi{
     //TileUtilities
     this.hitTestTile = (sprite, mapArray, gidToCheck, world, pointsToCheck) => {
       return this.tileUtilities.hitTestTile(sprite, mapArray, gidToCheck, world, pointsToCheck);
-    }
+    };
+    this.getIndex = this.tileUtilities.getIndex(spriteX, spriteY, tilewidth, tileheight, mapWidthInTiles);
+    this.getTile = this.tileUtilities.getTile;
+    this.surroundingCells = this.tileUtilities.surroundingCells;
+    this.getPoints = this.tileUtilities.getPoints;
+    this.updateMap = this.tileUtilities.updateMap;
   }
 
   //Getters and setters
 
   //Pixi's loader resources
-  get resources() {return this.loader.resources}
+  get resources() {
+    return this.loader.resources
+  }
 
   //Add Smoothie getters and setters to access the `fps`,
   //`properties`, `renderFps` and `interpolate` properties
-  get fps() {return this.smoothie.fps;}
-  set fps(value) {this.smoothie.fps = value;}
+  get fps() {
+    return this.smoothie.fps;
+  }
+  set fps(value) {
+    this.smoothie.fps = value;
+  }
 
-  get renderFps() {return this.smoothie.renderFps;}
-  set renderFps(value) {this.smoothie.renderFps = value;}
+  get renderFps() {
+    return this.smoothie.renderFps;
+  }
+  set renderFps(value) {
+    this.smoothie.renderFps = value;
+  }
 
-  get interpolate() {return this.smoothie.interpolate;}
-  set interpolate(value) {this.smoothie.interpolate = value;}
+  get interpolate() {
+    return this.smoothie.interpolate;
+  }
+  set interpolate(value) {
+    this.smoothie.interpolate = value;
+  }
 
-  get interpolationProperties() {return this.smoothie.properties;}
-  set interpolationProperties(value) {this.smoothie.properties = value;}
+  get interpolationProperties() {
+    return this.smoothie.properties;
+  }
+  set interpolationProperties(value) {
+    this.smoothie.properties = value;
+  }
 
   //The `border` property lets you set the border style on the canvas
-  set border(value) {this.canvas.style.border = value;}
+  set border(value) {
+    this.canvas.style.border = value;
+  }
 
   //The `backgroundColor` property lets you set the background color
   //of the renderer
-  set backgroundColor(value) {this.renderer.backgroundColor = this.color(value);}
+  set backgroundColor(value) {
+    this.renderer.backgroundColor = this.color(value);
+  }
 
 
   //5. SPRITE CREATION METHODS
@@ -850,7 +889,7 @@ class Hexi{
   //`addProperties` method
 
   //Universal sprites
-  sprite(source, x = 0, y = 0, tiling = false, width, height){
+  sprite(source, x = 0, y = 0, tiling = false, width, height) {
     let o = this.spriteUtilities.sprite(source, x, y, tiling, width, height);
     this.addProperties(o);
     this.stage.addChild(o);
@@ -858,7 +897,7 @@ class Hexi{
   }
 
   //Tiling sprites
-  tilingSprite(source, width, height, x = 0, y = 0){
+  tilingSprite(source, width, height, x = 0, y = 0) {
     let o = this.spriteUtilities.tilingSprite(source, width, height, x, y);
     this.addProperties(o);
     this.stage.addChild(o);
@@ -883,7 +922,7 @@ class Hexi{
   }
 
   //Make a rectangle and add it to the stage
-  rectangle(width = 32, height = 32,  fillStyle = 0xFF3300, strokeStyle = 0x0033CC, lineWidth = 0, x = 0, y = 0) {
+  rectangle(width = 32, height = 32, fillStyle = 0xFF3300, strokeStyle = 0x0033CC, lineWidth = 0, x = 0, y = 0) {
     let o = this.spriteUtilities.rectangle(width, height, fillStyle, strokeStyle, lineWidth, x, y);
     this.addProperties(o);
     this.stage.addChild(o);
@@ -894,7 +933,7 @@ class Hexi{
   circle(diameter = 32, fillStyle = 0xFF3300, strokeStyle = 0x0033CC, lineWidth = 0, x = 0, y = 0) {
     let o = this.spriteUtilities.circle(diameter, fillStyle, strokeStyle, lineWidth, x, y);
     this.addProperties(o);
-    
+
     //Add diameter and radius properties to the circle
     o.circular = true;
     this.stage.addChild(o);
@@ -941,9 +980,9 @@ class Hexi{
     columns = 0, rows = 0, cellWidth = 32, cellHeight = 32,
     centerCell = false, xOffset = 0, yOffset = 0,
     makeSprite = undefined,
-    extra = undefined  
+    extra = undefined
   ) {
-  
+
     let o = this.spriteUtilities.grid(
       columns, rows, cellWidth, cellHeight,
       centerCell, xOffset, yOffset, makeSprite, extra
@@ -1018,9 +1057,7 @@ class Hexi{
 
       //It's an array of sprites
       flowSprites(sprites);
-    } 
-    
-    else {
+    } else {
 
       //It's an array containing sprite objects
       let spritesArray = sprites[0];
@@ -1040,9 +1077,7 @@ class Hexi{
     };
     if (!(sprites[0] instanceof Array)) {
       flowSprites(sprites);
-    } 
-    
-    else {
+    } else {
       let spritesArray = sprites[0];
       flowSprites(spritesArray);
     }
@@ -1060,9 +1095,7 @@ class Hexi{
     };
     if (!(sprites[0] instanceof Array)) {
       flowSprites(sprites);
-    } 
-    
-    else {
+    } else {
       let spritesArray = sprites[0];
       flowSprites(spritesArray);
     }
@@ -1080,9 +1113,7 @@ class Hexi{
     };
     if (!(sprites[0] instanceof Array)) {
       flowSprites(sprites);
-    } 
-    
-    else {
+    } else {
       let spritesArray = sprites[0];
       flowSprites(spritesArray);
     }
@@ -1093,8 +1124,8 @@ class Hexi{
   //The sprite creation methods above all run the `addProperties`
   //method on each sprite they create. `addProperties` adds special
   //properties and methods (super powers!) to Hexi sprites.
-  
-  addProperties(o){
+
+  addProperties(o) {
 
     //Velocity
     o.vx = 0;
@@ -1117,11 +1148,11 @@ class Hexi{
     //Flag this object for compatibility with the Bump collision
     //library
     o._bumpPropertiesAdded = true;
-    
+
     //Swap the depth layer positions of two child sprites
     o.swapChildren = (child1, child2) => {
       let index1 = o.children.indexOf(child1),
-          index2 = o.children.indexOf(child2);
+        index2 = o.children.indexOf(child2);
       if (index1 !== -1 && index2 !== -1) {
 
         //Swap the indexes
@@ -1140,7 +1171,7 @@ class Hexi{
     //many sprites at the same time.
     o.add = (...sprites) => {
       if (sprites.length > 1) {
-        sprites.forEach(sprite  => o.addChild(sprite));
+        sprites.forEach(sprite => o.addChild(sprite));
       } else {
         o.addChild(sprites[0]);
       }
@@ -1171,7 +1202,7 @@ class Hexi{
           return value;
         }
       } else {
-        return value; 
+        return value;
       }
     };
 
@@ -1183,12 +1214,12 @@ class Hexi{
           return 0;
         }
       } else {
-        return 0; 
+        return 0;
       }
     };
 
     let compensateForAnchors = (a, b, property1, property2) => {
-       return compensateForAnchor(a, a[property1], property2) + compensateForAnchor(b, b[property1], property2)
+      return compensateForAnchor(a, a[property1], property2) + compensateForAnchor(b, b[property1], property2)
     };
 
     //The `put` methods:
@@ -1206,7 +1237,7 @@ class Hexi{
       b.y = (a.y + nudgeAnchor(a, a.halfHeight, "y") - nudgeAnchor(b, b.halfHeight, "y")) + yOffset;
 
       //Compensate for the parent's position
-      if(!o._stage) o.compensateForParentPosition(a, b);
+      if (!o._stage) o.compensateForParentPosition(a, b);
     };
 
     //Position `b` to the left of `a`.
@@ -1216,7 +1247,7 @@ class Hexi{
       b.y = (a.y + nudgeAnchor(a, a.halfHeight, "y") - nudgeAnchor(b, b.halfHeight, "y")) + yOffset;
 
       //Compensate for the parent's position
-      if(!o._stage) o.compensateForParentPosition(a, b);
+      if (!o._stage) o.compensateForParentPosition(a, b);
     };
 
     //Position `b` above `a`.
@@ -1226,7 +1257,7 @@ class Hexi{
       b.y = (a.y - nudgeAnchor(b, b.height, "y")) + yOffset - compensateForAnchors(a, b, "height", "y");
 
       //Compensate for the parent's position
-      if(!o._stage) o.compensateForParentPosition(a, b);
+      if (!o._stage) o.compensateForParentPosition(a, b);
     };
 
     //Position `b` to the right of `a`.
@@ -1238,7 +1269,7 @@ class Hexi{
       //b.y = (a.y + a.halfHeight - b.halfHeight) + yOffset;
 
       //Compensate for the parent's position
-      if(!o._stage) o.compensateForParentPosition(a, b);
+      if (!o._stage) o.compensateForParentPosition(a, b);
     };
 
     //Position `b` below `a`.
@@ -1250,7 +1281,7 @@ class Hexi{
       b.y = (a.y + nudgeAnchor(a, a.height, "y")) + yOffset + compensateForAnchors(a, b, "height", "y");
 
       //Compensate for the parent's position
-      if(!o._stage) o.compensateForParentPosition(a, b);
+      if (!o._stage) o.compensateForParentPosition(a, b);
     };
 
     //`compensateForParentPosition` is a helper function for the above
@@ -1266,31 +1297,49 @@ class Hexi{
     let self = this;
     Object.defineProperties(o, {
       "gx": {
-        get(){return o.getGlobalPosition().x},
-        enumerable: true, configurable: true
+        get() {
+          return o.getGlobalPosition().x
+        },
+        enumerable: true,
+        configurable: true
       },
       "gy": {
-        get(){return o.getGlobalPosition().y},
-        enumerable: true, configurable: true
+        get() {
+          return o.getGlobalPosition().y
+        },
+        enumerable: true,
+        configurable: true
       },
       "centerX": {
-        get(){return o.x + (o.width / 2) - o.xAnchorOffset},
-        enumerable: true, configurable: true
+        get() {
+          return o.x + (o.width / 2) - o.xAnchorOffset
+        },
+        enumerable: true,
+        configurable: true
       },
       "centerY": {
-        get(){return o.y + (o.height / 2) - o.yAnchorOffset},
-        enumerable: true, configurable: true
+        get() {
+          return o.y + (o.height / 2) - o.yAnchorOffset
+        },
+        enumerable: true,
+        configurable: true
       },
       "halfWidth": {
-        get(){return o.width / 2},
-        enumerable: true, configurable: true
+        get() {
+          return o.width / 2
+        },
+        enumerable: true,
+        configurable: true
       },
       "halfHeight": {
-        get(){return o.height / 2},
-        enumerable: true, configurable: true
+        get() {
+          return o.height / 2
+        },
+        enumerable: true,
+        configurable: true
       },
       "scaleModeNearest": {
-        set(value){
+        set(value) {
           if (o.texture.baseTexture) {
             if (value) {
               o.texture.baseTexture.scaleMode = PIXI.SCALE_MODES.NEAREST;
@@ -1301,78 +1350,95 @@ class Hexi{
             throw new Error(`The scale mode of ${o} cannot be modified`)
           }
         },
-        enumerable: true, configurable: true
+        enumerable: true,
+        configurable: true
       },
       "pivotX": {
-        get(){return o.anchor.x},
+        get() {
+          return o.anchor.x
+        },
         set(value) {
           if (o.anchor === undefined) {
             throw new Error(`${o} does not have a PivotX value`);
           }
           o.anchor.x = value;
           if (!o._previousPivotX) {
-            o.x += value * o.width; 
+            o.x += value * o.width;
           } else {
-            o.x += (value - o._previousPivotX) * o.width; 
+            o.x += (value - o._previousPivotX) * o.width;
           }
           o._previousPivotX = value;
         },
-        enumerable: true, configurable: true
+        enumerable: true,
+        configurable: true
       },
       "pivotY": {
-        get(){return o.anchor.y},
+        get() {
+          return o.anchor.y
+        },
         set(value) {
           if (o.anchor === undefined) {
             throw new Error(`${o} does not have a PivotY value`);
           }
           o.anchor.y = value;
           if (!o._previousPivotY) {
-            o.y += value * o.height; 
+            o.y += value * o.height;
           } else {
-            o.y += (value - o._previousPivotY) * o.height; 
+            o.y += (value - o._previousPivotY) * o.height;
           }
           o._previousPivotY = value;
         },
-        enumerable: true, configurable: true
+        enumerable: true,
+        configurable: true
       },
       "xAnchorOffset": {
-        get(){
+        get() {
           if (o.anchor !== undefined) {
             return o.height * o.anchor.x;
           } else {
             return 0;
           }
         },
-        enumerable: true, configurable: true
+        enumerable: true,
+        configurable: true
       },
       "yAnchorOffset": {
-        get(){
+        get() {
           if (o.anchor !== undefined) {
             return o.width * o.anchor.y;
           } else {
             return 0;
           }
         },
-        enumerable: true, configurable: true
+        enumerable: true,
+        configurable: true
       },
       "scaleX": {
-        get(){return o.scale.x},
+        get() {
+          return o.scale.x
+        },
         set(value) {
           o.scale.x = value;
         },
-        enumerable: true, configurable: true
+        enumerable: true,
+        configurable: true
       },
       "scaleY": {
-        get(){return o.scale.y},
+        get() {
+          return o.scale.y
+        },
         set(value) {
           o.scale.y = value;
         },
-        enumerable: true, configurable: true
+        enumerable: true,
+        configurable: true
       },
 
       //Depth layer
       "layer": {
-        get() {return o._layer},
+        get() {
+          return o._layer
+        },
         set(value) {
           o._layer = value;
           if (o.parent) {
@@ -1380,45 +1446,52 @@ class Hexi{
             //Sort the sprite’s parent’s `children` array so that sprites with a
             //higher `layer` value are moved to the end of the array
             o.parent.children.sort((a, b) => a.layer - b.layer);
-          } 
+          }
         },
-        enumerable: true, configurable: true
+        enumerable: true,
+        configurable: true
       },
 
       //Interactivity
       "interact": {
-        get() {return o._interact},
+        get() {
+          return o._interact
+        },
         set(value) {
           if (value === true) {
             if (!o._interact) {
               self.makeInteractive(o);
               o._interact = true;
             }
-          }else{
+          } else {
             if (self.tink.buttons.indexOf(o) !== -1) {
               self.tink.buttons.splice(self.tink.buttons.indexOf(o), 1);
               o._interact = false;
             }
           }
         },
-        enumerable: true, configurable: true
+        enumerable: true,
+        configurable: true
       },
 
       //Drag and drop
       "draggable": {
-        get() {return o._draggable},
+        get() {
+          return o._draggable
+        },
         set(value) {
           if (value === true) {
             if (!o._draggable) {
               self.makeDraggable(o);
               o._draggable = true;
             }
-          }else{
-            self.makeUndraggable(o)  
+          } else {
+            self.makeUndraggable(o)
             o._draggable = false;
           }
         },
-        enumerable: true, configurable: true
+        enumerable: true,
+        configurable: true
       },
 
       //The `localBounds` and `globalBounds` methods return an object
@@ -1435,7 +1508,8 @@ class Hexi{
             height: o.height
           };
         },
-        enumerable: true, configurable: true
+        enumerable: true,
+        configurable: true
       },
       "globalBounds": {
         get() {
@@ -1446,7 +1520,8 @@ class Hexi{
             height: o.gy + o.height
           };
         },
-        enumerable: true, configurable: true
+        enumerable: true,
+        configurable: true
       },
 
       //`empty` is a convenience property that will return `true` or
@@ -1458,9 +1533,10 @@ class Hexi{
             return true;
           } else {
             return false;
-          }   
+          }
         },
-        enumerable: true, configurable: true
+        enumerable: true,
+        configurable: true
       },
 
       //The `circular` property lets you define whether a sprite
@@ -1469,7 +1545,9 @@ class Hexi{
       //properties. If you set `circular` to `false`, the `radius`
       //and `diameter` properties are deleted from the sprite
       "circular": {
-        get() {return o._circular;},
+        get() {
+          return o._circular;
+        },
         set(value) {
 
           //Give the sprite `diameter` and `radius` properties
@@ -1484,7 +1562,8 @@ class Hexi{
                   o.width = value;
                   o.height = value;
                 },
-                enumerable: true, configurable: true
+                enumerable: true,
+                configurable: true
               },
               "radius": {
                 get() {
@@ -1494,7 +1573,8 @@ class Hexi{
                   o.width = value * 2;
                   o.height = value * 2;
                 },
-                enumerable: true, configurable: true
+                enumerable: true,
+                configurable: true
               }
             });
 
@@ -1510,7 +1590,8 @@ class Hexi{
             o._circular = false;
           }
         },
-        enumerable: true, configurable: true
+        enumerable: true,
+        configurable: true
       }
     });
 
@@ -1535,8 +1616,11 @@ class Hexi{
 
     if (o.circular) {
       Object.defineProperty(o, "radius", {
-        get(){return o.width / 2},
-        enumerable: true, configurable: true
+        get() {
+          return o.width / 2
+        },
+        enumerable: true,
+        configurable: true
       });
     }
 
@@ -1561,7 +1645,7 @@ class Hexi{
     this.pointer.scale = this.scale;
 
     //Re-scale on each browser resize
-    window.addEventListener("resize", event => { 
+    window.addEventListener("resize", event => {
 
       //Scale the canvas and update Hexi's global `scale` value and
       //the pointer's `scale` value
@@ -1584,7 +1668,7 @@ class Hexi{
   //`loadingBar` method, which should be run inside the `load`
   //function of your application code. 
   makeProgressBar(hexiObject) {
-  
+
     let hexi = hexiObject;
 
     //The `progressBar` object
@@ -1681,7 +1765,7 @@ class Hexi{
   //its contents, not the size of the canvas. So, let's use the more
   //useful canvas width and height for relative positioning instead 
   compensateForStageSize(o) {
-    if(o._stage === true) {
+    if (o._stage === true) {
       let a = {};
       a.x = 0;
       a.y = 0;
@@ -1699,7 +1783,7 @@ class Hexi{
   //objects, like sounds.
   image(imageFileName) {
     if (this.TextureCache[imageFileName]) {
-    return this.TextureCache[imageFileName];
+      return this.TextureCache[imageFileName];
     } else {
       throw new Error(`${imageFileName} does not appear to be an image`);
     }
