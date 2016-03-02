@@ -38319,7 +38319,9 @@ var Hexi = (function () {
       this.getTile = this.tileUtilities.getTile;
       this.surroundingCells = this.tileUtilities.surroundingCells;
       this.getPoints = this.tileUtilities.getPoints;
-      this.updateMap = this.tileUtilities.updateMap;
+      this.updateMap = function (mapArray, spritesToUpdate, world) {
+        return _this3.tileUtilities.updateMap(mapArray, spritesToUpdate, world);
+      };
     }
 
     //Getters and setters

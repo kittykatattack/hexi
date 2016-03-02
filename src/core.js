@@ -827,7 +827,9 @@ class Hexi {
     this.getTile = this.tileUtilities.getTile;
     this.surroundingCells = this.tileUtilities.surroundingCells;
     this.getPoints = this.tileUtilities.getPoints;
-    this.updateMap = this.tileUtilities.updateMap;
+    this.updateMap = (mapArray, spritesToUpdate, world) => {
+      return this.tileUtilities.updateMap(mapArray, spritesToUpdate, world);
+    }
   }
 
   //Getters and setters
