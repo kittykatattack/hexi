@@ -38316,7 +38316,7 @@ var Hexi = (function () {
         return _this3.tileUtilities.hitTestTile(sprite, mapArray, gidToCheck, world, pointsToCheck);
       };
       this.getIndex = function (x, y, tilewidth, tileheight, mapWidthInTiles) {
-        return _this3.tileUtilities.getIndex;
+        return _this3.tileUtilities.getIndex(x, y, tilewidth, tileheight, mapWidthInTiles);
       };
       this.getTile = this.tileUtilities.getTile;
       this.surroundingCells = this.tileUtilities.surroundingCells;

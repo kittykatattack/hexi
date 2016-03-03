@@ -824,7 +824,7 @@ class Hexi {
       return this.tileUtilities.hitTestTile(sprite, mapArray, gidToCheck, world, pointsToCheck);
     };
     this.getIndex = (x, y, tilewidth, tileheight, mapWidthInTiles) => {
-      return this.tileUtilities.getIndex;
+      return this.tileUtilities.getIndex(x, y, tilewidth, tileheight, mapWidthInTiles);
     };
     this.getTile = this.tileUtilities.getTile;
     this.surroundingCells = this.tileUtilities.surroundingCells;
