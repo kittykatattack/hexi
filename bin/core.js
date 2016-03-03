@@ -1029,7 +1029,9 @@ var Hexi = (function () {
       this.hitTestTile = function (sprite, mapArray, gidToCheck, world, pointsToCheck) {
         return _this3.tileUtilities.hitTestTile(sprite, mapArray, gidToCheck, world, pointsToCheck);
       };
-      this.getIndex = this.tileUtilities.getIndex;
+      this.getIndex = function (x, y, tilewidth, tileheight, mapWidthInTiles) {
+        return _this3.tileUtilities.getIndex;
+      };
       this.getTile = this.tileUtilities.getTile;
       this.surroundingCells = this.tileUtilities.surroundingCells;
       this.getPoints = this.tileUtilities.getPoints;
