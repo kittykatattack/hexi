@@ -37,17 +37,18 @@ g.start();
 
 //Game variables
 let world, alien, message, wallMapArray,
-    bombMapArray, bombSprites, bombLayer;
- 
+  bombMapArray, bombSprites, bombLayer,
+  leftArrow, upArrow, downArrow, rightArrow;
+
 //The `setup` function to initialize your application
 function setup() {
 
   //Make the world from the Tiled JSON data and the tileset PNG image
   world = g.makeTiledWorld(
-    "maps/timeBombPanic.json", 
+    "maps/timeBombPanic.json",
     "images/timeBombPanic.png"
   );
-    
+
   /*
   Get a reference to the `alien` sprite.
   Use `world.getObject` to do this. `getObject` searches for and
@@ -100,13 +101,20 @@ function setup() {
   alien.direction = "";
 
   //Configure Hexi's built in arrow keys to assign the alien a direction
-  g.leftArrow.press = () => alien.direction = "left"; 
-  g.upArrow.press = () => alien.direction = "up"; 
-  g.rightArrow.press = () => alien.direction = "right"; 
-  g.downArrow.press = () => alien.direction = "down"; 
+  //Create some keyboard objects
+  leftArrow = g.keyboard(37);
+  upArrow = g.keyboard(38);
+  rightArrow = g.keyboard(39);
+  downArrow = g.keyboard(40);
+
+  //Program the keyboard objects
+  leftArrow.press = () => alien.direction = "left";
+  upArrow.press = () => alien.direction = "up";
+  rightArrow.press = () => alien.direction = "right";
+  downArrow.press = () => alien.direction = "down";
 
   //Change the game state to `play`
-  g.state = play; 
+  g.state = play;
 }
 
 //The `play` function contains all the game logic and runs in a loop
@@ -117,8 +125,7 @@ function play() {
   //this but it's a nice effect that you might want to use in your
   //own games at some point.)
 
-  if(Math.floor(alien.x) % world.tilewidth === 0
-  && Math.floor(alien.y) % world.tileheight === 0) {
+  if (Math.floor(alien.x) % world.tilewidth === 0 && Math.floor(alien.y) % world.tileheight === 0) {
     switch (alien.direction) {
       case "up":
         alien.vy = -4;
@@ -142,7 +149,7 @@ function play() {
         break;
     }
   }
-  
+
   //Move the alien
   g.move(alien);
 
@@ -218,6 +225,5 @@ function play() {
         return true;
       }
     });
-  }  
+  }
 }
-

@@ -40,7 +40,11 @@ var world = undefined,
     wallMapArray = undefined,
     bombMapArray = undefined,
     bombSprites = undefined,
-    bombLayer = undefined;
+    bombLayer = undefined,
+    leftArrow = undefined,
+    upArrow = undefined,
+    downArrow = undefined,
+    rightArrow = undefined;
 
 //The `setup` function to initialize your application
 function setup() {
@@ -100,16 +104,23 @@ function setup() {
   alien.direction = "";
 
   //Configure Hexi's built in arrow keys to assign the alien a direction
-  g.leftArrow.press = function () {
+  //Create some keyboard objects
+  leftArrow = g.keyboard(37);
+  upArrow = g.keyboard(38);
+  rightArrow = g.keyboard(39);
+  downArrow = g.keyboard(40);
+
+  //Program the keyboard objects
+  leftArrow.press = function () {
     return alien.direction = "left";
   };
-  g.upArrow.press = function () {
+  upArrow.press = function () {
     return alien.direction = "up";
   };
-  g.rightArrow.press = function () {
+  rightArrow.press = function () {
     return alien.direction = "right";
   };
-  g.downArrow.press = function () {
+  downArrow.press = function () {
     return alien.direction = "down";
   };
 
