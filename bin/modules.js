@@ -7309,8 +7309,6 @@ var TileUtilities = (function () {
       //Return the index number
       return index.x + index.y * mapWidthInTiles;
     }
-  }, {
-    key: "getTile",
 
     /*
     #### getTile
@@ -7325,6 +7323,9 @@ var TileUtilities = (function () {
      The `world` object requires these properties:
     `x`, `y`, `tilewidth`, `tileheight` and `widthInTiles`
     */
+
+  }, {
+    key: "getTile",
     value: function getTile(index, mapArray, world) {
       var tile = {};
       tile.gid = mapArray[index];
@@ -7342,8 +7343,6 @@ var TileUtilities = (function () {
       //Return the tile object
       return tile;
     }
-  }, {
-    key: "surroundingCells",
 
     /*
     #### surroundingCells
@@ -7354,11 +7353,11 @@ var TileUtilities = (function () {
     and the width of the map array.
     */
 
+  }, {
+    key: "surroundingCells",
     value: function surroundingCells(index, widthInTiles) {
       return [index - widthInTiles - 1, index - widthInTiles, index - widthInTiles + 1, index - 1, index, index + 1, index + widthInTiles - 1, index + widthInTiles, index + widthInTiles + 1];
     }
-  }, {
-    key: "getPoints",
 
     //#### getPoints
     /*
@@ -7386,26 +7385,50 @@ var TileUtilities = (function () {
     ```
     */
 
+  }, {
+    key: "getPoints",
     value: function getPoints(s) {
       var ca = s.collisionArea;
       if (ca !== undefined) {
         return {
-          topLeft: { x: s.x + ca.x, y: s.y + ca.y },
-          topRight: { x: s.x + ca.x + ca.width, y: s.y + ca.y },
-          bottomLeft: { x: s.x + ca.x, y: s.y + ca.y + ca.height },
-          bottomRight: { x: s.x + ca.x + ca.width, y: s.y + ca.y + ca.height }
+          topLeft: {
+            x: s.x + ca.x,
+            y: s.y + ca.y
+          },
+          topRight: {
+            x: s.x + ca.x + ca.width,
+            y: s.y + ca.y
+          },
+          bottomLeft: {
+            x: s.x + ca.x,
+            y: s.y + ca.y + ca.height
+          },
+          bottomRight: {
+            x: s.x + ca.x + ca.width,
+            y: s.y + ca.y + ca.height
+          }
         };
       } else {
         return {
-          topLeft: { x: s.x, y: s.y },
-          topRight: { x: s.x + s.width - 1, y: s.y },
-          bottomLeft: { x: s.x, y: s.y + s.height - 1 },
-          bottomRight: { x: s.x + s.width - 1, y: s.y + s.height - 1 }
+          topLeft: {
+            x: s.x,
+            y: s.y
+          },
+          topRight: {
+            x: s.x + s.width - 1,
+            y: s.y
+          },
+          bottomLeft: {
+            x: s.x,
+            y: s.y + s.height - 1
+          },
+          bottomRight: {
+            x: s.x + s.width - 1,
+            y: s.y + s.height - 1
+          }
         };
       }
     }
-  }, {
-    key: "hitTestTile",
 
     //### hitTestTile
     /*
@@ -7431,6 +7454,8 @@ var TileUtilities = (function () {
     ```
     */
 
+  }, {
+    key: "hitTestTile",
     value: function hitTestTile(sprite, mapArray, gidToCheck, world, pointsToCheck) {
       var _this = this;
 
@@ -7471,7 +7496,12 @@ var TileUtilities = (function () {
         case "center":
 
           //`hit` will be true only if the center point is touching
-          var point = { center: { x: sprite.centerX, y: sprite.centerY } };
+          var point = {
+            center: {
+              x: sprite.centerX,
+              y: sprite.centerY
+            }
+          };
           sprite.collisionPoints = point;
           collision.hit = Object.keys(sprite.collisionPoints).some(checkPoints);
           break;
@@ -7495,8 +7525,6 @@ var TileUtilities = (function () {
       //collision occured
       return collision;
     }
-  }, {
-    key: "updateMap",
 
     //### updateMap
     /*
@@ -7516,7 +7544,10 @@ var TileUtilities = (function () {
     child sprites on that layer.
     */
 
+  }, {
+    key: "updateMap",
     value: function updateMap(mapArray, spritesToUpdate, world) {
+      var _this2 = this;
 
       //First create a map a new array filled with zeros.
       //The new map array will be exactly the same size as the original
@@ -7527,17 +7558,20 @@ var TileUtilities = (function () {
 
       //Is `spriteToUpdate` an array of sprites?
       if (spritesToUpdate instanceof Array) {
+        (function () {
 
-        //Get the index number of each sprite in the `spritesToUpdate` array
-        //and add the sprite's `gid` to the matching index on the map
-        spritesToUpdate.forEach(function (sprite) {
+          //Get the index number of each sprite in the `spritesToUpdate` array
+          //and add the sprite's `gid` to the matching index on the map
+          var self = _this2;
+          spritesToUpdate.forEach(function (sprite) {
 
-          //Find the new index number
-          sprite.index = this.getIndex(sprite.centerX, sprite.centerY, world.tilewidth, world.tileheight, world.widthInTiles);
+            //Find the new index number
+            sprite.index = self.getIndex(sprite.centerX, sprite.centerY, world.tilewidth, world.tileheight, world.widthInTiles);
 
-          //Add the sprite's `gid` number to the correct index on the map
-          newMapArray[sprite.index] = sprite.gid;
-        });
+            //Add the sprite's `gid` number to the correct index on the map
+            newMapArray[sprite.index] = sprite.gid;
+          });
+        })();
       }
 
       //Is `spritesToUpdate` just a single sprite?
@@ -7672,7 +7706,7 @@ var TileUtilities = (function () {
   }, {
     key: "makeTiledWorld",
     value: function makeTiledWorld(jsonTiledMap, tileset) {
-      var _this2 = this;
+      var _this3 = this;
 
       //Create a group called `world` to contain all the layers, sprites
       //and objects from the `tiledMap`. The `world` object is going to be
@@ -7713,7 +7747,7 @@ var TileUtilities = (function () {
 
         //Make a group for this layer and copy
         //all of the layer properties onto it.
-        var layerGroup = new _this2.Container();
+        var layerGroup = new _this3.Container();
 
         Object.keys(tiledLayer).forEach(function (key) {
           //Add all the layer's properties to the group, except the
@@ -7784,7 +7818,7 @@ var TileUtilities = (function () {
 
                 //Use the above values to create the sprite's image from
                 //the tileset image
-                texture = _this2.frame(tileset, tilesetX, tilesetY, world.tilewidth, world.tileheight);
+                texture = _this3.frame(tileset, tilesetX, tilesetY, world.tilewidth, world.tileheight);
 
                 //I've dedcided that any tiles that have a `name` property are important
                 //and should be accessible in the `world.objects` array.
@@ -7799,7 +7833,7 @@ var TileUtilities = (function () {
                 if (tileproperties[key] && tileproperties[key].name) {
 
                   //Make a sprite
-                  tileSprite = new _this2.Sprite(texture);
+                  tileSprite = new _this3.Sprite(texture);
 
                   //Copy all of the tile's properties onto the sprite
                   //(This includes the `name` property)
@@ -7817,7 +7851,7 @@ var TileUtilities = (function () {
                 //If the tile doesn't have a `name` property, just use it to
                 //create an ordinary sprite (it will only need one texture)
                 else {
-                    tileSprite = new _this2.Sprite(texture);
+                    tileSprite = new _this3.Sprite(texture);
                   }
 
                 //Position the sprite on the map
