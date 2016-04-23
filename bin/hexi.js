@@ -31707,7 +31707,7 @@ var Bump = (function () {
 
 var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
 
-function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) arr2[i] = arr[i]; return arr2; } else { return Array.from(arr); } }
+function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -31715,7 +31715,7 @@ var Charm = (function () {
   function Charm() {
     var _this = this;
 
-    var renderingEngine = arguments[0] === undefined ? PIXI : arguments[0];
+    var renderingEngine = arguments.length <= 0 || arguments[0] === undefined ? PIXI : arguments[0];
 
     _classCallCheck(this, Charm);
 
@@ -31736,6 +31736,7 @@ var Charm = (function () {
     this.easingFormulas = {
 
       //Linear
+
       linear: function linear(x) {
         return x;
       },
@@ -31827,23 +31828,23 @@ var Charm = (function () {
     };
   }
 
+  //The low level `tweenProperty` function is used as the foundation
+  //for the the higher level tween methods.
+
   _createClass(Charm, [{
     key: "tweenProperty",
-
-    //The low level `tweenProperty` function is used as the foundation
-    //for the the higher level tween methods.
     value: function tweenProperty(sprite, //Sprite object
     property, //String property
     startValue, //Tween start value
     endValue, //Tween end value
-    totalFrames) {
-      var type = arguments[5] === undefined ? "smoothstep" : arguments[5];
+    totalFrames) //Delay in frames before repeating
+    {
+      var type = arguments.length <= 5 || arguments[5] === undefined ? "smoothstep" : arguments[5];
 
       var _this2 = this;
 
-      var yoyo = arguments[6] === undefined ? false : arguments[6];
-      var delayBeforeRepeat = arguments[7] === undefined ? 0 //Delay in frames before repeating
-      : arguments[7];
+      var yoyo = arguments.length <= 6 || arguments[6] === undefined ? false : arguments[6];
+      var delayBeforeRepeat = arguments.length <= 7 || arguments[7] === undefined ? 0 : arguments[7];
 
       //Create the tween object
       var o = {};
@@ -31904,8 +31905,8 @@ var Charm = (function () {
             //2 additional `type` array values as the spline's start and
             //end points
             else {
-              curvedTime = _this2.easingFormulas.spline(normalizedTime, o.startMagnitude, 0, 1, o.endMagnitude);
-            }
+                curvedTime = _this2.easingFormulas.spline(normalizedTime, o.startMagnitude, 0, 1, o.endMagnitude);
+              }
 
             //Interpolate the sprite's property based on the curve
             sprite[property] = o.endValue * curvedTime + o.startValue * (1 - curvedTime);
@@ -31915,8 +31916,9 @@ var Charm = (function () {
 
           //When the tween has finished playing, run the end tasks
           else {
-            o.end();
-          }
+              sprite[property] = o.endValue;
+              o.end();
+            }
         }
       };
 
@@ -31953,13 +31955,13 @@ var Charm = (function () {
       //Return the tween object
       return o;
     }
-  }, {
-    key: "makeTween",
 
     //`makeTween` is a general low-level method for making complex tweens
     //out of multiple `tweenProperty` functions. Its one argument,
     //`tweensToAdd` is an array containing multiple `tweenProperty` calls
 
+  }, {
+    key: "makeTween",
     value: function makeTween(tweensToAdd) {
       var _this3 = this;
 
@@ -32020,51 +32022,54 @@ var Charm = (function () {
       //Return the tween object
       return o;
     }
-  }, {
-    key: "fadeOut",
 
     /* High level tween methods */
 
     //1. Simple tweens
 
     //`fadeOut`
+
+  }, {
+    key: "fadeOut",
     value: function fadeOut(sprite) {
-      var frames = arguments[1] === undefined ? 60 : arguments[1];
+      var frames = arguments.length <= 1 || arguments[1] === undefined ? 60 : arguments[1];
 
       return this.tweenProperty(sprite, "alpha", sprite.alpha, 0, frames, "sine");
     }
-  }, {
-    key: "fadeIn",
 
     //`fadeIn`
+
+  }, {
+    key: "fadeIn",
     value: function fadeIn(sprite) {
-      var frames = arguments[1] === undefined ? 60 : arguments[1];
+      var frames = arguments.length <= 1 || arguments[1] === undefined ? 60 : arguments[1];
 
       return this.tweenProperty(sprite, "alpha", sprite.alpha, 1, frames, "sine");
     }
-  }, {
-    key: "pulse",
 
     //`pulse`
     //Fades the sprite in and out at a steady rate.
     //Set the `minAlpha` to something greater than 0 if you
     //don't want the sprite to fade away completely
+
+  }, {
+    key: "pulse",
     value: function pulse(sprite) {
-      var frames = arguments[1] === undefined ? 60 : arguments[1];
-      var minAlpha = arguments[2] === undefined ? 0 : arguments[2];
+      var frames = arguments.length <= 1 || arguments[1] === undefined ? 60 : arguments[1];
+      var minAlpha = arguments.length <= 2 || arguments[2] === undefined ? 0 : arguments[2];
 
       return this.tweenProperty(sprite, "alpha", sprite.alpha, minAlpha, frames, "smoothstep", true);
     }
-  }, {
-    key: "slide",
 
     //2. Complex tweens
 
+  }, {
+    key: "slide",
     value: function slide(sprite, endX, endY) {
-      var frames = arguments[3] === undefined ? 60 : arguments[3];
-      var type = arguments[4] === undefined ? "smoothstep" : arguments[4];
-      var yoyo = arguments[5] === undefined ? false : arguments[5];
-      var delayBeforeRepeat = arguments[6] === undefined ? 0 : arguments[6];
+      var frames = arguments.length <= 3 || arguments[3] === undefined ? 60 : arguments[3];
+      var type = arguments.length <= 4 || arguments[4] === undefined ? "smoothstep" : arguments[4];
+      var yoyo = arguments.length <= 5 || arguments[5] === undefined ? false : arguments[5];
+      var delayBeforeRepeat = arguments.length <= 6 || arguments[6] === undefined ? 0 : arguments[6];
 
       return this.makeTween([
 
@@ -32077,11 +32082,11 @@ var Charm = (function () {
   }, {
     key: "breathe",
     value: function breathe(sprite) {
-      var endScaleX = arguments[1] === undefined ? 0.8 : arguments[1];
-      var endScaleY = arguments[2] === undefined ? 0.8 : arguments[2];
-      var frames = arguments[3] === undefined ? 60 : arguments[3];
-      var yoyo = arguments[4] === undefined ? true : arguments[4];
-      var delayBeforeRepeat = arguments[5] === undefined ? 0 : arguments[5];
+      var endScaleX = arguments.length <= 1 || arguments[1] === undefined ? 0.8 : arguments[1];
+      var endScaleY = arguments.length <= 2 || arguments[2] === undefined ? 0.8 : arguments[2];
+      var frames = arguments.length <= 3 || arguments[3] === undefined ? 60 : arguments[3];
+      var yoyo = arguments.length <= 4 || arguments[4] === undefined ? true : arguments[4];
+      var delayBeforeRepeat = arguments.length <= 5 || arguments[5] === undefined ? 0 : arguments[5];
 
       //Add `scaleX` and `scaleY` properties to Pixi sprites
       this._addScaleProperties(sprite);
@@ -32097,9 +32102,9 @@ var Charm = (function () {
   }, {
     key: "scale",
     value: function scale(sprite) {
-      var endScaleX = arguments[1] === undefined ? 0.5 : arguments[1];
-      var endScaleY = arguments[2] === undefined ? 0.5 : arguments[2];
-      var frames = arguments[3] === undefined ? 60 : arguments[3];
+      var endScaleX = arguments.length <= 1 || arguments[1] === undefined ? 0.5 : arguments[1];
+      var endScaleY = arguments.length <= 2 || arguments[2] === undefined ? 0.5 : arguments[2];
+      var frames = arguments.length <= 3 || arguments[3] === undefined ? 60 : arguments[3];
 
       //Add `scaleX` and `scaleY` properties to Pixi sprites
       this._addScaleProperties(sprite);
@@ -32115,12 +32120,12 @@ var Charm = (function () {
   }, {
     key: "strobe",
     value: function strobe(sprite) {
-      var scaleFactor = arguments[1] === undefined ? 1.3 : arguments[1];
-      var startMagnitude = arguments[2] === undefined ? 10 : arguments[2];
-      var endMagnitude = arguments[3] === undefined ? 20 : arguments[3];
-      var frames = arguments[4] === undefined ? 10 : arguments[4];
-      var yoyo = arguments[5] === undefined ? true : arguments[5];
-      var delayBeforeRepeat = arguments[6] === undefined ? 0 : arguments[6];
+      var scaleFactor = arguments.length <= 1 || arguments[1] === undefined ? 1.3 : arguments[1];
+      var startMagnitude = arguments.length <= 2 || arguments[2] === undefined ? 10 : arguments[2];
+      var endMagnitude = arguments.length <= 3 || arguments[3] === undefined ? 20 : arguments[3];
+      var frames = arguments.length <= 4 || arguments[4] === undefined ? 10 : arguments[4];
+      var yoyo = arguments.length <= 5 || arguments[5] === undefined ? true : arguments[5];
+      var delayBeforeRepeat = arguments.length <= 6 || arguments[6] === undefined ? 0 : arguments[6];
 
       var bounce = "bounce " + startMagnitude + " " + endMagnitude;
 
@@ -32138,19 +32143,19 @@ var Charm = (function () {
   }, {
     key: "wobble",
     value: function wobble(sprite) {
-      var scaleFactorX = arguments[1] === undefined ? 1.2 : arguments[1];
-      var scaleFactorY = arguments[2] === undefined ? 1.2 : arguments[2];
-      var frames = arguments[3] === undefined ? 10 : arguments[3];
-      var xStartMagnitude = arguments[4] === undefined ? 10 : arguments[4];
-      var xEndMagnitude = arguments[5] === undefined ? 10 : arguments[5];
-      var yStartMagnitude = arguments[6] === undefined ? -10 : arguments[6];
-      var yEndMagnitude = arguments[7] === undefined ? -10 : arguments[7];
-      var friction = arguments[8] === undefined ? 0.98 : arguments[8];
+      var scaleFactorX = arguments.length <= 1 || arguments[1] === undefined ? 1.2 : arguments[1];
+      var scaleFactorY = arguments.length <= 2 || arguments[2] === undefined ? 1.2 : arguments[2];
+      var frames = arguments.length <= 3 || arguments[3] === undefined ? 10 : arguments[3];
+      var xStartMagnitude = arguments.length <= 4 || arguments[4] === undefined ? 10 : arguments[4];
+      var xEndMagnitude = arguments.length <= 5 || arguments[5] === undefined ? 10 : arguments[5];
+      var yStartMagnitude = arguments.length <= 6 || arguments[6] === undefined ? -10 : arguments[6];
+      var yEndMagnitude = arguments.length <= 7 || arguments[7] === undefined ? -10 : arguments[7];
+      var friction = arguments.length <= 8 || arguments[8] === undefined ? 0.98 : arguments[8];
 
       var _this4 = this;
 
-      var yoyo = arguments[9] === undefined ? true : arguments[9];
-      var delayBeforeRepeat = arguments[10] === undefined ? 0 : arguments[10];
+      var yoyo = arguments.length <= 9 || arguments[9] === undefined ? true : arguments[9];
+      var delayBeforeRepeat = arguments.length <= 10 || arguments[10] === undefined ? 0 : arguments[10];
 
       var bounceX = "bounce " + xStartMagnitude + " " + xEndMagnitude;
       var bounceY = "bounce " + yStartMagnitude + " " + yEndMagnitude;
@@ -32186,18 +32191,18 @@ var Charm = (function () {
 
       return o;
     }
-  }, {
-    key: "followCurve",
 
     //3. Motion path tweens
 
+  }, {
+    key: "followCurve",
     value: function followCurve(sprite, pointsArray, totalFrames) {
-      var type = arguments[3] === undefined ? "smoothstep" : arguments[3];
+      var type = arguments.length <= 3 || arguments[3] === undefined ? "smoothstep" : arguments[3];
 
       var _this5 = this;
 
-      var yoyo = arguments[4] === undefined ? false : arguments[4];
-      var delayBeforeRepeat = arguments[5] === undefined ? 0 : arguments[5];
+      var yoyo = arguments.length <= 4 || arguments[4] === undefined ? false : arguments[4];
+      var delayBeforeRepeat = arguments.length <= 5 || arguments[5] === undefined ? 0 : arguments[5];
 
       //Create the tween object
       var o = {};
@@ -32257,9 +32262,9 @@ var Charm = (function () {
             //2 additional `type` array values as the spline's start and
             //end points
             else {
-              //curve = tweenFunction.spline(n, type[1], 0, 1, type[2]);
-              curvedTime = _this5.easingFormulas.spline(normalizedTime, o.startMagnitude, 0, 1, o.endMagnitude);
-            }
+                //curve = tweenFunction.spline(n, type[1], 0, 1, type[2]);
+                curvedTime = _this5.easingFormulas.spline(normalizedTime, o.startMagnitude, 0, 1, o.endMagnitude);
+              }
 
             //Apply the Bezier curve to the sprite's position
             sprite.x = _this5.easingFormulas.cubicBezier(curvedTime, p[0][0], p[1][0], p[2][0], p[3][0]);
@@ -32271,8 +32276,9 @@ var Charm = (function () {
 
           //When the tween has finished playing, run the end tasks
           else {
-            o.end();
-          }
+              //sprite[property] = o.endValue;
+              o.end();
+            }
         }
       };
 
@@ -32313,16 +32319,16 @@ var Charm = (function () {
   }, {
     key: "walkPath",
     value: function walkPath(sprite, //The sprite
-    originalPathArray) {
-      var totalFrames = arguments[2] === undefined ? 300 : arguments[2];
-      var type = arguments[3] === undefined ? "smoothstep" : arguments[3];
-      var loop = arguments[4] === undefined ? false : arguments[4];
+    originalPathArray) //Delay, in milliseconds, between sections
+    {
+      var totalFrames = arguments.length <= 2 || arguments[2] === undefined ? 300 : arguments[2];
+      var type = arguments.length <= 3 || arguments[3] === undefined ? "smoothstep" : arguments[3];
+      var loop = arguments.length <= 4 || arguments[4] === undefined ? false : arguments[4];
 
       var _this6 = this;
 
-      var yoyo = arguments[5] === undefined ? false : arguments[5];
-      var delayBetweenSections = arguments[6] === undefined ? 0 //Delay, in milliseconds, between sections
-      : arguments[6];
+      var yoyo = arguments.length <= 5 || arguments[5] === undefined ? false : arguments[5];
+      var delayBetweenSections = arguments.length <= 6 || arguments[6] === undefined ? 0 : arguments[6];
 
       //Clone the path array so that any possible references to sprite
       //properties are converted into ordinary numbers
@@ -32370,30 +32376,30 @@ var Charm = (function () {
           //loop and yoyo it
           else {
 
-            //Reverse the path if `loop` is `true`
-            if (loop) {
+              //Reverse the path if `loop` is `true`
+              if (loop) {
 
-              //Reverse the array if `yoyo` is `true`
-              if (yoyo) pathArray.reverse();
+                //Reverse the array if `yoyo` is `true`
+                if (yoyo) pathArray.reverse();
 
-              //Optionally wait before restarting
-              _this6.wait(delayBetweenSections).then(function () {
+                //Optionally wait before restarting
+                _this6.wait(delayBetweenSections).then(function () {
 
-                //Reset the `currentPoint` to 0 so that we can
-                //restart at the first point
-                currentPoint = 0;
+                  //Reset the `currentPoint` to 0 so that we can
+                  //restart at the first point
+                  currentPoint = 0;
 
-                //Set the sprite to the first point
-                sprite.x = pathArray[0][0];
-                sprite.y = pathArray[0][1];
+                  //Set the sprite to the first point
+                  sprite.x = pathArray[0][0];
+                  sprite.y = pathArray[0][1];
 
-                //Make the first new path
-                tween = makePath(currentPoint);
+                  //Make the first new path
+                  tween = makePath(currentPoint);
 
-                //... and so it continues!
-              });
+                  //... and so it continues!
+                });
+              }
             }
-          }
         };
 
         //Return the path tween to the main function
@@ -32409,16 +32415,16 @@ var Charm = (function () {
   }, {
     key: "walkCurve",
     value: function walkCurve(sprite, //The sprite
-    pathArray) {
-      var totalFrames = arguments[2] === undefined ? 300 : arguments[2];
-      var type = arguments[3] === undefined ? "smoothstep" : arguments[3];
-      var loop = arguments[4] === undefined ? false : arguments[4];
+    pathArray) //Delay, in milliseconds, between sections
+    {
+      var totalFrames = arguments.length <= 2 || arguments[2] === undefined ? 300 : arguments[2];
+      var type = arguments.length <= 3 || arguments[3] === undefined ? "smoothstep" : arguments[3];
+      var loop = arguments.length <= 4 || arguments[4] === undefined ? false : arguments[4];
 
       var _this7 = this;
 
-      var yoyo = arguments[5] === undefined ? false : arguments[5];
-      var delayBeforeContinue = arguments[6] === undefined ? 0 //Delay, in milliseconds, between sections
-      : arguments[6];
+      var yoyo = arguments.length <= 5 || arguments[5] === undefined ? false : arguments[5];
+      var delayBeforeContinue = arguments.length <= 6 || arguments[6] === undefined ? 0 : arguments[6];
 
       //Divide the `totalFrames` into sections for each part of the path
       var frames = totalFrames / pathArray.length;
@@ -32447,28 +32453,28 @@ var Charm = (function () {
           //If we've reached the end of the path, optionally
           //loop and reverse it
           else {
-            if (loop) {
-              if (yoyo) {
+              if (loop) {
+                if (yoyo) {
 
-                //Reverse order of the curves in the `pathArray`
-                pathArray.reverse();
+                  //Reverse order of the curves in the `pathArray`
+                  pathArray.reverse();
 
-                //Reverse the order of the points in each curve
-                pathArray.forEach(function (curveArray) {
-                  return curveArray.reverse();
+                  //Reverse the order of the points in each curve
+                  pathArray.forEach(function (curveArray) {
+                    return curveArray.reverse();
+                  });
+                }
+
+                //After an optional delay, reset the sprite to the
+                //beginning of the path and make the next new path
+                _this7.wait(delayBeforeContinue).then(function () {
+                  currentCurve = 0;
+                  sprite.x = pathArray[0][0];
+                  sprite.y = pathArray[0][1];
+                  tween = makePath(currentCurve);
                 });
               }
-
-              //After an optional delay, reset the sprite to the
-              //beginning of the path and make the next new path
-              _this7.wait(delayBeforeContinue).then(function () {
-                currentCurve = 0;
-                sprite.x = pathArray[0][0];
-                sprite.y = pathArray[0][1];
-                tween = makePath(currentCurve);
-              });
             }
-          }
         };
 
         //Return the path tween to the main function
@@ -32481,8 +32487,6 @@ var Charm = (function () {
       //Pass the tween back to the main program
       return tween;
     }
-  }, {
-    key: "wait",
 
     //4. Utilities
 
@@ -32496,17 +32500,20 @@ var Charm = (function () {
         .then(() => console.log("Three"))
      */
 
+  }, {
+    key: "wait",
     value: function wait() {
-      var duration = arguments[0] === undefined ? 0 : arguments[0];
+      var duration = arguments.length <= 0 || arguments[0] === undefined ? 0 : arguments[0];
 
       return new Promise(function (resolve, reject) {
         setTimeout(resolve, duration);
       });
     }
-  }, {
-    key: "removeTween",
 
     //A utility to remove tweens from the game
+
+  }, {
+    key: "removeTween",
     value: function removeTween(tweenObject) {
       var _this8 = this;
 
@@ -32518,11 +32525,11 @@ var Charm = (function () {
 
         //Otherwise, remove the nested tween objects
       } else {
-        tweenObject.pause();
-        tweenObject.tweens.forEach(function (element) {
-          _this8.globalTweens.splice(_this8.globalTweens.indexOf(element), 1);
-        });
-      }
+          tweenObject.pause();
+          tweenObject.tweens.forEach(function (element) {
+            _this8.globalTweens.splice(_this8.globalTweens.indexOf(element), 1);
+          });
+        }
     }
   }, {
     key: "update",
@@ -32540,20 +32547,6 @@ var Charm = (function () {
 
   return Charm;
 })();
-
-//Duration in frames
-//The easing type
-//Yoyo?
-//A 2D array of waypoints
-//The duration, in frames
-//The easing type
-//Should the animation loop?
-//Shoud the direction reverse?
-//2D array of Bezier curves
-//The duration, in frames
-//The easing type
-//Should the animation loop?
-//Should the direction reverse?
 //# sourceMappingURL=charm.js.map"use strict";
 
 var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
