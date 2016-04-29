@@ -134,14 +134,13 @@ Here's Hexi's core feature list:
 - A built-in universal `pointer` that works with both the mouse and
   touch. Assign your own custom `press`, `release` and `tap` methods
   or use any of the pointer's built-in properties: `isUp`, `isDown`,
-  `tapped`, `x` and `y`. Define as many pointers as you need for multi-touch.
+  `tapped`, `x` and `y`. Define as many pointers as you need for multi-touch. (It also works with isometric maps!)
 - Conveniently position sprites relative to other sprites using
-  `putTop`, `putRight`, `putBottom`, `putLeft` and `putCenter`. Algin
+  `putTop`, `putRight`, `putBottom`, `putLeft` and `putCenter`. Align
   sprites horizontally or vertically using `flowRight`, `flowLeft`,
   `flowUp` or `flowDown`.
 - A universal asset loader to pre-load images, fonts, sounds and JSON
-  data files. All popular file formats are supported. You can load new assets into the game at
-  any time.
+  data files. All popular file formats are supported. You can load new assets into the game at any time.
 - An optional `load` state that lets you run actions while assets are
   loading. You can use the `load` state to add a loading progress bar.
 - A fast and focused [Pixi-based](https://github.com/pixijs/pixi.js/) rendering engine. If Pixi can do it, so can Hexi! Hexi 
@@ -181,9 +180,7 @@ Here's Hexi's core feature list:
 - A `createParticles` function for creating all kinds of particle
   effects for games. Use the `particleEmitter` function to create a constant
   stream of particles.
-- Use `scaleToWindow` to make the game automatically scale to its maximum size and align itself 
-  for the best fit inside the browser window. Use `enableFullscreen` to make the 
-  browser enter full screen mode.
+- Use `scaleToWindow` to make the game automatically scale to its maximum size and align itself for the best fit inside the browser window. Use `enableFullscreen` to make the browser enter full screen mode.
 - Tiled Editor support using `makeTiledWorld`. Design your game in
   Tiled Editor and access all the sprites, layers and objects directly
   in your game code. It's an extremely fun, quick and easy way to make
@@ -198,6 +195,7 @@ Here's Hexi's core feature list:
   world.
 - Seamless integration with HTML and CSS elements for creating rich
   user interfaces. Use Hexi also works with Angular, React and Elm!
+- A complete suite of tools for easily creating isometric game worlds, including: an isometric mouse/touch pointer, isometric tile collision using `hitTestIsoTile`, and full Tiled Editor isometric map support using `makeIsoTiledWorld`. 
 
 <a id='features'></a>
 ### Hexi's modules
@@ -216,7 +214,7 @@ properties or methods of these modules in your high-level Hexi code.
   create and use Pixi sprites, as well adding a state machine and
   animation player
 - [Game Utilities](https://github.com/kittykatattack/gameUtilities): A collection of useful methods for games.
-- [Tile Utilities](https://github.com/kittykatattack/tileUtilities): A collection of useful methods for making tile-based game worlds with [Tiled Editor](http://www.mapeditor.org).
+- [Tile Utilities](https://github.com/kittykatattack/tileUtilities): A collection of useful methods for making tile-based game worlds with [Tiled Editor](http://www.mapeditor.org). Includes a full suite of isometric map utilities.
 - [Sound.js](https://github.com/kittykatattack/sound.js): A micro-library for loading, controlling and generating
   sound and music effects. Everything you need to add sound to games.
 - [Full Screen](https://github.com/kittykatattack/fullScreen): A simple way to add a full screen feature.

@@ -1038,6 +1038,23 @@ var Hexi = (function () {
       this.updateMap = function (mapArray, spritesToUpdate, world) {
         return _this3.tileUtilities.updateMap(mapArray, spritesToUpdate, world);
       };
+      this.byDepth = this.tileUtilities.byDepth;
+      this.hitTestIsoTile = function (sprite, mapArray, gidToCheck, world, pointsToCheck) {
+        return _this3.tileUtilities.hitTestIsoTile(sprite, mapArray, gidToCheck, world, pointsToCheck);
+      };
+      this.getIsoPoints = this.tileUtilities.getIsoPoints;
+      this.makeIsoPointer = function (pointer, world) {
+        return _this3.tileUtilities.makeIsoPointer(pointer, world);
+      };
+      this.isoRectangle = function (width, height, fillStyle) {
+        return _this3.tileUtilities.isoRectangle(width, height, fillStyle);
+      };
+      this.addIsoProperties = function (sprite, x, y, width, height) {
+        return _this3.tileUtilities.addIsoProperties(sprite, x, y, width, height);
+      };
+      this.makeIsoTiledWorld = function (jsonTiledMap, tileset) {
+        return _this3.tileUtilities.makeIsoTiledWorld(jsonTiledMap, tileset);
+      };
     }
 
     //Getters and setters

@@ -832,6 +832,24 @@ class Hexi {
     this.updateMap = (mapArray, spritesToUpdate, world) => {
       return this.tileUtilities.updateMap(mapArray, spritesToUpdate, world);
     };
+    this.byDepth = this.tileUtilities.byDepth;
+    this.hitTestIsoTile = (sprite, mapArray, gidToCheck, world, pointsToCheck) => {
+      return this.tileUtilities.hitTestIsoTile(sprite, mapArray, gidToCheck, world, pointsToCheck);
+    };
+    this.getIsoPoints = this.tileUtilities.getIsoPoints;
+    this.makeIsoPointer = (pointer, world) => {
+      return this.tileUtilities.makeIsoPointer(pointer, world);
+    };
+    this.isoRectangle = (width, height, fillStyle) => {
+      return this.tileUtilities.isoRectangle(width, height, fillStyle);
+    };
+    this.addIsoProperties = (sprite, x, y, width, height) => {
+      return this.tileUtilities.addIsoProperties(sprite, x, y, width, height);
+    };
+    this.makeIsoTiledWorld = (jsonTiledMap, tileset) => {
+      return this.tileUtilities.makeIsoTiledWorld(jsonTiledMap, tileset);
+    };
+
   }
 
   //Getters and setters
