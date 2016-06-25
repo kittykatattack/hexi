@@ -111,7 +111,7 @@ function setup() {
   //the `x` and `y` screen position values where the cat should start.
   //As you'll see ahead, this function is going to be called by Hexi's
   //`pointer` object each time it's clicked.
-  makeCat = function (x, y) {
+  var makeCat = function makeCat(x, y) {
 
     //Create the cat sprite. Supply the `sprite` method with
     //the name of the loaded image that should be displayed

@@ -74,10 +74,10 @@ g.start();
 //Its optional. You can leave it out if you don't have any files to
 //load, or you don't need to monitor their loading progress
 
-function load(){
+function load() {
 
   //Display the file currently being loaded
-  console.log(`loading: ${g.loadingFile}`); 
+  console.log(`loading: ${g.loadingFile}`);
 
   //Display the percentage of files currently loaded
   console.log(`progress: ${g.loadingProgress}`);
@@ -105,7 +105,7 @@ let cats, message;
 //mandatory - every Hexi application has to have a `setup` function
 //(although you can give it any name you want)
 
-function setup(){
+function setup() {
 
   //Create a `group` called `cats` to store all the cats
   cats = g.group();
@@ -114,7 +114,7 @@ function setup(){
   //the `x` and `y` screen position values where the cat should start.
   //As you'll see ahead, this function is going to be called by Hexi's
   //`pointer` object each time it's clicked.
-  makeCat = (x, y) => {
+  let makeCat = (x, y) => {
 
     //Create the cat sprite. Supply the `sprite` method with 
     //the name of the loaded image that should be displayed
@@ -125,7 +125,7 @@ function setup(){
     //directly in your Hexi application. All of Hexi's sprites are just
     //ordinary Pixi sprites under the hood, so any Pixi code you write to modify
     //them will work
-    
+
     //Set the cat's position
     cat.setPosition(x, y);
 
@@ -185,7 +185,7 @@ function setup(){
   //Create a cat sprite when you `tap` Hexi's `pointer`.
   //(The pointer also has `press` and `release` methods) 
   g.pointer.tap = () => {
-    
+
     //Supply `makeCat` with the pointer's `x` and `y` coordinates.
     makeCat(g.pointer.x, g.pointer.y);
 
@@ -241,7 +241,7 @@ function play() {
     //argument will make the cat bounce when it hits the stage
     //boundaries
     let collision = g.contain(cat, g.stage, true);
-    
+
     //If there's no collision, the `collision` variable will be
     //`undefined`. But if there is a collision, it will have any of
     //the string values "left", "right", "top", or "bottom", depending
@@ -275,4 +275,3 @@ prefer, like ES6 modules, CommonJS, AMD, or good old HTML `<script>` tags.
 This simple architectural model can scale to any size, and is the only
 architectural model you need to know. Keep it simple and stay happy!
 */
-

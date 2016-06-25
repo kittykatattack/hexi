@@ -104,9 +104,7 @@ Features
 Here's Hexi's core feature list:
 
 - All the most important sprites you need: rectangles, circles, lines,
-  text, image sprites and animated "MovieClip" style sprites. You can make any of these
-  sprites with one only line of code. You can also create your own custom sprite
-  types.
+  text, image sprites and animated "MovieClip" style sprites. You can make any of these sprites with one only line of code. You can also create your own custom sprite types.
 - A complete scene graph with nested child-parent hierarchies (including
   a `stage`, and `addChild`/`removeChild` methods), local and global
   coordinates, depth layers, and rotation pivots.
@@ -195,7 +193,8 @@ Here's Hexi's core feature list:
   world.
 - Seamless integration with HTML and CSS elements for creating rich
   user interfaces. Use Hexi also works with Angular, React and Elm!
-- A complete suite of tools for easily creating isometric game worlds, including: an isometric mouse/touch pointer, isometric tile collision using `hitTestIsoTile`, and full Tiled Editor isometric map support using `makeIsoTiledWorld`. 
+- A complete suite of tools for easily creating isometric game worlds, including: an isometric mouse/touch pointer, isometric tile collision using `hitTestIsoTile`, and full Tiled Editor isometric map support using `makeIsoTiledWorld`.
+- Yes, Hexi applications meet W3C accessibilty guidelines thanks to the [`accessible`](http://www.goodboydigital.com/pixi-becomes-accessible/) property provided by the Pixi renderer.
 
 <a id='features'></a>
 ### Hexi's modules
