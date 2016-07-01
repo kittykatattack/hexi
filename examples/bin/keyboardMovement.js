@@ -27,6 +27,59 @@ function setup() {
   //velocity at 5 pixels per frame
   g.arrowControl(cat, 5);
 
+  /*
+  //Alternatively, create some keyboard objects using Hexi's `keyboard` method.
+  //You would usually use this code in the `setup` function
+  let leftArrow = g.keyboard(37),
+    upArrow = g.keyboard(38),
+    rightArrow = g.keyboard(39),
+    downArrow = g.keyboard(40);
+   console.log(rightArrow)
+   //Here 's how to customize the `press` and `release` methods of   
+  //these new arrow keys: 
+   //Assign key `press` methods
+  leftArrow.press = () => {
+    //Change the cat's velocity when the key is pressed
+    cat.vx = -5;
+    cat.vy = 0;
+  };
+  leftArrow.release = () => {
+    //If the left arrow has been released, and the right arrow isn't down,
+    //and the cat isn't moving vertically: 
+    //Stop the cat
+    if (!rightArrow.isDown && cat.vy === 0) {
+      cat.vx = 0;
+    }
+  };
+  upArrow.press = () => {
+    cat.vy = -5;
+    cat.vx = 0;
+  };
+  upArrow.release = () => {
+    if (!downArrow.isDown && cat.vx === 0) {
+      cat.vy = 0;
+    }
+  };
+  rightArrow.press = () => {
+    cat.vx = 5;
+    cat.vy = 0;
+  };
+  rightArrow.release = () => {
+    if (!leftArrow.isDown && cat.vy === 0) {
+      cat.vx = 0;
+    }
+  };
+  downArrow.press = () => {
+    cat.vy = 5;
+    cat.vx = 0;
+  };
+  downArrow.release = () => {
+    if (!upArrow.isDown && cat.vx === 0) {
+      cat.vy = 0;
+    }
+  };
+  */
+
   //Add the instruction text
   message = g.text("Use the arrow keys to move the cat", "18px Futura", "black", 6, 6);
 
