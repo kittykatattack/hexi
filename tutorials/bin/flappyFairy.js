@@ -56,6 +56,7 @@ function setupTitleScreen() {
   //Make the play button's `press` action
   //start the game when the button is pressed.
   goButton.release = function () {
+    console.log("test");
     g.state = setupGame;
   };
 

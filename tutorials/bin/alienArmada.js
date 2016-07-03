@@ -89,10 +89,13 @@ function setup() {
   explosionSound.pan = 0.5;
 
   //Set up the keyboard arrow keys to move the cannon.
+  var leftArrow = g.keyboard(37),
+      rightArrow = g.keyboard(39),
+      spaceBar = g.keyboard(32);
 
   //Left arrow key.
   //Assign key `press` method.
-  g.leftArrow.press = function () {
+  leftArrow.press = function () {
 
     //Change the player's velocity when the key is pressed.
     cannon.vx = -5;
@@ -100,32 +103,32 @@ function setup() {
   };
 
   //Assign key `release` method.
-  g.leftArrow.release = function () {
+  leftArrow.release = function () {
 
     //If the left arrow has been released, and the right arrow isn't down,
     //and the player isn't moving vertically:
     //Stop the player.
-    if (!g.rightArrow.isDown && cannon.vy === 0) {
+    if (!rightArrow.isDown && cannon.vy === 0) {
       cannon.vx = 0;
     }
   };
 
   //Right arrow key.
   //Assign key `press` method.
-  g.rightArrow.press = function () {
+  rightArrow.press = function () {
     cannon.vx = 5;
     cannon.vy = 0;
   };
 
   //Assign key `release` method.
-  g.rightArrow.release = function () {
-    if (!g.leftArrow.isDown && cannon.vy === 0) {
+  rightArrow.release = function () {
+    if (!leftArrow.isDown && cannon.vy === 0) {
       cannon.vx = 0;
     }
   };
 
   //Space key.
-  g.spaceBar.press = function () {
+  spaceBar.press = function () {
 
     //Shoot the bullet.
     g.shoot(cannon, //The shooter

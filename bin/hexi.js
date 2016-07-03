@@ -32799,6 +32799,7 @@ var Tink = (function () {
 
         //The pointer's `downHandler`
         downHandler: function downHandler(event) {
+          console.log(event);
 
           //Set the down states
           this.isDown = true;

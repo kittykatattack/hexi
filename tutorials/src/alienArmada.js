@@ -23,23 +23,23 @@ g.start();
 
 //Declare your global variables (global to this game, which means you
 //want to use them in more than one function)
-let cannon, 
-    scoreDisplay, 
-    music, 
-    bullets, 
-    winner,
-    shootSound, 
-    explosionSound, 
-    aliens, 
-    score,
-    scoreNeededToWin, 
-    alienFrequency, 
-    alienTimer,
-    gameOverMessage;
+let cannon,
+  scoreDisplay,
+  music,
+  bullets,
+  winner,
+  shootSound,
+  explosionSound,
+  aliens,
+  score,
+  scoreNeededToWin,
+  alienFrequency,
+  alienTimer,
+  gameOverMessage;
 
 //Use the `load` function to run any code while the assets are
 //loading. The `load` function runs in the game loop.
-function load(){
+function load() {
 
   //Use Hexi's built in `loadingBar` to display a loading progress
   //percentage bar while the assets are loading.
@@ -92,10 +92,13 @@ function setup() {
   explosionSound.pan = 0.5;
 
   //Set up the keyboard arrow keys to move the cannon.
+  let leftArrow = g.keyboard(37),
+    rightArrow = g.keyboard(39),
+    spaceBar = g.keyboard(32);
 
   //Left arrow key.
   //Assign key `press` method.
-  g.leftArrow.press = () => {
+  leftArrow.press = () => {
 
     //Change the player's velocity when the key is pressed.
     cannon.vx = -5;
@@ -103,42 +106,42 @@ function setup() {
   };
 
   //Assign key `release` method.
-  g.leftArrow.release = () => {
+  leftArrow.release = () => {
 
     //If the left arrow has been released, and the right arrow isn't down,
     //and the player isn't moving vertically:
     //Stop the player.
-    if (!g.rightArrow.isDown && cannon.vy === 0) {
+    if (!rightArrow.isDown && cannon.vy === 0) {
       cannon.vx = 0;
     }
   };
- 
+
   //Right arrow key.
   //Assign key `press` method.
-  g.rightArrow.press = () => {
+  rightArrow.press = () => {
     cannon.vx = 5;
     cannon.vy = 0;
   };
 
   //Assign key `release` method.
-  g.rightArrow.release = () => {
-    if (!g.leftArrow.isDown && cannon.vy === 0) {
+  rightArrow.release = () => {
+    if (!leftArrow.isDown && cannon.vy === 0) {
       cannon.vx = 0;
     }
   };
 
   //Space key.
-  g.spaceBar.press = () => {
+  spaceBar.press = () => {
 
     //Shoot the bullet.
     g.shoot(
-      cannon,            //The shooter
-      4.71,              //The angle at which to shoot (4.71 is up)
-      cannon.halfWidth,  //Bullet's x position on the cannon
-      0,                 //Bullet's y position on the canon
-      g.stage,           //The container to which the bullet should be added
-      7,                 //The bullet's speed (pixels per frame)
-      bullets,           //The array used to store the bullets
+      cannon, //The shooter
+      4.71, //The angle at which to shoot (4.71 is up)
+      cannon.halfWidth, //Bullet's x position on the cannon
+      0, //Bullet's y position on the canon
+      g.stage, //The container to which the bullet should be added
+      7, //The bullet's speed (pixels per frame)
+      bullets, //The array used to store the bullets
 
       //A function that returns the sprite that should
       //be used to make each bullet
@@ -202,7 +205,7 @@ function play() {
     //Assign two frames from the texture atlas as the 
     //alien's two states.
     let alienFrames = [
-      "alien.png", 
+      "alien.png",
       "explosion.png"
     ];
 
@@ -215,16 +218,16 @@ function play() {
       normal: 0,
       destroyed: 1
     };
-    
+
     //Set its y position above the screen boundary.
     alien.y = 0 - alien.height;
-    
+
     //Assign the alien a random x position.
     alien.x = g.randomInt(0, 14) * alien.width;
-    
+
     //Set its speed.
     alien.vy = 1;
-    
+
     //Push the alien into the `aliens` array.
     aliens.push(alien);
 
@@ -233,7 +236,7 @@ function play() {
 
     //Reduce `alienFrequency` by one to gradually increase
     //the frequency that aliens are created
-    if(alienFrequency > 2){  
+    if (alienFrequency > 2) {
       alienFrequency--;
     }
   }
@@ -326,7 +329,7 @@ function play() {
 
     //Check to see if the `alien`'s `y` position is greater
     //than the `stage`'s `height`
-    if (alien.y > g.canvas.height) { 
+    if (alien.y > g.canvas.height) {
 
       //Set the aliens as the winner.
       winner = "aliens";
@@ -341,7 +344,7 @@ function end() {
 
   //Pause the game loop.
   g.pause();
-  
+
   //Create the game over message text.
   gameOverMessage = g.text("", "20px emulogic", "#00FF00", 90, 120);
 
@@ -357,7 +360,7 @@ function end() {
 
   //Display "Earth Destroyed!" if the aliens win.
   if (winner === "aliens") {
-    gameOverMessage.content = "Earth Destroyed!";  
+    gameOverMessage.content = "Earth Destroyed!";
   }
 
   //Wait for 3 seconds then run the `reset` function.
@@ -394,4 +397,3 @@ function reset() {
   g.state = play;
   g.resume();
 }
-

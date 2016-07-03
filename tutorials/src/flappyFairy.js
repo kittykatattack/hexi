@@ -25,15 +25,15 @@ g.enableFullScreen(88, 120);
 
 //Declare your global variables (global to this game, which means you
 //want to use them in more than one function)
-let pointer, canvas, fairy, sky, blocks, 
-    title, goButton, finish, dust, dustFrames;
+let pointer, canvas, fairy, sky, blocks,
+  title, goButton, finish, dust, dustFrames;
 
 function setupTitleScreen() {
 
   //Make the sky background
   sky = g.tilingSprite(
-    "sky.png", 
-    g.canvas.width, 
+    "sky.png",
+    g.canvas.width,
     g.canvas.height
   );
 
@@ -56,6 +56,7 @@ function setupTitleScreen() {
   //Make the play button's `press` action
   //start the game when the button is pressed.
   goButton.release = () => {
+    console.log("test")
     g.state = setupGame;
   };
 
@@ -64,7 +65,7 @@ function setupTitleScreen() {
 }
 
 function playTitleScreen() {
-  
+
   //Make the sky background scroll by shifting the `tileX`
   //of the `sky` tiling sprite.
   sky.tileX -= 1;
@@ -95,11 +96,11 @@ function setupGame() {
   for (let i = 0; i < numberOfPillars; i++) {
 
     //Randomly place the gap somewhere inside the pillar
-    let startGapNumber = g.randomInt(0, 8 - gapSize); 
+    let startGapNumber = g.randomInt(0, 8 - gapSize);
 
     //Reduce the `gapSize` by one after every fifth pillar. This is
     //what makes gaps gradually become narrower
-    if (i > 0 && i % 5 === 0) gapSize -= 1; 
+    if (i > 0 && i % 5 === 0) gapSize -= 1;
 
     //Create a block if it's not within the range of numbers
     //occupied by the gap
@@ -127,8 +128,8 @@ function setupGame() {
 
   //Make the fairy 
   let fairyFrames = [
-    "0.png", 
-    "1.png", 
+    "0.png",
+    "1.png",
     "2.png"
   ];
   fairy = g.sprite(fairyFrames);
@@ -148,22 +149,22 @@ function setupGame() {
 
   //Create the emitter
   dust = g.particleEmitter(
-    300,                                   //The interval
+    300, //The interval
     () => {
-        g.createParticles(                 //The function
-        fairy.x + 8,                       //x position
-        fairy.y + fairy.halfHeight + 8,    //y position
-        () => g.sprite(dustFrames),        //Particle sprite
-        g.stage,                           //The container to add the particles to               
-        3,                                 //Number of particles
-        0,                                 //Gravity
-        true,                              //Random spacing
-        2.4, 3.6,                          //Min/max angle
-        12, 18,                            //Min/max size
-        1, 2,                              //Min/max speed
-        0.005, 0.01,                       //Min/max scale speed
-        0.005, 0.01,                       //Min/max alpha speed
-        0.05, 0.1                          //Min/max rotation speed
+      g.createParticles( //The function
+        fairy.x + 8, //x position
+        fairy.y + fairy.halfHeight + 8, //y position
+        () => g.sprite(dustFrames), //Particle sprite
+        g.stage, //The container to add the particles to               
+        3, //Number of particles
+        0, //Gravity
+        true, //Random spacing
+        2.4, 3.6, //Min/max angle
+        12, 18, //Min/max size
+        1, 2, //Min/max speed
+        0.005, 0.01, //Min/max scale speed
+        0.005, 0.01, //Min/max alpha speed
+        0.05, 0.1 //Min/max rotation speed
       );
     }
   );
@@ -175,7 +176,7 @@ function setupGame() {
   //vertical velocity when it's tapped
   g.pointer.tap = () => {
     fairy.vy += 1.5;
-  };  
+  };
 
   //set the game state to `play`
   g.state = play;
@@ -227,7 +228,7 @@ function play() {
   let fairyVsStage = g.contain(fairy, g.stage);
   if (fairyVsStage) {
     if (fairyVsStage.has("bottom") || fairyVsStage.has("top")) {
-      fairy.vy = 0;  
+      fairy.vy = 0;
     }
   }
 
@@ -236,7 +237,7 @@ function play() {
   //`hitTestRectangle` returns `true`). Set `hitTestRectangle`s third argument
   //to `true` to use the sprites' global coordinates
   let fairyVsBlock = blocks.children.some(block => {
-    return g.hitTestRectangle(fairy, block, true);  
+    return g.hitTestRectangle(fairy, block, true);
   });
 
   //If there's a collision and the fairy is currently visible,
@@ -251,16 +252,16 @@ function play() {
     //Create a fairy dust explosion
     g.createParticles(
       fairy.centerX, fairy.centerY, //x and y position
-      () => g.sprite(dustFrames),   //Particle sprite
-      g.stage,                      //The container to add the particles to  
-      20,                           //Number of particles
-      0,                            //Gravity
-      false,                        //Random spacing
-      0, 6.28,                      //Min/max angle
-      16, 32,                       //Min/max size
-      1, 3                          //Min/max speed
+      () => g.sprite(dustFrames), //Particle sprite
+      g.stage, //The container to add the particles to  
+      20, //Number of particles
+      0, //Gravity
+      false, //Random spacing
+      0, 6.28, //Min/max angle
+      16, 32, //Min/max size
+      1, 3 //Min/max speed
     );
-    
+
     //Stop the dust emitter that's trailing the fairy
     dust.stop();
 
@@ -317,8 +318,5 @@ function reset() {
   fairy.y = 32;
   fairy.vy = 0;
   dust.play();
-  blocks.x = 0;  
+  blocks.x = 0;
 }
-
-
-
