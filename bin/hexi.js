@@ -36571,7 +36571,7 @@ var TileUtilities = (function () {
     `centerX`, `centerY`, `index`, `gid` (The number in the array that represpents the sprite)
     Here's an example of how you could use `updateMap` in your game code like this:
     
-        blockLayer.data = g.updateMap(blockLayer.data, blockLayer.children, world);
+        blockLayer.data = updateMap(blockLayer.data, blockLayer.children, world);
      The `blockLayer.data` array would now contain the new index position numbers of all the 
     child sprites on that layer.
     */
@@ -37017,6 +37017,7 @@ var TileUtilities = (function () {
   }, {
     key: "hitTestIsoTile",
     value: function hitTestIsoTile(sprite, mapArray, gidToCheck, world, pointsToCheck) {
+      var _this4 = this;
 
       //The `checkPoints` helper function Loop through the sprite's corner points to
       //find out if they are inside an array cell that you're interested in.
@@ -37028,7 +37029,7 @@ var TileUtilities = (function () {
         var point = sprite.collisionPoints[key];
 
         //Find the point's index number in the map array
-        collision.index = g.getIndex(point.x, point.y, world.cartTilewidth, world.cartTileheight, world.widthInTiles);
+        collision.index = _this4.getIndex(point.x, point.y, world.cartTilewidth, world.cartTileheight, world.widthInTiles);
 
         //Find out what the gid value is in the map position
         //that the point is currently over
@@ -37289,7 +37290,7 @@ var TileUtilities = (function () {
   }, {
     key: "makeIsoTiledWorld",
     value: function makeIsoTiledWorld(jsonTiledMap, tileset) {
-      var _this4 = this;
+      var _this5 = this;
 
       //Create a group called `world` to contain all the layers, sprites
       //and objects from the `tiledMap`. The `world` object is going to be
@@ -37351,7 +37352,7 @@ var TileUtilities = (function () {
 
         //Make a group for this layer and copy
         //all of the layer properties onto it.
-        var layerGroup = new _this4.Container();
+        var layerGroup = new _this5.Container();
 
         Object.keys(tiledLayer).forEach(function (key) {
           //Add all the layer's properties to the group, except the
@@ -37420,7 +37421,7 @@ var TileUtilities = (function () {
 
                 //Use the above values to create the sprite's image from
                 //the tileset image
-                texture = g.frame(tileset, tilesetX, tilesetY, world.tilewidth, world.tileheight);
+                texture = _this5.frame(tileset, tilesetX, tilesetY, world.tilewidth, world.tileheight);
 
                 //I've dedcided that any tiles that have a `name` property are important
                 //and should be accessible in the `world.objects` array.
@@ -37435,7 +37436,7 @@ var TileUtilities = (function () {
                 if (tileproperties[key] && tileproperties[key].name) {
 
                   //Make a sprite
-                  tileSprite = new _this4.Sprite(texture);
+                  tileSprite = new _this5.Sprite(texture);
 
                   //Copy all of the tile's properties onto the sprite
                   //(This includes the `name` property)
@@ -37453,11 +37454,11 @@ var TileUtilities = (function () {
                 //If the tile doesn't have a `name` property, just use it to
                 //create an ordinary sprite (it will only need one texture)
                 else {
-                    tileSprite = new _this4.Sprite(texture);
+                    tileSprite = new _this5.Sprite(texture);
                   }
 
                 //G. Add isometric properties to the sprite
-                _this4.addIsoProperties(tileSprite, mapX, mapY, world.cartTilewidth, world.cartTileheight);
+                _this5.addIsoProperties(tileSprite, mapX, mapY, world.cartTilewidth, world.cartTileheight);
 
                 //H. Use the isometric position to add the sprite to the world
                 tileSprite.x = tileSprite.isoX;
