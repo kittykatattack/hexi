@@ -87,13 +87,12 @@ Of course, Hexi is completely free to use: for-anything, for-ever! It was writte
     9. [Displaying the score](#displayingscore)
     10. [Ending and resetting the game](#endinggame2)
   3. [Flappy Fairy!](#flappyfairy)
-    1. [Launch a game in fullscreen mode](#launchagameinfullscreenmode)
-    2. [Make a button](#makeabutton)
-    3. [Making the fairy fly](#makingthefairyfly)
-    4. [Make a scrolling background](#makeascrollingbackground)
-    5. [The fairy dust explosions](#thefairydustexplosions)
-    6. [Use a particle emitter](#useaparticleemitter)
-    7. [Creating and moving the pillars](#creatingandmovingthepillars)
+    1. [Make a button](#makeabutton)
+    2. [Making the fairy fly](#makingthefairyfly)
+    3. [Make a scrolling background](#makeascrollingbackground)
+    4. [The fairy dust explosions](#thefairydustexplosions)
+    5. [Use a particle emitter](#useaparticleemitter)
+    6. [Creating and moving the pillars](#creatingandmovingthepillars)
 5. [Integration with HTML and CSS](#htmlIntegration)
 6. [A Guide to the examples](#aguidetotheexamples)
 
@@ -178,7 +177,7 @@ Here's Hexi's core feature list:
 - A `createParticles` function for creating all kinds of particle
   effects for games. Use the `particleEmitter` function to create a constant
   stream of particles.
-- Use `scaleToWindow` to make the game automatically scale to its maximum size and align itself for the best fit inside the browser window. Use `enableFullscreen` to make the browser enter full screen mode.
+- Use `scaleToWindow` to make the game automatically scale to its maximum size and align itself for the best fit inside the browser window. 
 - Tiled Editor support using `makeTiledWorld`. Design your game in
   Tiled Editor and access all the sprites, layers and objects directly
   in your game code. It's an extremely fun, quick and easy way to make
@@ -216,7 +215,6 @@ properties or methods of these modules in your high-level Hexi code.
 - [Tile Utilities](https://github.com/kittykatattack/tileUtilities): A collection of useful methods for making tile-based game worlds with [Tiled Editor](http://www.mapeditor.org). Includes a full suite of isometric map utilities.
 - [Sound.js](https://github.com/kittykatattack/sound.js): A micro-library for loading, controlling and generating
   sound and music effects. Everything you need to add sound to games.
-- [Full Screen](https://github.com/kittykatattack/fullScreen): A simple way to add a full screen feature.
 - [Smoothie](https://github.com/kittykatattack/smoothie): Ultra-smooth sprite animation using 
   true delta-time interpolation. It also lets you specify the fps (frames-per-second) at which 
   your game or application runs, and completely separates your sprite rendering loop from your
@@ -2793,44 +2791,6 @@ You'll find the fully commented Flappy Fairy source code in the
 all of this code in its proper context. Its general structure is identical
 to the other games in this tutorial, with the addition of these new techniques. Let's
 find out how they were implemented.
-
-<a id='launchagameinfullscreenmode'></a>
-#### Launch a game in fullscreen mode
-
-When you start Flappy Fairy by clicking the "Go" button,
-the game expands to fill your entire screen. This is done with
-the help of a built-in method called `enableFullscreen`.
-```js
-g.enableFullsreen(listOfAsciiExitKeyCodes);
-```
-It's one optional argument is a list of Ascii key codes. They refer to keyboard
-keys that could be used to exit fullscreen mode. For example, if you
-want fullscreen mode to exit if a user presses upper-case "X" or
-lower-case "x", list their Ascii code values in the arguments like
-this:
-```js
-g.enableFullscreen(88, 120);
-```
-(88 is "X" and 120 is "x".) You can list as many key codes as you
-like. If you leave these arguments out, the default `esc` key will do the trick.
-
-`enableFullscreen`'s behaviour is very simple: it just launches fullscreen mode
-whenever the user releases the pointer (mouse or touch) over the
-canvas. Add it just below your game's `start` method, like this:
-```js
-let thingsToLoad = ["images/flappyFairy/flappyFairy.json"];
-let g = hexi(910, 512, setupTitleScreen, thingsToLoad);
-g.start();
-g.enableFullScreen(88, 120);
-```
-It's a quick and easy way to make any games run fullscreen.
-
-(Note: Fullscreen mode is different than `scaleToWindow` because it
-completely takes over the user's screen. And I mean completely: the
-browser disappears and the only thing on the screen is your game. That's cool, but many users will find it disorienting and become stressed or panicked if they
-can't figure out how to exit your game. So if you do decide to run your game in fullscreen mode, be confident that users will know how to exit it. Or, play it
-safe and just use `scaleToWindow`, which still looks great but doesn't
-take over the entire browser UI.)
 
 <a id='makeabutton'></a>
 #### Make a button

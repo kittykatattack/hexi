@@ -186,7 +186,6 @@ class Hexi {
     this.charm = new Charm(PIXI);
     this.dust = new Dust(PIXI);
     this.bump = new Bump(PIXI);
-    this.tink = new Tink(PIXI);
     this.spriteUtilities = new SpriteUtilities(PIXI);
     this.tileUtilities = new TileUtilities(PIXI);
     this.gameUtilities = new GameUtilities();
@@ -200,14 +199,7 @@ class Hexi {
     this.modulesToUpdate = [];
     this.modulesToUpdate.push(this.charm);
     this.modulesToUpdate.push(this.dust);
-    this.modulesToUpdate.push(this.tink);
     this.modulesToUpdate.push(this.spriteUtilities);
-
-    //Create local aliases for the important methods and properties of
-    //these libraries, including the most useful Pixi properties.
-    //Take a look at Hexi's `createModulePropertyAliases` method in the
-    //source code ahead to see how this works
-    this.createModulePropertyAliases();
 
     //Create the stage and renderer
     //Auto renderer (default)
@@ -240,6 +232,18 @@ class Hexi {
     //HTML canvas element
     this.canvas = this.renderer.view;
 
+    //Initialize the Tink interactive module (it needs a reference to the canvas)
+    this.tink = new Tink(PIXI, this.canvas);
+    this.modulesToUpdate.push(this.tink);
+
+    //Create local aliases for the important methods and properties of
+    //these libraries, including the most useful Pixi properties.
+    //Take a look at Hexi's `createModulePropertyAliases` method in the
+    //source code ahead to see how this works
+    this.createModulePropertyAliases();
+
+    //NOTE: MOVE TINK INITIALIZATION HERE AND INITIALIZE WITH THE CANVAS ELEMENT
+
     //Add `halfWidth` and `halfHeight` properties to the canvas
     Object.defineProperties.bind(this, this.canvas, {
       "halfWidth": {
@@ -262,7 +266,7 @@ class Hexi {
     this.canvas.scaled = false;
 
     //Add the FullScreen module and supply it with the canvas element
-    this.fullScreen = new FullScreen(this.canvas);
+    //this.fullScreen = new FullScreen(this.canvas);
 
     //Note: Hexi's `update` function checks whether we're in full screen
     //mode and updates the global scale value accordingly
@@ -609,18 +613,27 @@ class Hexi {
     //These are modules that contain `update` methods that need to be
     //called every frame
     this.modulesToUpdate.forEach(module => module.update());
-
     //If the application is in full screen mode, make sure that Hexi
     //is using the correct scale value
-    if (document.fullscreenEnabled) {
+    /*
+    if (document.fullscreenEnabled === true) {
+      console.log("fullscreenEnabled")
+
+      //Note: Check Firefox's current FullScreen API and specifically:
+      //https://github.com/neovov/Fullscreen-API-Polyfill/blob/master/fullscreen-api-polyfill.js  
+      //if (this.fullScreen.fullscreenScale !== 1) {
       this.scale = this.fullScreen.fullscreenScale;
-      this.pointer.scale = this.fullScreen.fullscreenScale;
+      //console.log("this.fullScreen.fullscreenScale: " + this.fullScreen.fullscreenScale)
+      this.pointer.scale = this.scale;
+      //Find out if the pointer scale is propagating to Tink's pointer?
+      console.log(this.pointer.scale)
     } else {
       if (!this.canvas.scaled) {
         this.scale = 1;
         this.pointer.scale = 1;
       }
     }
+    */
 
     //Run the current game `state` function if it's been defined and
     //the game isn't `paused`
@@ -817,7 +830,7 @@ class Hexi {
     };
 
     //FullScreen
-    this.enableFullScreen = (exitKeyCodes) => this.fullScreen.enableFullScreen(exitKeyCodes);
+    //this.enableFullScreen = (exitKeyCodes) => this.fullScreen.enableFullScreen(exitKeyCodes);
 
     //TileUtilities
     this.hitTestTile = (sprite, mapArray, gidToCheck, world, pointsToCheck) => {
@@ -1664,11 +1677,13 @@ class Hexi {
     //Use the `scaleToWindow` function module to scale the canvas to
     //the maximum window size
     this.scale = scaleToWindow(this.canvas, scaleBorderColor);
+    console.log("new scale: " + this.scale)
     this.pointer.scale = this.scale;
+    //this.pointer = this.makePointer(this.canvas, this.scale);
+    console.log(this.pointer)
 
     //Re-scale on each browser resize
     window.addEventListener("resize", event => {
-
       //Scale the canvas and update Hexi's global `scale` value and
       //the pointer's `scale` value
       this.scale = scaleToWindow(this.canvas, scaleBorderColor);

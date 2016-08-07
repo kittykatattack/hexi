@@ -22,11 +22,12 @@ DUST ?= src/modules/dust/bin/dust.js
 SPRITE_UTILITIES ?= src/modules/spriteUtilities/bin/spriteUtilities.js
 GAME_UTILITIES ?= src/modules/gameUtilities/bin/gameUtilities.js
 SMOOTHIE ?= src/modules/smoothie/bin/smoothie.js
-FULLSCREEN ?= src/modules/fullScreen/bin/fullScreen.js
 TILE_UTILITIES ?= src/modules/tileUtilities/bin/tileUtilities.js
+#The experimental fullscreen feature has been removed for now
+#FULLSCREEN ?= src/modules/fullScreen/bin/fullScreen.js
 
 #Concatenated modules
-ES5_MODULES := ${SOUND} $(SCALE_TO_WINDOW) ${BUMP} ${CHARM} ${TINK} ${DUST} ${SPRITE_UTILITIES} ${GAME_UTILITIES} ${SMOOTHIE} ${FULLSCREEN} ${TILE_UTILITIES}
+ES5_MODULES := ${SOUND} $(SCALE_TO_WINDOW) ${BUMP} ${CHARM} ${TINK} ${DUST} ${SPRITE_UTILITIES} ${GAME_UTILITIES} ${SMOOTHIE} ${TILE_UTILITIES}
 
 #The concatenated modules output file (exluding PIXI)
 MODULES ?= bin/modules.js

@@ -42,7 +42,7 @@ function setup() {
     192, 96                      //The `width` and `height` of each frame
   );
   */
-  
+
   //Make a `button` using the frames
   button = g.button(buttonFrames);
 
@@ -68,7 +68,7 @@ function setup() {
   actionMessage.y = 32;
 
   //Buttons remain interactive even if there's no game loop running.
-  g.state = play;  
+  g.state = play;
 }
 
 //The `play` function will run in a loop
@@ -76,7 +76,5 @@ function play() {
 
   //Display the button's current state and action
   stateMessage.content = "State: " + button.state;
-  actionMessage.content = "Action: " + button.action; 
+  actionMessage.content = "Action: " + button.action;
 }
-
-

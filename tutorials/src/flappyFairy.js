@@ -13,6 +13,9 @@ let g = hexi(910, 512, setupTitleScreen, thingsToLoad);
 //Start Hexi
 g.start();
 
+//Warning: The experimental fullscreen feature below has been removed for now
+//until a more reliable system can be built. There were too many
+//cross-platform bugs to implement this reliably inside Hexi.
 //Enable fullscreen mode using `enableFullscreen`.
 //Fullscreen mode will be activated as soon as the 
 //user clicks or touches the canvas.
@@ -21,7 +24,11 @@ g.start();
 //mode by pressing lowercase `x` (88) or uppercase `X` (120) on 
 //the keyboard. If you leave these arguments out, the default `esc`
 //key will do the trick.
-g.enableFullScreen(88, 120);
+//g.enableFullScreen(88, 120);
+
+//Set the background color and scale the canvas
+g.backgroundColor = "black";
+g.scaleToWindow();
 
 //Declare your global variables (global to this game, which means you
 //want to use them in more than one function)
