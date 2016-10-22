@@ -1,36 +1,36 @@
 [submodule "src/modules/pixi.js"]
 	path = src/modules/pixi.js
-	url = git@github.com:pixijs/pixi.js.git
+	url = https://github.com/pixijs/pixi.js
 [submodule "src/modules/dust"]
 	path = src/modules/dust
-	url = git@github.com:kittykatattack/dust.git
+	url = https://github.com/kittykatattack/dust
 [submodule "src/modules/tink"]
 	path = src/modules/tink
-	url = git@github.com:kittykatattack/tink.git 
+	url = https://github.com/kittykatattack/tink
 [submodule "src/modules/spriteUtilities"]
 	path = src/modules/spriteUtilities
-	url = git@github.com:kittykatattack/spriteUtilities.git
+	url = https://github.com/kittykatattack/spriteUtilities
 [submodule "src/modules/charm"]
 	path = src/modules/charm
-	url = git@github.com:kittykatattack/charm.git
+	url = https://github.com/kittykatattack/charm
 [submodule "src/modules/bump"]
 	path = src/modules/bump
-	url = git@github.com:kittykatattack/bump.git
+	url = https://github.com/kittykatattack/bump
 [submodule "src/modules/sound.js"]
 	path = src/modules/sound.js
-	url = git@github.com:kittykatattack/sound.js.git
+	url = https://github.com/kittykatattack/sound.js
 [submodule "src/modules/scaleToWindow"]
 	path = src/modules/scaleToWindow
-	url = git@github.com:kittykatattack/scaleToWindow.git
+	url = https://github.com/kittykatattack/scaleToWindow
 [submodule "src/modules/smoothie"]
 	path = src/modules/smoothie
-	url = git@github.com:kittykatattack/smoothie.git
+	url = https://github.com/kittykatattack/smoothie
 [submodule "src/modules/gameUtilities"]
 	path = src/modules/gameUtilities
-	url = git@github.com:kittykatattack/gameUtilities.git
+	url = https://github.com/kittykatattack/gameUtilities
 [submodule "src/modules/fullScreen"]
 	path = src/modules/fullScreen
-	url = git@github.com:kittykatattack/fullScreen.git
+	url = https://github.com/kittykatattack/fullScreen
 [submodule "src/modules/tileUtilities"]
 	path = src/modules/tileUtilities
-	url = git@github.com:kittykatattack/tileUtilities.git
+	url = https://github.com/kittykatattack/tileUtilities
