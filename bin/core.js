@@ -184,26 +184,6 @@ var Hexi = (function () {
   function Hexi(o) {
     _classCallCheck(this, Hexi);
 
-    //Initialize all the helper modules.
-    //(See Hexi's README.md on information about these libraries)
-    this.charm = new Charm(PIXI);
-    this.dust = new Dust(PIXI);
-    this.bump = new Bump(PIXI);
-    this.spriteUtilities = new SpriteUtilities(PIXI);
-    this.tileUtilities = new TileUtilities(PIXI);
-    this.gameUtilities = new GameUtilities();
-
-    //Any modules that have an `update` method that should updated
-    //each frame in the game loop should be added to the
-    //`modulesToUpdate` array. The game loop will call the `update`
-    //method on each of these modules while the game is running.
-    //This is very efficient and does not effect performance: no modules are updated unless they
-    //contain objects that need updating.
-    this.modulesToUpdate = [];
-    this.modulesToUpdate.push(this.charm);
-    this.modulesToUpdate.push(this.dust);
-    this.modulesToUpdate.push(this.spriteUtilities);
-
     //Create the stage and renderer
     //Auto renderer (default)
     if (o.renderer === "auto" || o.renderer === undefined) {
@@ -217,6 +197,26 @@ var Hexi = (function () {
       } else if (o.renderer === "webgl") {
           this.renderer = new PIXI.WebGLRenderer(o.width, o.height, o);
         }
+
+    //Initialize all the helper modules.
+    //(See Hexi's README.md on information about these libraries)
+    this.charm = new Charm(PIXI);
+    this.dust = new Dust(PIXI);
+    this.bump = new Bump(PIXI);
+    this.spriteUtilities = new SpriteUtilities(PIXI, this.renderer);
+    this.tileUtilities = new TileUtilities(PIXI);
+    this.gameUtilities = new GameUtilities();
+
+    //Any modules that have an `update` method that should updated
+    //each frame in the game loop should be added to the
+    //`modulesToUpdate` array. The game loop will call the `update`
+    //method on each of these modules while the game is running.
+    //This is very efficient and does not effect performance: no modules are updated unless they
+    //contain objects that need updating.
+    this.modulesToUpdate = [];
+    this.modulesToUpdate.push(this.charm);
+    this.modulesToUpdate.push(this.dust);
+    this.modulesToUpdate.push(this.spriteUtilities);
 
     //Get a reference to the `renderer.view`, which is the
     //HTML canvas element

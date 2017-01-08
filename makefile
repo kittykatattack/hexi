@@ -10,7 +10,7 @@ CORE_ES6 ?= src/core.js
 CORE_ES5 ?= bin/core.js
 
 #Pixi
-PIXI ?= src/modules/pixi.js/bin/pixi.js
+PIXI ?= src/modules/pixi/pixi.js
 
 #The individual modules (Not including PIXI)
 BUMP ?= src/modules/bump/bin/bump.js
