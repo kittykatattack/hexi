@@ -274,7 +274,7 @@ class Hexi {
 
     //Set the canvas's optional background color and border style
     if (o.backgroundColor) {
-      this.renderer.backgroundColor = this.color(o.backgroundColor);
+      this.renderer.backgroundColor = parseInt(this.color(o.backgroundColor));
     } else {
       this.renderer.backgroundColor = 0xFFFFFF;
     }
@@ -727,7 +727,6 @@ class Hexi {
       return this.spriteUtilities.shoot(shooter, angle, x, y, container, bulletSpeed, bulletArray, bulletSprite)
     };
     this.shake = (sprite, magnitude = 16, angular = false) => {
-      console.log("shake")
       return this.spriteUtilities.shake(sprite, magnitude, angular);
     }
 
@@ -911,7 +910,7 @@ class Hexi {
   //The `backgroundColor` property lets you set the background color
   //of the renderer
   set backgroundColor(value) {
-    this.renderer.backgroundColor = this.color(value);
+    this.renderer.backgroundColor = parseInt(this.color(value));
   }
 
 
@@ -1678,10 +1677,8 @@ class Hexi {
     //Use the `scaleToWindow` function module to scale the canvas to
     //the maximum window size
     this.scale = scaleToWindow(this.canvas, scaleBorderColor);
-    console.log("new scale: " + this.scale)
     this.pointer.scale = this.scale;
     //this.pointer = this.makePointer(this.canvas, this.scale);
-    console.log(this.pointer)
 
     //Re-scale on each browser resize
     window.addEventListener("resize", event => {
@@ -1743,7 +1740,7 @@ class Hexi {
 
         //3. A text sprite that will display the percentage
         //of assets that have loaded
-        this.percentage = hexi.text("0%", "28px sans-serif", "black");
+        this.percentage = hexi.text("0%", "sans-serif", "28px", "black");
         this.percentage.x = (hexi.canvas.width / 2) - (this.maxWidth / 2) + 12;
         this.percentage.y = (hexi.canvas.height / 2) - 17;
       },

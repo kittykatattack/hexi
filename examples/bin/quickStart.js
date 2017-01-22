@@ -145,15 +145,15 @@ function setup() {
     cats.addChild(cat);
   };
 
-  //Create a text sprite. Display the initial text, set the font
-  //style and colour
-  message = g.text("Tap for cats!", "38px puzzler", "red");
+  //Create a text sprite. Display the initial text, set the font family,
+  //size and colour
+  message = g.text("Tap for cats!", "puzzler", "38px", "red");
 
   //You can re-assign the text sprite's style at any time by assigning
   //a custom options object to the `style` property. See Pixi's
   //documentation on the `Text` class for the complete list of options
   //you can set
-  //message.style = {fill: "black", font: "16px Helvetica"};
+  //message.style = {fill: "black", fontFamily: "Helvetica", fontSize: "16px"};
 
   //You can also create bitmap text with the `bitmapText` method
   //Make sure to load the bitmap text's XML file first.

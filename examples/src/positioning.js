@@ -32,8 +32,8 @@ g.scaleToWindow();
 
 //Declare global sprites, objects, and variables
 //that you want to access in all the game functions and states
-let box, ball, line, cat, tiger, 
-    rocket, star, hedgehog;
+let box, ball, line, cat, tiger,
+  rocket, star, hedgehog;
 
 //A `setup` function that will run only once.
 //Use it for initialization tasks
@@ -78,7 +78,7 @@ function setup() {
   box.putCenter(star);
 
   //Change the game state to `play`
-  g.state = play;  
+  g.state = play;
 }
 
 //The `play` function will run in a loop

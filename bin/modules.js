@@ -5236,8 +5236,8 @@ var SpriteUtilities = (function () {
       o._sprite = undefined;
       o._width = width;
       o._height = height;
-      o._fillStyle = this.color(fillStyle);
-      o._strokeStyle = this.color(strokeStyle);
+      o._fillStyle = parseInt(this.color(fillStyle));
+      o._strokeStyle = parseInt(this.color(strokeStyle));
       o._lineWidth = lineWidth;
 
       //Draw the rectangle
@@ -5246,15 +5246,20 @@ var SpriteUtilities = (function () {
         o.beginFill(fillStyle);
         if (lineWidth > 0) {
           o.lineStyle(lineWidth, strokeStyle, 1);
+
+          //Strangely, with Pixi v4, half of the lineWidth height needs to be
+          //added to the rectangle width and height. Keep and eye on this,
+          //it might change for future versions of Pixi
+          o.drawRect(0 + lineWidth / 2, 0 + lineWidth / 2, width, height);
+        } else {
+          o.drawRect(0, 0, width, height);
         }
-        o.drawRect(0, 0, width, height);
         o.endFill();
       };
 
       //Draw the line and capture the sprite that the `draw` function
       //returns
       draw(o._width, o._height, o._fillStyle, o._strokeStyle, o._lineWidth);
-      console.log(PIXI);
 
       //Generate a texture from the rectangle
       var texture = this.renderer.generateTexture(o);
@@ -5282,7 +5287,7 @@ var SpriteUtilities = (function () {
             draw(o._width, o._height, o._fillStyle, o._strokeStyle, o._lineWidth, o._x, o._y);
 
             //Generate a new texture and set it as the sprite's texture
-            var texture = self.renderingEngine.renderer.generateTexture(o);
+            var texture = self.renderer.generateTexture(o);
             o._sprite.texture = texture;
           },
 
@@ -5300,7 +5305,7 @@ var SpriteUtilities = (function () {
             draw(o._width, o._height, o._fillStyle, o._strokeStyle, o._lineWidth, o._x, o._y);
 
             //Generate a new texture and set it as the sprite's texture
-            var texture = self.renderingEngine.renderer.generateTexture(o);
+            var texture = self.renderer.generateTexture(o);
             o._sprite.texture = texture;
           },
 
@@ -5318,7 +5323,7 @@ var SpriteUtilities = (function () {
             draw(o._width, o._height, o._fillStyle, o._strokeStyle, o._lineWidth, o._x, o._y);
 
             //Generate a new texture and set it as the sprite's texture
-            var texture = self.renderingEngine.renderer.generateTexture(o);
+            var texture = self.renderer.generateTexture(o);
             o._sprite.texture = texture;
           },
 
@@ -5357,10 +5362,19 @@ var SpriteUtilities = (function () {
       var draw = function draw(diameter, fillStyle, strokeStyle, lineWidth) {
         o.clear();
         o.beginFill(fillStyle);
+
+        //This old code worked with Pixi v3
         if (lineWidth > 0) {
           o.lineStyle(lineWidth, strokeStyle, 1);
         }
-        o.drawCircle(0, 0, diameter / 2);
+
+        //Draw the circle, but add an extra check to make sure that lineWidth
+        //isn't zero (to prevent division by zero)
+        if (lineWidth !== 0) {
+          o.drawCircle(diameter / 2 + lineWidth / 2, diameter / 2 + lineWidth / 2, diameter / 2);
+        } else {
+          o.drawCircle(diameter / 2, diameter / 2, diameter / 2);
+        }
         o.endFill();
       };
 
@@ -5368,7 +5382,7 @@ var SpriteUtilities = (function () {
       draw(o._diameter, o._fillStyle, o._strokeStyle, o._lineWidth);
 
       //Generate a texture from the rectangle
-      var texture = this.renderingEngine.renderer.generateTexture(o);
+      var texture = this.renderer.generateTexture(o);
 
       //Use the texture to create a sprite
       var sprite = new this.Sprite(texture);
@@ -5387,11 +5401,11 @@ var SpriteUtilities = (function () {
           set: function set(value) {
             o._fillStyle = self.color(value);
 
-            //Draw the cirlce
+            //Draw the circle
             draw(o._diameter, o._fillStyle, o._strokeStyle, o._lineWidth);
 
             //Generate a new texture and set it as the sprite's texture
-            var texture = self.renderingEngine.renderer.generateTexture(o);
+            var texture = self.renderer.generateTexture(o);
             o._sprite.texture = texture;
           },
 
@@ -5405,11 +5419,11 @@ var SpriteUtilities = (function () {
           set: function set(value) {
             o._strokeStyle = self.color(value);
 
-            //Draw the cirlce
+            //Draw the circle
             draw(o._diameter, o._fillStyle, o._strokeStyle, o._lineWidth);
 
             //Generate a new texture and set it as the sprite's texture
-            var texture = self.renderingEngine.renderer.generateTexture(o);
+            var texture = self.renderer.generateTexture(o);
             o._sprite.texture = texture;
           },
 
@@ -5427,7 +5441,7 @@ var SpriteUtilities = (function () {
             draw(o._diameter, o._fillStyle, o._strokeStyle, o._lineWidth);
 
             //Generate a new texture and set it as the sprite's texture
-            var texture = self.renderingEngine.renderer.generateTexture(o);
+            var texture = self.renderer.generateTexture(o);
             o._sprite.texture = texture;
           },
 
@@ -5441,10 +5455,10 @@ var SpriteUtilities = (function () {
           set: function set(value) {
 
             //Draw the cirlce
-            draw(value * 2, o._fillStyle, o._strokeStyle, o._lineWidth);
+            draw(o._diameter, o._fillStyle, o._strokeStyle, o._lineWidth);
 
             //Generate a new texture and set it as the sprite's texture
-            var texture = self.renderingEngine.renderer.generateTexture(o);
+            var texture = self.renderer.generateTexture(o);
             o._sprite.texture = texture;
           },
 

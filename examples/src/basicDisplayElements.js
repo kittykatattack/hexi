@@ -5,13 +5,13 @@ images, text, access the pointer and do animation
 
 //Create an array of files you want to load
 let thingsToLoad = [
-  "images/star.png",        //An image file
-  "images/rocket.png",      //An image file
-  "fonts/puzzler.otf",      //A font file
-  "fonts/PetMe64.ttf",      //A font file
-  "fonts/disko.xml",        //A bitmap font data file
-  "images/animals.json",    //A texture atlas in Texture Packer JSON format
-  "sounds/bounce.wav"       //A sound file
+  "images/star.png", //An image file
+  "images/rocket.png", //An image file
+  "fonts/puzzler.otf", //A font file
+  "fonts/PetMe64.ttf", //A font file
+  "fonts/disko.xml", //A bitmap font data file
+  "images/animals.json", //A texture atlas in Texture Packer JSON format
+  "sounds/bounce.wav" //A sound file
 ];
 
 /*
@@ -67,9 +67,9 @@ g.scaleToWindow();
 
 //Declare global sprites, objects, and variables
 //that you want to access in all the game functions and states
-let box, ball, line, message, cat,  
-    pathA, pathB, rocket, star,
-    pointerDisplay;
+let box, ball, line, message, cat,
+  pathA, pathB, rocket, star,
+  pointerDisplay;
 
 //A `setup` function that will run only once.
 //Use it for initialization tasks
@@ -77,11 +77,12 @@ function setup() {
 
   //Optionally hide the mouse pointer
   //g.pointer.visible = false;
-  
+
   //Create a square called `box`, using the `rectangle` method.
   //`rectangle` arguments: 
   //width, height, fillColor, strokeColor, lineWidth, x, y
-  box = g.rectangle(32, 32, "cyan", "white", 4, 52, 42);
+  box = g.rectangle(32, 32, "cyan", "black", 8, 52, 42);
+  //box = g.rectangle(32, 32, "cyan", "black", 8, 0, 0);
 
   //Colors can be HTML color strings, RGBA values or Hexadecimal
   //values
@@ -98,7 +99,7 @@ function setup() {
   //`pivotY` properties
 
   //Rotate the box by 0.5 radians
-  box.rotation = 0.5;
+  //box.rotation = 0.5;
 
   //Create a `circle` sprite called `ball`
   //`circle` argumenets:
@@ -110,7 +111,7 @@ function setup() {
   //content, font, fillStyle, x, y
   //The font family name will be the same as the font's file name
 
-  message = g.text("Tap the circle!", "14px puzzler", "white");
+  message = g.text("Tap the circle!", "puzzler", "14px", "white");
   message.x = 30;
   message.y = 10;
 
@@ -170,7 +171,7 @@ function setup() {
   //`slide` arguments:
   //sprite, xDestination, yDestination, durationInFrames, easingType, yoyo?
   g.slide(cat, g.canvas.width - 60, cat.y, 120, "smoothstep", true);
-  
+
   //Create a star sprite from an image
   star = g.sprite("images/star.png");
 
@@ -180,7 +181,7 @@ function setup() {
   star.circular = true;
   console.log(`star.radius: ${star.radius}`);
   console.log(`star.diameter: ${star.diameter}`);
-  
+
   //If you ever have texture-bleed problems with a
   //sprite, set `scaleModeNearest` to `true`
   //star.scaleModeNearest = true;
@@ -192,7 +193,7 @@ function setup() {
   //Hexi has a `pointer` object with a `x` and `y` property
   //that tells you the position of the mouse or touch pointer.
   //Here's how to display the pointer position with a `text` sprite:
-  pointerDisplay = g.text("", "8px PetMe64", "white");
+  pointerDisplay = g.text("", "PetMe64", "8px", "white");
   pointerDisplay.x = 10;
   pointerDisplay.y = 235;
 
@@ -242,14 +243,14 @@ function setup() {
   star.layer = 1;
 
   //Change the game state to `play`
-  g.state = play;  
+  g.state = play;
 }
 
 //The `play` function will run in a loop
 function play() {
 
   //Make the box rotate
-  box.rotation += 0.01;
+  //box.rotation += 0.01;
 
   //Make the star ease towards the pointer.
   //`followEase` arguments: follower, leader, speed
@@ -274,7 +275,7 @@ function play() {
   }
 
   //Display the position of the pointer
-  pointerDisplay.content = 
+  pointerDisplay.content =
     `pointer.x: ${Math.round(g.pointer.x)} pointer.y: ${Math.round(g.pointer.y)}`;
 
   //Make the line's `ax` and `ay` points rotate clockwise around

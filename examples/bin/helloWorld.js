@@ -10,7 +10,7 @@ function setup() {
   console.log("setup");
 
   //Add some text
-  g.text("Hello World!");
+  g.text("Hello World!", "Helvetica", "24px");
 
   //Change the state to `play`
   g.state = play;

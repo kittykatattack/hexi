@@ -22,7 +22,7 @@ function setup() {
 
   //Make a ball sprite.
   //circle arguments: diameter, fillStyle, strokeStyle, lineWidth, x, y
-  ball = g.circle(64, "powderBlue", "black", 2, 192, 256); 
+  ball = g.circle(64, "powderBlue", "black", 2, 192, 256);
 
   //Set the ball's velocity to 0
   ball.vx = g.randomInt(5, 15);
@@ -30,7 +30,7 @@ function setup() {
 
   //Physics properties
   ball.gravity = 0.3;
-  ball.frictionX = 1; 
+  ball.frictionX = 1;
   ball.frictionY = 0;
 
   //Adding mass will let the `contain` method
@@ -49,7 +49,7 @@ function setup() {
   //When the pointer is tapped, center the ball
   //over the pointer and give it a new random velocity
   g.pointer.tap = () => {
-    
+
     //Position the ball over the pointer
     ball.x = g.pointer.x - ball.halfWidth;
     ball.y = g.pointer.y - ball.halfHeight;
@@ -61,13 +61,13 @@ function setup() {
 
   //Add the instructions
   let message = g.text(
-    "Tap to give the ball a new random velocity", 
-    "18px Futura", "black",
+    "Tap to give the ball a new random velocity",
+    "Futura", "18px", "black",
     6, 6
   );
 
   //Change the game state to `play`.
-  g.state = play;  
+  g.state = play;
 }
 
 //The `play` function will run in a loop
@@ -75,16 +75,16 @@ function play() {
 
   //Apply gravity to the vertical velocity
   ball.vy += ball.gravity;
-  
+
   //Apply friction. ball.frictionX will be 0.96 if the ball is
   //on the ground, and 1 if it's in the air
   ball.vx *= ball.frictionX;
-  
+
   //Move the ball by applying the new calculated velocity
   //to the ball's x and y position
   ball.x += ball.vx;
   ball.y += ball.vy;
-  
+
   //Use Ga's custom `contain` method to bounce the ball 
   //off the canvas edges and slow it to a stop:
 

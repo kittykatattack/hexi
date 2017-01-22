@@ -89,7 +89,8 @@ function setup() {
   //Create a square called `box`, using the `rectangle` method.
   //`rectangle` arguments:
   //width, height, fillColor, strokeColor, lineWidth, x, y
-  box = g.rectangle(32, 32, "cyan", "white", 4, 52, 42);
+  box = g.rectangle(32, 32, "cyan", "black", 8, 52, 42);
+  //box = g.rectangle(32, 32, "cyan", "black", 8, 0, 0);
 
   //Colors can be HTML color strings, RGBA values or Hexadecimal
   //values
@@ -106,7 +107,7 @@ function setup() {
   //`pivotY` properties
 
   //Rotate the box by 0.5 radians
-  box.rotation = 0.5;
+  //box.rotation = 0.5;
 
   //Create a `circle` sprite called `ball`
   //`circle` argumenets:
@@ -118,7 +119,7 @@ function setup() {
   //content, font, fillStyle, x, y
   //The font family name will be the same as the font's file name
 
-  message = g.text("Tap the circle!", "14px puzzler", "white");
+  message = g.text("Tap the circle!", "puzzler", "14px", "white");
   message.x = 30;
   message.y = 10;
 
@@ -200,7 +201,7 @@ function setup() {
   //Hexi has a `pointer` object with a `x` and `y` property
   //that tells you the position of the mouse or touch pointer.
   //Here's how to display the pointer position with a `text` sprite:
-  pointerDisplay = g.text("", "8px PetMe64", "white");
+  pointerDisplay = g.text("", "PetMe64", "8px", "white");
   pointerDisplay.x = 10;
   pointerDisplay.y = 235;
 
@@ -257,7 +258,7 @@ function setup() {
 function play() {
 
   //Make the box rotate
-  box.rotation += 0.01;
+  //box.rotation += 0.01;
 
   //Make the star ease towards the pointer.
   //`followEase` arguments: follower, leader, speed

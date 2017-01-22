@@ -265,7 +265,7 @@ var Hexi = (function () {
 
     //Set the canvas's optional background color and border style
     if (o.backgroundColor) {
-      this.renderer.backgroundColor = this.color(o.backgroundColor);
+      this.renderer.backgroundColor = parseInt(this.color(o.backgroundColor));
     } else {
       this.renderer.backgroundColor = 0xFFFFFF;
     }
@@ -811,7 +811,6 @@ var Hexi = (function () {
         var magnitude = arguments.length <= 1 || arguments[1] === undefined ? 16 : arguments[1];
         var angular = arguments.length <= 2 || arguments[2] === undefined ? false : arguments[2];
 
-        console.log("shake");
         return _this3.spriteUtilities.shake(sprite, magnitude, angular);
       };
 
@@ -2026,10 +2025,8 @@ var Hexi = (function () {
       //Use the `scaleToWindow` function module to scale the canvas to
       //the maximum window size
       this.scale = scaleToWindow(this.canvas, scaleBorderColor);
-      console.log("new scale: " + this.scale);
       this.pointer.scale = this.scale;
       //this.pointer = this.makePointer(this.canvas, this.scale);
-      console.log(this.pointer);
 
       //Re-scale on each browser resize
       window.addEventListener("resize", function (event) {
@@ -2097,7 +2094,7 @@ var Hexi = (function () {
 
           //3. A text sprite that will display the percentage
           //of assets that have loaded
-          this.percentage = hexi.text("0%", "28px sans-serif", "black");
+          this.percentage = hexi.text("0%", "sans-serif", "28px", "black");
           this.percentage.x = hexi.canvas.width / 2 - this.maxWidth / 2 + 12;
           this.percentage.y = hexi.canvas.height / 2 - 17;
         },
@@ -2281,7 +2278,7 @@ var Hexi = (function () {
   }, {
     key: "backgroundColor",
     set: function set(value) {
-      this.renderer.backgroundColor = this.color(value);
+      this.renderer.backgroundColor = parseInt(this.color(value));
     }
   }]);
 

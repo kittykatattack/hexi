@@ -62,7 +62,7 @@ function setup() {
   };
 
   //Add the instructions
-  var message = g.text("Tap to give the ball a new random velocity", "18px Futura", "black", 6, 6);
+  var message = g.text("Tap to give the ball a new random velocity", "Futura", "18px", "black", 6, 6);
 
   //Change the game state to `play`.
   g.state = play;
