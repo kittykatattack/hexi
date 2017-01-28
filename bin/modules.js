@@ -8,7 +8,6 @@ and generate sound effects and music for games and interactive applications. All
 code targets the WebAudio API.
 */
 
-
 /*
 Fixing the WebAudio API
 --------------------------
@@ -28,67 +27,54 @@ Thank you, Chris!
   'use strict';
 
   function fixSetTarget(param) {
-    if (!param)	// if NYI, just return
+    if (!param) // if NYI, just return
       return;
-    if (!param.setTargetAtTime)
-      param.setTargetAtTime = param.setTargetValueAtTime;
+    if (!param.setTargetAtTime) param.setTargetAtTime = param.setTargetValueAtTime;
   }
 
-  if (window.hasOwnProperty('webkitAudioContext') &&
-      !window.hasOwnProperty('AudioContext')) {
+  if (window.hasOwnProperty('webkitAudioContext') && !window.hasOwnProperty('AudioContext')) {
     window.AudioContext = webkitAudioContext;
 
-    if (!AudioContext.prototype.hasOwnProperty('createGain'))
-      AudioContext.prototype.createGain = AudioContext.prototype.createGainNode;
-    if (!AudioContext.prototype.hasOwnProperty('createDelay'))
-      AudioContext.prototype.createDelay = AudioContext.prototype.createDelayNode;
-    if (!AudioContext.prototype.hasOwnProperty('createScriptProcessor'))
-      AudioContext.prototype.createScriptProcessor = AudioContext.prototype.createJavaScriptNode;
-    if (!AudioContext.prototype.hasOwnProperty('createPeriodicWave'))
-      AudioContext.prototype.createPeriodicWave = AudioContext.prototype.createWaveTable;
-
+    if (!AudioContext.prototype.hasOwnProperty('createGain')) AudioContext.prototype.createGain = AudioContext.prototype.createGainNode;
+    if (!AudioContext.prototype.hasOwnProperty('createDelay')) AudioContext.prototype.createDelay = AudioContext.prototype.createDelayNode;
+    if (!AudioContext.prototype.hasOwnProperty('createScriptProcessor')) AudioContext.prototype.createScriptProcessor = AudioContext.prototype.createJavaScriptNode;
+    if (!AudioContext.prototype.hasOwnProperty('createPeriodicWave')) AudioContext.prototype.createPeriodicWave = AudioContext.prototype.createWaveTable;
 
     AudioContext.prototype.internal_createGain = AudioContext.prototype.createGain;
-    AudioContext.prototype.createGain = function() {
+    AudioContext.prototype.createGain = function () {
       var node = this.internal_createGain();
       fixSetTarget(node.gain);
       return node;
     };
 
     AudioContext.prototype.internal_createDelay = AudioContext.prototype.createDelay;
-    AudioContext.prototype.createDelay = function(maxDelayTime) {
+    AudioContext.prototype.createDelay = function (maxDelayTime) {
       var node = maxDelayTime ? this.internal_createDelay(maxDelayTime) : this.internal_createDelay();
       fixSetTarget(node.delayTime);
       return node;
     };
 
     AudioContext.prototype.internal_createBufferSource = AudioContext.prototype.createBufferSource;
-    AudioContext.prototype.createBufferSource = function() {
+    AudioContext.prototype.createBufferSource = function () {
       var node = this.internal_createBufferSource();
       if (!node.start) {
-        node.start = function ( when, offset, duration ) {
-          if ( offset || duration )
-            this.noteGrainOn( when || 0, offset, duration );
-          else
-            this.noteOn( when || 0 );
+        node.start = function (when, offset, duration) {
+          if (offset || duration) this.noteGrainOn(when || 0, offset, duration);else this.noteOn(when || 0);
         };
       } else {
         node.internal_start = node.start;
-        node.start = function( when, offset, duration ) {
-          if( typeof duration !== 'undefined' )
-            node.internal_start( when || 0, offset, duration );
-          else
-            node.internal_start( when || 0, offset || 0 );
+        node.start = function (when, offset, duration) {
+          if (typeof duration !== 'undefined') node.internal_start(when || 0, offset, duration);else node.internal_start(when || 0, offset || 0);
         };
       }
       if (!node.stop) {
-        node.stop = function ( when ) {
-          this.noteOff( when || 0 );
+        node.stop = function (when) {
+          this.noteOff(when || 0);
         };
       } else {
         node.internal_stop = node.stop;
-        node.stop = function( when ) {
-          node.internal_stop( when || 0 );
+        node.stop = function (when) {
+          node.internal_stop(when || 0);
         };
       }
       fixSetTarget(node.playbackRate);
@@ -96,7 +82,7 @@ Thank you, Chris!
     };
 
     AudioContext.prototype.internal_createDynamicsCompressor = AudioContext.prototype.createDynamicsCompressor;
-    AudioContext.prototype.createDynamicsCompressor = function() {
+    AudioContext.prototype.createDynamicsCompressor = function () {
       var node = this.internal_createDynamicsCompressor();
       fixSetTarget(node.threshold);
       fixSetTarget(node.knee);
@@ -108,7 +94,7 @@ Thank you, Chris!
     };
 
     AudioContext.prototype.internal_createBiquadFilter = AudioContext.prototype.createBiquadFilter;
-    AudioContext.prototype.createBiquadFilter = function() {
+    AudioContext.prototype.createBiquadFilter = function () {
       var node = this.internal_createBiquadFilter();
       fixSetTarget(node.frequency);
       fixSetTarget(node.detune);
@@ -117,32 +103,31 @@ Thank you, Chris!
       return node;
     };
 
-    if (AudioContext.prototype.hasOwnProperty( 'createOscillator' )) {
+    if (AudioContext.prototype.hasOwnProperty('createOscillator')) {
       AudioContext.prototype.internal_createOscillator = AudioContext.prototype.createOscillator;
-      AudioContext.prototype.createOscillator = function() {
+      AudioContext.prototype.createOscillator = function () {
         var node = this.internal_createOscillator();
         if (!node.start) {
-          node.start = function ( when ) {
-            this.noteOn( when || 0 );
+          node.start = function (when) {
+            this.noteOn(when || 0);
           };
         } else {
           node.internal_start = node.start;
-          node.start = function ( when ) {
-            node.internal_start( when || 0);
+          node.start = function (when) {
+            node.internal_start(when || 0);
           };
         }
         if (!node.stop) {
-          node.stop = function ( when ) {
-            this.noteOff( when || 0 );
+          node.stop = function (when) {
+            this.noteOff(when || 0);
           };
         } else {
           node.internal_stop = node.stop;
-          node.stop = function( when ) {
-            node.internal_stop( when || 0 );
+          node.stop = function (when) {
+            node.internal_stop(when || 0);
           };
         }
-        if (!node.setPeriodicWave)
-          node.setPeriodicWave = node.setWaveTable;
+        if (!node.setPeriodicWave) node.setPeriodicWave = node.setWaveTable;
         fixSetTarget(node.frequency);
         fixSetTarget(node.detune);
         return node;
@@ -150,12 +135,10 @@ Thank you, Chris!
     }
   }
 
-  if (window.hasOwnProperty('webkitOfflineAudioContext') &&
-      !window.hasOwnProperty('OfflineAudioContext')) {
+  if (window.hasOwnProperty('webkitOfflineAudioContext') && !window.hasOwnProperty('OfflineAudioContext')) {
     window.OfflineAudioContext = webkitOfflineAudioContext;
   }
-
-}(window));
+})(window);
 
 /*
 Define the audio context
@@ -209,7 +192,7 @@ var sounds = {
   //The load method creates and loads all the assets. Use it like this:
   //`assets.load(["images/anyImage.png", "fonts/anyFont.otf"]);`.
 
-  load: function(sources) {
+  load: function load(sources) {
     console.log("Loading sounds..");
 
     //Get a reference to this asset object so we can
@@ -218,7 +201,7 @@ var sounds = {
 
     //Find the number of files that need to be loaded.
     self.toLoad = sources.length;
-    sources.forEach(function(source){
+    sources.forEach(function (source) {
 
       //Find the file extension of the asset.
       var extension = source.split('.').pop();
@@ -244,14 +227,14 @@ var sounds = {
 
       //Display a message if the file type isn't recognized.
       else {
-        console.log("File type not recognized: " + source);
-      }
+          console.log("File type not recognized: " + source);
+        }
     });
   },
 
   //#### loadHandler
   //The `loadHandler` will be called each time an asset finishes loading.
-  loadHandler: function () {
+  loadHandler: function loadHandler() {
     var self = this;
     self.loaded += 1;
     console.log(self.loaded);
@@ -384,9 +367,9 @@ function makeSound(source, loadHandler, loadSound, xhr) {
   //Reverb properties
   o.reverb = false;
   o.reverbImpulse = null;
-  
+
   //The sound object's methods.
-  o.play = function() {
+  o.play = function () {
 
     //Set the start time (it will be `0` when the sound
     //first starts.
@@ -408,16 +391,16 @@ function makeSound(source, loadHandler, loadSound, xhr) {
     //If there's no reverb, bypass the convolverNode
     if (o.reverb === false) {
       o.volumeNode.connect(o.panNode);
-    } 
+    }
 
     //If there is reverb, connect the `convolverNode` and apply
     //the impulse response
     else {
-      o.volumeNode.connect(o.convolverNode);
-      o.convolverNode.connect(o.panNode);
-      o.convolverNode.buffer = o.reverbImpulse;
-    }
-    
+        o.volumeNode.connect(o.convolverNode);
+        o.convolverNode.connect(o.panNode);
+        o.convolverNode.buffer = o.reverbImpulse;
+      }
+
     //Connect the `panNode` to the destination to complete the chain.
     o.panNode.connect(actx.destination);
 
@@ -451,16 +434,14 @@ function makeSound(source, loadHandler, loadSound, xhr) {
     //Finally, use the `start` method to play the sound.
     //The start time will either be `0`,
     //or a later time if the sound was paused.
-    o.soundNode.start(
-      0, o.startOffset % o.buffer.duration
-    );
+    o.soundNode.start(0, o.startOffset % o.buffer.duration);
 
     //Set `playing` to `true` to help control the
     //`pause` and `restart` methods.
     o.playing = true;
   };
 
-  o.pause = function() {
+  o.pause = function () {
     //Pause the sound if it's playing, and calculate the
     //`startOffset` to save the current position.
     if (o.playing) {
@@ -470,7 +451,7 @@ function makeSound(source, loadHandler, loadSound, xhr) {
     }
   };
 
-  o.restart = function() {
+  o.restart = function () {
     //Stop the sound if it's playing, reset the start and offset times,
     //then call the `play` method again.
     if (o.playing) {
@@ -480,7 +461,7 @@ function makeSound(source, loadHandler, loadSound, xhr) {
     o.play();
   };
 
-  o.playFrom = function(value) {
+  o.playFrom = function (value) {
     if (o.playing) {
       o.soundNode.stop(0);
     }
@@ -488,7 +469,7 @@ function makeSound(source, loadHandler, loadSound, xhr) {
     o.play();
   };
 
-  o.setEcho = function(delayValue, feedbackValue, filterValue) {
+  o.setEcho = function (delayValue, feedbackValue, filterValue) {
     if (delayValue === undefined) delayValue = 0.3;
     if (feedbackValue === undefined) feedbackValue = 0.3;
     if (filterValue === undefined) filterValue = 0;
@@ -498,7 +479,7 @@ function makeSound(source, loadHandler, loadSound, xhr) {
     o.echo = true;
   };
 
-  o.setReverb = function(duration, decay, reverse) {
+  o.setReverb = function (duration, decay, reverse) {
     if (duration === undefined) duration = 2;
     if (decay === undefined) decay = 2;
     if (reverse === undefined) reverse = false;
@@ -510,39 +491,34 @@ function makeSound(source, loadHandler, loadSound, xhr) {
   //The first argument is the volume that the sound should
   //fade to, and the second value is the duration, in seconds,
   //that the fade should last.
-  o.fade = function(endValue, durationInSeconds) {
+  o.fade = function (endValue, durationInSeconds) {
     if (o.playing) {
-      o.volumeNode.gain.linearRampToValueAtTime(
-        o.volumeNode.gain.value, actx.currentTime
-      );
-      o.volumeNode.gain.linearRampToValueAtTime(
-        endValue, actx.currentTime + durationInSeconds
-      );
+      o.volumeNode.gain.linearRampToValueAtTime(o.volumeNode.gain.value, actx.currentTime);
+      o.volumeNode.gain.linearRampToValueAtTime(endValue, actx.currentTime + durationInSeconds);
     }
   };
 
   //Fade a sound in, from an initial volume level of zero.
-  o.fadeIn = function(durationInSeconds) {
-    
+  o.fadeIn = function (durationInSeconds) {
+
     //Set the volume to 0 so that you can fade
     //in from silence
     o.volumeNode.gain.value = 0;
     o.fade(1, durationInSeconds);
-  
   };
 
   //Fade a sound out, from its current volume level to zero.
-  o.fadeOut = function(durationInSeconds) {
+  o.fadeOut = function (durationInSeconds) {
     o.fade(0, durationInSeconds);
   };
-  
+
   //Volume and pan getters/setters.
   Object.defineProperties(o, {
     volume: {
-      get: function() {
+      get: function get() {
         return o.volumeValue;
       },
-      set: function(value) {
+      set: function set(value) {
         o.volumeNode.gain.value = value;
         o.volumeValue = value;
       },
@@ -555,14 +531,14 @@ function makeSound(source, loadHandler, loadSound, xhr) {
     //So the code checks for this and uses the older 3D panner
     //if 2D isn't available.
     pan: {
-      get: function() {
+      get: function get() {
         if (!actx.createStereoPanner) {
           return o.panValue;
         } else {
           return o.panNode.pan.value;
         }
       },
-      set: function(value) {
+      set: function set(value) {
         if (!actx.createStereoPanner) {
           //Panner objects accept x, y and z coordinates for 3D
           //sound. However, because we're only doing 2D left/right
@@ -606,7 +582,7 @@ function loadSound(o, source, loadHandler) {
 
   //When the sound has finished loading, decode it using the
   //`decodeAudio` function (which you'll see ahead)
-  xhr.addEventListener("load", decodeAudio.bind(this, o, xhr, loadHandler)); 
+  xhr.addEventListener("load", decodeAudio.bind(this, o, xhr, loadHandler));
 
   //Send the request to load the file.
   xhr.send();
@@ -617,27 +593,23 @@ function loadSound(o, source, loadHandler) {
 function decodeAudio(o, xhr, loadHandler) {
 
   //Decode the sound and store a reference to the buffer.
-  actx.decodeAudioData(
-    xhr.response,
-    function(buffer) {
-      o.buffer = buffer;
-      o.hasLoaded = true;
+  actx.decodeAudioData(xhr.response, function (buffer) {
+    o.buffer = buffer;
+    o.hasLoaded = true;
 
-      //This next bit is optional, but important.
-      //If you have a load manager in your game, call it here so that
-      //the sound is registered as having loaded.
-      if (loadHandler) {
-        loadHandler();
-      }
-    },
-
-    //Throw an error if the sound can't be decoded.
-    function(error) {
-      throw new Error("Audio could not be decoded: " + error);
+    //This next bit is optional, but important.
+    //If you have a load manager in your game, call it here so that
+    //the sound is registered as having loaded.
+    if (loadHandler) {
+      loadHandler();
     }
-  );
-}
+  },
 
+  //Throw an error if the sound can't be decoded.
+  function (error) {
+    throw new Error("Audio could not be decoded: " + error);
+  });
+}
 
 /*
 soundEffect
@@ -670,21 +642,20 @@ Experiment by changing these parameters to see what kinds of effects you can cre
 your own library of custom sound effects for games.
 */
 
-function soundEffect(
-  frequencyValue,      //The sound's fequency pitch in Hertz
-  attack,              //The time, in seconds, to fade the sound in
-  decay,               //The time, in seconds, to fade the sound out
-  type,                //waveform type: "sine", "triangle", "square", "sawtooth"
-  volumeValue,         //The sound's maximum volume
-  panValue,            //The speaker pan. left: -1, middle: 0, right: 1
-  wait,                //The time, in seconds, to wait before playing the sound
-  pitchBendAmount,     //The number of Hz in which to bend the sound's pitch down
-  reverse,             //If `reverse` is true the pitch will bend up
-  randomValue,         //A range, in Hz, within which to randomize the pitch
-  dissonance,          //A value in Hz. It creates 2 dissonant frequencies above and below the target pitch
-  echo,                //An array: [delayTimeInSeconds, feedbackTimeInSeconds, filterValueInHz]
-  reverb,              //An array: [durationInSeconds, decayRateInSeconds, reverse]
-  timeout              //A number, in seconds, which is the maximum duration for sound effects
+function soundEffect(frequencyValue, //The sound's fequency pitch in Hertz
+attack, //The time, in seconds, to fade the sound in
+decay, //The time, in seconds, to fade the sound out
+type, //waveform type: "sine", "triangle", "square", "sawtooth"
+volumeValue, //The sound's maximum volume
+panValue, //The speaker pan. left: -1, middle: 0, right: 1
+wait, //The time, in seconds, to wait before playing the sound
+pitchBendAmount, //The number of Hz in which to bend the sound's pitch down
+reverse, //If `reverse` is true the pitch will bend up
+randomValue, //A range, in Hz, within which to randomize the pitch
+dissonance, //A value in Hz. It creates 2 dissonant frequencies above and below the target pitch
+echo, //An array: [delayTimeInSeconds, feedbackTimeInSeconds, filterValueInHz]
+reverb, //An array: [durationInSeconds, decayRateInSeconds, reverse]
+timeout //A number, in seconds, which is the maximum duration for sound effects
 ) {
 
   //Set the default values
@@ -722,7 +693,7 @@ function soundEffect(
   if (!actx.createStereoPanner) {
     pan.setPosition(panValue, 0, 1 - Math.abs(panValue));
   } else {
-    pan.pan.value = panValue; 
+    pan.pan.value = panValue;
   }
   oscillator.type = type;
 
@@ -731,14 +702,11 @@ function soundEffect(
   //specified by `frequencyValue`. The random pitch will be either
   //above or below the target frequency.
   var frequency;
-  var randomInt = function(min, max){
-    return Math.floor(Math.random() * (max - min + 1)) + min
+  var randomInt = function randomInt(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
   };
   if (randomValue > 0) {
-    frequency = randomInt(
-      frequencyValue - randomValue / 2,
-      frequencyValue + randomValue / 2
-    );
+    frequency = randomInt(frequencyValue - randomValue / 2, frequencyValue + randomValue / 2);
   } else {
     frequency = frequencyValue;
   }
@@ -756,7 +724,7 @@ function soundEffect(
   play(oscillator);
 
   //The helper functions:
-  
+
   function addReverb(volumeNode) {
     var convolver = actx.createConvolver();
     convolver.buffer = impulseResponse(reverb[0], reverb[1], reverb[2], actx);
@@ -803,22 +771,14 @@ function soundEffect(
     //in from silence
     volumeNode.gain.value = 0;
 
-    volumeNode.gain.linearRampToValueAtTime(
-      0, actx.currentTime + wait
-    );
-    volumeNode.gain.linearRampToValueAtTime(
-      volumeValue, actx.currentTime + wait + attack
-    );
+    volumeNode.gain.linearRampToValueAtTime(0, actx.currentTime + wait);
+    volumeNode.gain.linearRampToValueAtTime(volumeValue, actx.currentTime + wait + attack);
   }
 
   //The `fadeOut` function
   function fadeOut(volumeNode) {
-    volumeNode.gain.linearRampToValueAtTime(
-      volumeValue, actx.currentTime + attack + wait
-    );
-    volumeNode.gain.linearRampToValueAtTime(
-      0, actx.currentTime + wait + attack + decay
-    );
+    volumeNode.gain.linearRampToValueAtTime(volumeValue, actx.currentTime + attack + wait);
+    volumeNode.gain.linearRampToValueAtTime(0, actx.currentTime + wait + attack + decay);
   }
 
   //The `pitchBend` function
@@ -831,28 +791,16 @@ function soundEffect(
 
     //If `reverse` is true, make the sound drop in pitch
     if (!reverse) {
-      oscillatorNode.frequency.linearRampToValueAtTime(
-        frequency, 
-        actx.currentTime + wait
-      );
-      oscillatorNode.frequency.linearRampToValueAtTime(
-        frequency - pitchBendAmount, 
-        actx.currentTime + wait + attack + decay
-      );
+      oscillatorNode.frequency.linearRampToValueAtTime(frequency, actx.currentTime + wait);
+      oscillatorNode.frequency.linearRampToValueAtTime(frequency - pitchBendAmount, actx.currentTime + wait + attack + decay);
     }
 
     //If `reverse` is false, make the note rise in pitch. Useful for
     //jumping sounds
     else {
-      oscillatorNode.frequency.linearRampToValueAtTime(
-        frequency, 
-        actx.currentTime + wait
-      );
-      oscillatorNode.frequency.linearRampToValueAtTime(
-        frequency + pitchBendAmount, 
-        actx.currentTime + wait + attack + decay
-      );
-    }
+        oscillatorNode.frequency.linearRampToValueAtTime(frequency, actx.currentTime + wait);
+        oscillatorNode.frequency.linearRampToValueAtTime(frequency + pitchBendAmount, actx.currentTime + wait + attack + decay);
+      }
   }
 
   //The `addDissonance` function
@@ -948,7 +896,7 @@ function impulseResponse(duration, decay, reverse, actx) {
 
   //Loop through each sample-frame and fill the channel
   //data with random noise.
-  for (var i = 0; i < length; i++){
+  for (var i = 0; i < length; i++) {
 
     //Apply the reverse effect, if `reverse` is `true`.
     var n;
@@ -967,7 +915,6 @@ function impulseResponse(duration, decay, reverse, actx) {
   //Return the `impulse`.
   return impulse;
 }
-
 
 /*
 keyboard
@@ -1006,7 +953,7 @@ function keyboard(keyCode) {
   key.press = undefined;
   key.release = undefined;
   //The `downHandler`
-  key.downHandler = function(event) {
+  key.downHandler = function (event) {
     if (event.keyCode === key.code) {
       if (key.isUp && key.press) key.press();
       key.isDown = true;
@@ -1016,7 +963,7 @@ function keyboard(keyCode) {
   };
 
   //The `upHandler`
-  key.upHandler = function(event) {
+  key.upHandler = function (event) {
     if (event.keyCode === key.code) {
       if (key.isDown && key.release) key.release();
       key.isDown = false;
@@ -1026,21 +973,16 @@ function keyboard(keyCode) {
   };
 
   //Attach event listeners
-  window.addEventListener(
-    "keydown", key.downHandler.bind(key), false
-  );
-  window.addEventListener(
-    "keyup", key.upHandler.bind(key), false
-  );
+  window.addEventListener("keydown", key.downHandler.bind(key), false);
+  window.addEventListener("keyup", key.upHandler.bind(key), false);
   return key;
 }
-
 
 function scaleToWindow(canvas, backgroundColor) {
 
   backgroundColor = backgroundColor || "#2C3539";
   var scaleX, scaleY, scale, center;
-  
+
   //1. Scale the canvas to the correct size
   //Figure out the scale amount on each axis
   scaleX = window.innerWidth / canvas.offsetWidth;
@@ -1050,7 +992,7 @@ function scaleToWindow(canvas, backgroundColor) {
   scale = Math.min(scaleX, scaleY);
   canvas.style.transformOrigin = "0 0";
   canvas.style.transform = "scale(" + scale + ")";
-  console.log(scaleX)
+  console.log(scaleX);
 
   //2. Center the canvas.
   //Decide whether to center the canvas vertically or horizontally.
@@ -1059,17 +1001,17 @@ function scaleToWindow(canvas, backgroundColor) {
   if (canvas.offsetwidth > canvas.offsetHeight) {
     if (canvas.offsetWidth * scale < window.innerWidth) {
       center = "horizontally";
-    } else { 
+    } else {
       center = "vertically";
     }
   } else {
     if (canvas.offsetHeight * scale < window.innerHeight) {
       center = "vertically";
-    } else { 
+    } else {
       center = "horizontally";
     }
   }
-  
+
   //Center horizontally (for square or tall canvases)
   var margin;
   if (center === "horizontally") {
@@ -1092,33 +1034,46 @@ function scaleToWindow(canvas, backgroundColor) {
   canvas.style.paddingTop = 0;
   canvas.style.paddingBottom = 0;
   canvas.style.display = "block";
-  
+
   //4. Set the color of the HTML body background
   document.body.style.backgroundColor = backgroundColor;
-  
+
   //Fix some quirkiness in scaling for Safari
-  var ua = navigator.userAgent.toLowerCase(); 
-  if (ua.indexOf("safari") != -1) { 
+  var ua = navigator.userAgent.toLowerCase();
+  if (ua.indexOf("safari") != -1) {
     if (ua.indexOf("chrome") > -1) {
       // Chrome
     } else {
-      // Safari
-      //canvas.style.maxHeight = "100%";
-      //canvas.style.minHeight = "100%";
-    }
+        // Safari
+        //canvas.style.maxHeight = "100%";
+        //canvas.style.minHeight = "100%";
+      }
   }
 
   //5. Return the `scale` value. This is important, because you'll nee this value 
   //for correct hit testing between the pointer and sprites
   return scale;
 }
+
 "use strict";
 
-var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+var _createClass = function () {
+  function defineProperties(target, props) {
+    for (var i = 0; i < props.length; i++) {
+      var descriptor = props[i];descriptor.enumerable = descriptor.enumerable || false;descriptor.configurable = true;if ("value" in descriptor) descriptor.writable = true;Object.defineProperty(target, descriptor.key, descriptor);
+    }
+  }return function (Constructor, protoProps, staticProps) {
+    if (protoProps) defineProperties(Constructor.prototype, protoProps);if (staticProps) defineProperties(Constructor, staticProps);return Constructor;
+  };
+}();
 
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+function _classCallCheck(instance, Constructor) {
+  if (!(instance instanceof Constructor)) {
+    throw new TypeError("Cannot call a class as a function");
+  }
+}
 
-var Bump = (function () {
+var Bump = function () {
   function Bump() {
     var renderingEngine = arguments.length <= 0 || arguments[0] === undefined ? PIXI : arguments[0];
 
@@ -1548,6 +1503,7 @@ var Bump = (function () {
           xSide = undefined,
           ySide = undefined,
 
+
       //`s` refers to the distance vector between the circles
       s = {},
           p1A = {},
@@ -1795,41 +1751,41 @@ var Bump = (function () {
               */
             }
           } else {
-              //The collision is happening on the Y axis
-              //But on which side? vx can tell us
+            //The collision is happening on the Y axis
+            //But on which side? vx can tell us
 
-              if (vx > 0) {
-                collision = "left";
-                //Move the rectangle out of the collision
-                r1.x = r1.x + overlapX;
-              } else {
-                collision = "right";
-                //Move the rectangle out of the collision
-                r1.x = r1.x - overlapX;
-              }
-
-              //Bounce
-              if (bounce) {
-                r1.vx *= -1;
-
-                /*Alternative
-                //Find the bounce surface's vx and vy properties
-                var s = {};
-                s.vx = 0;
-                s.vy = r2.y - r2.y + r2.height;
-                 //Bounce r1 off the surface
-                this.bounceOffSurface(r1, s);
-                */
-              }
+            if (vx > 0) {
+              collision = "left";
+              //Move the rectangle out of the collision
+              r1.x = r1.x + overlapX;
+            } else {
+              collision = "right";
+              //Move the rectangle out of the collision
+              r1.x = r1.x - overlapX;
             }
+
+            //Bounce
+            if (bounce) {
+              r1.vx *= -1;
+
+              /*Alternative
+              //Find the bounce surface's vx and vy properties
+              var s = {};
+              s.vx = 0;
+              s.vy = r2.y - r2.y + r2.height;
+               //Bounce r1 off the surface
+              this.bounceOffSurface(r1, s);
+              */
+            }
+          }
         } else {
             //No collision
           }
       } else {}
-        //No collision
+      //No collision
 
-        //Return the collision string. it will be either "top", "right",
-        //"bottom", or "left" depending on which side of r1 is touching r2.
+      //Return the collision string. it will be either "top", "right",
+      //"bottom", or "left" depending on which side of r1 is touching r2.
       return collision;
     }
 
@@ -2676,16 +2632,37 @@ var Bump = (function () {
   }]);
 
   return Bump;
-})();
-//# sourceMappingURL=bump.js.map"use strict";
+}();
+//# sourceMappingURL=bump.js.map
+"use strict";
 
-var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+var _createClass = function () {
+  function defineProperties(target, props) {
+    for (var i = 0; i < props.length; i++) {
+      var descriptor = props[i];descriptor.enumerable = descriptor.enumerable || false;descriptor.configurable = true;if ("value" in descriptor) descriptor.writable = true;Object.defineProperty(target, descriptor.key, descriptor);
+    }
+  }return function (Constructor, protoProps, staticProps) {
+    if (protoProps) defineProperties(Constructor.prototype, protoProps);if (staticProps) defineProperties(Constructor, staticProps);return Constructor;
+  };
+}();
 
-function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
+function _toConsumableArray(arr) {
+  if (Array.isArray(arr)) {
+    for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) {
+      arr2[i] = arr[i];
+    }return arr2;
+  } else {
+    return Array.from(arr);
+  }
+}
 
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+function _classCallCheck(instance, Constructor) {
+  if (!(instance instanceof Constructor)) {
+    throw new TypeError("Cannot call a class as a function");
+  }
+}
 
-var Charm = (function () {
+var Charm = function () {
   function Charm() {
     var _this = this;
 
@@ -3499,11 +3476,11 @@ var Charm = (function () {
 
         //Otherwise, remove the nested tween objects
       } else {
-          tweenObject.pause();
-          tweenObject.tweens.forEach(function (element) {
-            _this8.globalTweens.splice(_this8.globalTweens.indexOf(element), 1);
-          });
-        }
+        tweenObject.pause();
+        tweenObject.tweens.forEach(function (element) {
+          _this8.globalTweens.splice(_this8.globalTweens.indexOf(element), 1);
+        });
+      }
     }
   }, {
     key: "update",
@@ -3520,14 +3497,27 @@ var Charm = (function () {
   }]);
 
   return Charm;
-})();
-//# sourceMappingURL=charm.js.map"use strict";
+}();
+//# sourceMappingURL=charm.js.map
+"use strict";
 
-var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+var _createClass = function () {
+  function defineProperties(target, props) {
+    for (var i = 0; i < props.length; i++) {
+      var descriptor = props[i];descriptor.enumerable = descriptor.enumerable || false;descriptor.configurable = true;if ("value" in descriptor) descriptor.writable = true;Object.defineProperty(target, descriptor.key, descriptor);
+    }
+  }return function (Constructor, protoProps, staticProps) {
+    if (protoProps) defineProperties(Constructor.prototype, protoProps);if (staticProps) defineProperties(Constructor, staticProps);return Constructor;
+  };
+}();
 
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+function _classCallCheck(instance, Constructor) {
+  if (!(instance instanceof Constructor)) {
+    throw new TypeError("Cannot call a class as a function");
+  }
+}
 
-var Tink = (function () {
+var Tink = function () {
   function Tink(PIXI, element) {
     var scale = arguments.length <= 2 || arguments[2] === undefined ? 1 : arguments[2];
 
@@ -4403,14 +4393,27 @@ var Tink = (function () {
   }]);
 
   return Tink;
-})();
-//# sourceMappingURL=tink.js.map"use strict";
+}();
+//# sourceMappingURL=tink.js.map
+"use strict";
 
-var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+var _createClass = function () {
+  function defineProperties(target, props) {
+    for (var i = 0; i < props.length; i++) {
+      var descriptor = props[i];descriptor.enumerable = descriptor.enumerable || false;descriptor.configurable = true;if ("value" in descriptor) descriptor.writable = true;Object.defineProperty(target, descriptor.key, descriptor);
+    }
+  }return function (Constructor, protoProps, staticProps) {
+    if (protoProps) defineProperties(Constructor.prototype, protoProps);if (staticProps) defineProperties(Constructor, staticProps);return Constructor;
+  };
+}();
 
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+function _classCallCheck(instance, Constructor) {
+  if (!(instance instanceof Constructor)) {
+    throw new TypeError("Cannot call a class as a function");
+  }
+}
 
-var Dust = (function () {
+var Dust = function () {
   function Dust() {
     var renderingEngine = arguments[0] === undefined ? PIXI : arguments[0];
 
@@ -4503,10 +4506,10 @@ var Dust = (function () {
         //If `randomSpacing` is `false`, space each particle evenly,
         //starting with the `minAngle` and ending with the `maxAngle`
         else {
-          if (angle === undefined) angle = minAngle;
-          angles.push(angle);
-          angle += spacing;
-        }
+            if (angle === undefined) angle = minAngle;
+            angles.push(angle);
+            angle += spacing;
+          }
       }
 
       //A function to make particles
@@ -4651,22 +4654,35 @@ var Dust = (function () {
           //Remove the particle array from the `globalParticles` array if doesn't
           //contain any more sprites
           else {
-            this.globalParticles.splice(this.globalParticles.indexOf(particles), 1);
-          }
+              this.globalParticles.splice(this.globalParticles.indexOf(particles), 1);
+            }
         }
       }
     }
   }]);
 
   return Dust;
-})();
-//# sourceMappingURL=dust.js.map"use strict";
+}();
+//# sourceMappingURL=dust.js.map
+"use strict";
 
-var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+var _createClass = function () {
+  function defineProperties(target, props) {
+    for (var i = 0; i < props.length; i++) {
+      var descriptor = props[i];descriptor.enumerable = descriptor.enumerable || false;descriptor.configurable = true;if ("value" in descriptor) descriptor.writable = true;Object.defineProperty(target, descriptor.key, descriptor);
+    }
+  }return function (Constructor, protoProps, staticProps) {
+    if (protoProps) defineProperties(Constructor.prototype, protoProps);if (staticProps) defineProperties(Constructor, staticProps);return Constructor;
+  };
+}();
 
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+function _classCallCheck(instance, Constructor) {
+  if (!(instance instanceof Constructor)) {
+    throw new TypeError("Cannot call a class as a function");
+  }
+}
 
-var SpriteUtilities = (function () {
+var SpriteUtilities = function () {
   function SpriteUtilities() {
     var renderingEngine = arguments.length <= 0 || arguments[0] === undefined ? PIXI : arguments[0];
 
@@ -4906,11 +4922,11 @@ var SpriteUtilities = (function () {
           //If we've reached the last frame and `loop`
           //is `true`, then start from the first frame again
         } else {
-            if (sprite.loop) {
-              sprite.gotoAndStop(startFrame);
-              frameCounter = 1;
-            }
+          if (sprite.loop) {
+            sprite.gotoAndStop(startFrame);
+            frameCounter = 1;
           }
+        }
       }
 
       function reset() {
@@ -6034,14 +6050,27 @@ var SpriteUtilities = (function () {
   }]);
 
   return SpriteUtilities;
-})();
-//# sourceMappingURL=spriteUtilities.js.map"use strict";
+}();
+//# sourceMappingURL=spriteUtilities.js.map
+"use strict";
 
-var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+var _createClass = function () {
+  function defineProperties(target, props) {
+    for (var i = 0; i < props.length; i++) {
+      var descriptor = props[i];descriptor.enumerable = descriptor.enumerable || false;descriptor.configurable = true;if ("value" in descriptor) descriptor.writable = true;Object.defineProperty(target, descriptor.key, descriptor);
+    }
+  }return function (Constructor, protoProps, staticProps) {
+    if (protoProps) defineProperties(Constructor.prototype, protoProps);if (staticProps) defineProperties(Constructor, staticProps);return Constructor;
+  };
+}();
 
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+function _classCallCheck(instance, Constructor) {
+  if (!(instance instanceof Constructor)) {
+    throw new TypeError("Cannot call a class as a function");
+  }
+}
 
-var GameUtilities = (function () {
+var GameUtilities = function () {
   function GameUtilities() {
     _classCallCheck(this, GameUtilities);
   }
@@ -6431,14 +6460,27 @@ var GameUtilities = (function () {
   }]);
 
   return GameUtilities;
-})();
-//# sourceMappingURL=gameUtilities.js.map"use strict";
+}();
+//# sourceMappingURL=gameUtilities.js.map
+"use strict";
 
-var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+var _createClass = function () {
+  function defineProperties(target, props) {
+    for (var i = 0; i < props.length; i++) {
+      var descriptor = props[i];descriptor.enumerable = descriptor.enumerable || false;descriptor.configurable = true;if ("value" in descriptor) descriptor.writable = true;Object.defineProperty(target, descriptor.key, descriptor);
+    }
+  }return function (Constructor, protoProps, staticProps) {
+    if (protoProps) defineProperties(Constructor.prototype, protoProps);if (staticProps) defineProperties(Constructor, staticProps);return Constructor;
+  };
+}();
 
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+function _classCallCheck(instance, Constructor) {
+  if (!(instance instanceof Constructor)) {
+    throw new TypeError("Cannot call a class as a function");
+  }
+}
 
-var Smoothie = (function () {
+var Smoothie = function () {
   function Smoothie() //Refers to `tileposition` and `tileScale` x and y properties
   {
     var options = arguments.length <= 0 || arguments[0] === undefined ? {
@@ -6964,14 +7006,27 @@ var Smoothie = (function () {
   }]);
 
   return Smoothie;
-})();
-//# sourceMappingURL=smoothie.js.map"use strict";
+}();
+//# sourceMappingURL=smoothie.js.map
+"use strict";
 
-var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+var _createClass = function () {
+  function defineProperties(target, props) {
+    for (var i = 0; i < props.length; i++) {
+      var descriptor = props[i];descriptor.enumerable = descriptor.enumerable || false;descriptor.configurable = true;if ("value" in descriptor) descriptor.writable = true;Object.defineProperty(target, descriptor.key, descriptor);
+    }
+  }return function (Constructor, protoProps, staticProps) {
+    if (protoProps) defineProperties(Constructor.prototype, protoProps);if (staticProps) defineProperties(Constructor, staticProps);return Constructor;
+  };
+}();
 
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+function _classCallCheck(instance, Constructor) {
+  if (!(instance instanceof Constructor)) {
+    throw new TypeError("Cannot call a class as a function");
+  }
+}
 
-var TileUtilities = (function () {
+var TileUtilities = function () {
   function TileUtilities() {
     var renderingEngine = arguments.length <= 0 || arguments[0] === undefined ? PIXI : arguments[0];
 
@@ -8259,5 +8314,6 @@ var TileUtilities = (function () {
   }]);
 
   return TileUtilities;
-})();
+}();
 //# sourceMappingURL=tileUtilities.js.map
+//# sourceMappingURL=modules.js.map

@@ -1,0 +1,47 @@
+{
+  "name": "hexi",
+  "version": "0.0.1",
+  "description": "Hexi is a fun and easy way to make HTML5 games or any other kind interactive media using pure JavaScript code.",
+  "main": "hexi.js",
+  "bin": {
+    "hexi": "core.js"
+  },
+  "directories": {
+    "example": "examples"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kittykatattack/hexi.git"
+  },
+  "keywords": [
+    "PIXI",
+    "HTML5",
+    "Games",
+    "Animation",
+    "WebGL"
+  ],
+  "author": "kittykatattack",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/kittykatattack/hexi/issues"
+  },
+  "homepage": "https://github.com/kittykatattack/hexi#readme",
+  "devDependencies": {
+    "babel-cli": "^6.22.2",
+    "babel-core": "^6.22.1",
+    "babel-plugin-transform-remove-strict-mode": "^0.0.2",
+    "babel-preset-env": "^1.1.8",
+    "coffee-script": "^1.12.3",
+    "del": "^2.2.2",
+    "gulp": "gulpjs/gulp.git#4.0",
+    "gulp-babel": "^6.1.2",
+    "gulp-concat": "^2.6.1",
+    "gulp-load-plugins": "^1.4.0",
+    "gulp-rename": "^1.2.2",
+    "gulp-sourcemaps": "^2.4.0",
+    "gulp-uglify": "^2.0.1"
+  }
+}
