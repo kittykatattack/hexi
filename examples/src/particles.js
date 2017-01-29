@@ -72,8 +72,8 @@ function setup() {
 
   g.pointer.press = () => {
     g.createParticles(
-      g.pointer.x, 
-      g.pointer.y, 
+      g.pointer.x,
+      g.pointer.y,
       () => g.sprite("images/star.png"),
       g.stage,
       50
@@ -81,7 +81,5 @@ function setup() {
   };
 
   //Add text instructions
-  g.text("Tap to make stars", "14px Futura", "white", 6, 4);  
+  g.text("Tap to make stars", "Futura", "14px", "white", 6, 4);
 }
-
-

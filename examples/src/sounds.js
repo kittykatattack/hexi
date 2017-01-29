@@ -42,8 +42,8 @@ function setup() {
   //Use the `sounds` method to create sound objects. The `sound`
   //method takes one argument: a string that describes the sound file path
   let shoot = g.sound("sounds/shoot.wav"),
-      explosion = g.sound("sounds/explosion.wav"),
-      music = g.sound("sounds/music.wav");
+    explosion = g.sound("sounds/explosion.wav"),
+    music = g.sound("sounds/music.wav");
 
   //Next, setup the sounds
 
@@ -60,22 +60,22 @@ function setup() {
 
   //Create the keyboard objects to play the sounds
   let one = g.keyboard(49),
-      a = g.keyboard(65),
-      b = g.keyboard(66),
-      c = g.keyboard(67),
-      d = g.keyboard(68),
-      e = g.keyboard(69),
-      f = g.keyboard(70),
-      gee = g.keyboard(71),
-      h = g.keyboard(72),
-      i = g.keyboard(73),
-      j = g.keyboard(74);
+    a = g.keyboard(65),
+    b = g.keyboard(66),
+    c = g.keyboard(67),
+    d = g.keyboard(68),
+    e = g.keyboard(69),
+    f = g.keyboard(70),
+    gee = g.keyboard(71),
+    h = g.keyboard(72),
+    i = g.keyboard(73),
+    j = g.keyboard(74);
 
   //Create `press` actions for each sound 
   a.press = () => {
 
     //Allow the music to start playing only once
-    if (!music.playing) music.play(); 
+    if (!music.playing) music.play();
   };
   b.press = () => music.pause();
   c.press = () => music.restart();
@@ -93,57 +93,57 @@ function setup() {
   //The shoot sound
   function shootSound() {
     g.soundEffect(
-      1046.5,           //frequency
-      0,                //attack
-      0.3,              //decay
-      "sawtooth",       //waveform
-      1,                //Volume
-      -0.8,             //pan
-      0,                //wait before playing
-      1200,             //pitch bend amount
-      false,            //reverse bend
-      0,                //random pitch range
-      25,               //dissonance
+      1046.5, //frequency
+      0, //attack
+      0.3, //decay
+      "sawtooth", //waveform
+      1, //Volume
+      -0.8, //pan
+      0, //wait before playing
+      1200, //pitch bend amount
+      false, //reverse bend
+      0, //random pitch range
+      25, //dissonance
       [0.2, 0.2, 2000], //echo: [delay, feedback, filter]
-      undefined         //reverb: [duration, decay, reverse?]
+      undefined //reverb: [duration, decay, reverse?]
     );
   }
 
   //The jump sound
   function jumpSound() {
     g.soundEffect(
-      523.25,       //frequency
-      0.05,         //attack
-      0.2,          //decay
-      "sine",       //waveform
-      3,            //volume
-      0.8,          //pan
-      0,            //wait before playing
-      600,          //pitch bend amount
-      true,         //reverse
-      100,          //random pitch range
-      0,            //dissonance
-      undefined,    //echo: [delay, feedback, filter]
-      undefined     //reverb: [duration, decay, reverse?]
+      523.25, //frequency
+      0.05, //attack
+      0.2, //decay
+      "sine", //waveform
+      3, //volume
+      0.8, //pan
+      0, //wait before playing
+      600, //pitch bend amount
+      true, //reverse
+      100, //random pitch range
+      0, //dissonance
+      undefined, //echo: [delay, feedback, filter]
+      undefined //reverb: [duration, decay, reverse?]
     );
   }
 
   //The explosion sound
   function explosionSound() {
     g.soundEffect(
-      16,          //frequency
-      0,           //attack
-      1,           //decay
-      "sawtooth",  //waveform
-      1,           //volume
-      0,           //pan
-      0,           //wait before playing
-      0,           //pitch bend amount
-      false,       //reverse
-      0,           //random pitch range
-      50,          //dissonance
-      undefined,   //echo: [delay, feedback, filter]
-      undefined    //reverb: [duration, decay, reverse?]
+      16, //frequency
+      0, //attack
+      1, //decay
+      "sawtooth", //waveform
+      1, //volume
+      0, //pan
+      0, //wait before playing
+      0, //pitch bend amount
+      false, //reverse
+      0, //random pitch range
+      50, //dissonance
+      undefined, //echo: [delay, feedback, filter]
+      undefined //reverb: [duration, decay, reverse?]
     );
   }
 
@@ -156,7 +156,7 @@ function setup() {
     //High D
     g.soundEffect(1174.66, 0, 0.3, "square", 1, 0, 0.2);
   }
- 
+
   //Program keyboard keys to play the sounds.
   gee.press = () => shootSound();
   h.press = () => jumpSound();
@@ -164,14 +164,14 @@ function setup() {
   j.press = () => bonusSound();
 
   //Display the instructions
-  let instructions = g.text("", "12px PetMe64", "yellowGreen");
+  let instructions = g.text("", "PetMe64", "12px", "yellowGreen");
   instructions.setPosition(10, 0);
 
   //Here's an example of how to create multiline text
   //using ES6 template strings (surounding the text with 
   //backtick characters)
-  instructions.content = 
-`
+  instructions.content =
+    `
 To shoot, press 1
 
 To control music:
@@ -190,5 +190,3 @@ Generated sound effects
 `;
 
 }
-
-

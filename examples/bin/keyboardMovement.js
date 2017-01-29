@@ -81,7 +81,7 @@ function setup() {
   */
 
   //Add the instruction text
-  message = g.text("Use the arrow keys to move the cat", "18px Futura", "black", 6, 6);
+  message = g.text("Use the arrow keys to move the cat", "Futura", "18px", "black", 6, 6);
 
   //Change the game state to `play`.
   g.state = play;

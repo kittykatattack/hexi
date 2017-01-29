@@ -14,20 +14,20 @@ g.scaleToWindow();
 
 //Declare variables used in more than one function
 var sceneOne,
-    blackSquare,
-    messageOne,
-    sceneTwo,
-    blueSquare,
-    messageTwo,
-    oneTween,
-    twoTween;
+  blackSquare,
+  messageOne,
+  sceneTwo,
+  blueSquare,
+  messageTwo,
+  oneTween,
+  twoTween;
 
 //The `setup` function to initialize your application
 function setup() {
 
   //Make a black square and some text
   blackSquare = g.rectangle(128, 128, "black");
-  messageOne = g.text("One", "16px puzzler", "white");
+  messageOne = g.text("One", "puzzler", "16px", "white");
 
   //Use `setPosition` to set the `x` and `y` 
   //value with one line of code
@@ -61,7 +61,7 @@ function setup() {
 
   //Make a blue square and some text.
   blueSquare = g.rectangle(128, 128, "cyan");
-  messageTwo = g.text("Two", "16px puzzler", "red");
+  messageTwo = g.text("Two", "puzzler", "16px", "red");
   messageTwo.setPosition(40, 52);
 
   //Create a `sceneTwo` group and add `blueSquare` and
@@ -77,7 +77,7 @@ function setup() {
 
   /*
   Tweening
-  Use one of Ga's many built in tween functions to make the 
+  Use one of Hexi's many built in tween functions to make the 
   scene groups move. Here's how to use the `slide` method to 
   make the scenes move, in a continuous loop, between the top and
   bottom corners of the screen. There's a delay of 2000 milliseconds
@@ -111,8 +111,8 @@ function setup() {
   set `yoyo` (the 6th argument) to `false`.
   */
 
-  oneTween = g.slide(sceneOne, 128, 128, 60, "smoothstep", true, 2000); 
-  twoTween = g.slide(sceneTwo, 0, 0, 60, "smoothstep", true, 2000); 
+  oneTween = g.slide(sceneOne, 128, 128, 60, "smoothstep", true, 2000);
+  twoTween = g.slide(sceneTwo, 0, 0, 60, "smoothstep", true, 2000);
 
   /*
   There are many more tween effects you can use, including `pulse`,
@@ -147,7 +147,7 @@ function setup() {
     //... then use `pulse` to make a sprite fade in and out, in a
     //continuous loop.
     //`pulse` arguments: sprite, durationInFrames, minimumAlphaValue
-    g.pulse(sceneOne, 30, 0.3);    
+    g.pulse(sceneOne, 30, 0.3);
   });
 
   /*
@@ -156,5 +156,3 @@ function setup() {
   var spriteFade = g.fadeIn(sprite, durationInFrames);
   */
 }
-
-

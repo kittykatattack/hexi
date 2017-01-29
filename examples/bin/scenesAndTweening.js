@@ -22,7 +22,7 @@ function setup() {
 
   //Make a black square and some text
   blackSquare = g.rectangle(128, 128, "black");
-  messageOne = g.text("One", "16px puzzler", "white");
+  messageOne = g.text("One", "puzzler", "16px", "white");
 
   //Use `setPosition` to set the `x` and `y`
   //value with one line of code
@@ -56,7 +56,7 @@ function setup() {
 
   //Make a blue square and some text.
   blueSquare = g.rectangle(128, 128, "cyan");
-  messageTwo = g.text("Two", "16px puzzler", "red");
+  messageTwo = g.text("Two", "puzzler", "16px", "red");
   messageTwo.setPosition(40, 52);
 
   //Create a `sceneTwo` group and add `blueSquare` and
@@ -72,7 +72,7 @@ function setup() {
 
   /*
   Tweening
-  Use one of Ga's many built in tween functions to make the 
+  Use one of Hexi's many built in tween functions to make the 
   scene groups move. Here's how to use the `slide` method to 
   make the scenes move, in a continuous loop, between the top and
   bottom corners of the screen. There's a delay of 2000 milliseconds

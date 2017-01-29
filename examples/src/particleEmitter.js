@@ -27,10 +27,10 @@ g.scaleToWindow();
 function setup() {
 
   let particleStream = g.particleEmitter(
-    100,                                   //The interval, in milliseconds
-    () => g.createParticles(               //The `createParticles` method
-      g.pointer.x, 
-      g.pointer.y, 
+    100, //The interval, in milliseconds
+    () => g.createParticles( //The `createParticles` method
+      g.pointer.x,
+      g.pointer.y,
       () => g.sprite("images/star.png"),
       g.stage,
       50
@@ -44,7 +44,5 @@ function setup() {
   g.pointer.release = () => particleStream.stop();
 
   //Add text instructions
-  g.text("Press and hold to make stars", "14px Futura", "white", 6, 4);
+  g.text("Press and hold to make stars", "Futura", "16px", "white", 6, 4);
 }
-
-

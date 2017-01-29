@@ -17,18 +17,22 @@ let pixie;
 //The `setup` function to initialize your application
 function setup() {
 
-/*
-  Hexi has three way that you can make sprites with animation frames.
-  The first, lower level way, is to use the `frames` method. `frames`
-  lets you list an array of x/y positions on an image that refer to
-  each sub-image that you wan to use. Here's how to use it:
-  */   
+  /*
+    Hexi has three way that you can make sprites with animation frames.
+    The first, lower level way, is to use the `frames` method. `frames`
+    lets you list an array of x/y positions on an image that refer to
+    each sub-image that you wan to use. Here's how to use it:
+    */
 
   //Create the pixie's animation frames using the `frames` method
   let pixieFrames = g.frames(
     "images/pixieFrames.png", //The tileset image
-    [[0,0],[48,0],[96,0]],    //The `x` and `y` positions of frames
-    48, 32                    //The `width` and `height` of each frame
+    [
+      [0, 0],
+      [48, 0],
+      [96, 0]
+    ], //The `x` and `y` positions of frames
+    48, 32 //The `width` and `height` of each frame
   );
 
   //Make a sprite using the frames
@@ -73,7 +77,7 @@ function setup() {
   //pixie.playAnimation([0, 1]);
 
 
-  g.state = play;    
+  g.state = play;
 }
 
 function play() {
@@ -82,5 +86,3 @@ function play() {
   //`followEase` arguments: follower, leader, speed
   g.followEase(pixie, g.pointer, 0.1);
 }
-
-

@@ -32,10 +32,8 @@ function setup() {
   //If you ever need to disable drag and drop, set Hexi's 
   //`draggable` property to `false`, like this:
   //tiger.draggable = false;
-  
+
   //Drag and drop sprite remain interactive even if there's no game loop
   //running in your application (like the `play` function, for example). 
   //That's because they're updated by Hexi's internal game loop.
 }
-
-

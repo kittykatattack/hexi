@@ -19,12 +19,12 @@ g.start();
 g.scaleToWindow();
 
 //Declare variables used in more than one function
-let elf, forest, leftArrow, upArrow, downArrow, rightArrow; 
+let elf, forest, leftArrow, upArrow, downArrow, rightArrow;
 
 //The `setup` function to initialize your application
 function setup() {
 
-//Make the forest background
+  //Make the forest background
   forest = g.sprite("images/forest.png");
 
   /*
@@ -74,13 +74,13 @@ function setup() {
 
   //Use the `show` method to display the elf's `right` state
   elf.show(elf.states.right);
- 
+
   //Create some keyboard objects
   leftArrow = g.keyboard(37);
   upArrow = g.keyboard(38);
   rightArrow = g.keyboard(39);
   downArrow = g.keyboard(40);
-  
+
   //Assign key `press` and release methods that
   //show and play the elf's different states
   leftArrow.press = () => {
@@ -129,18 +129,16 @@ function setup() {
   };
 
   //Add text instructions
-  g.text("Use the arrow keys to walk", "14px Futura", "white", 6, 4);    
+  g.text("Use the arrow keys to walk", "Futura", "14px", "white", 6, 4);
 
-  g.state = play;    
+  g.state = play;
 }
 
 function play() {
 
   //Move the elf and constrain it to the canvas boundaries
   //(-18 and +18 are to compensate for image padding around the sprite)
-  elf.x = Math.max(-18, Math.min(elf.x + elf.vx, g.canvas.width - elf.width + 18)); 
+  elf.x = Math.max(-18, Math.min(elf.x + elf.vx, g.canvas.width - elf.width + 18));
   elf.y = Math.max(64, Math.min(elf.y + elf.vy, g.canvas.height - elf.height));
 
 }
-
-

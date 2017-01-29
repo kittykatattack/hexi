@@ -84,7 +84,7 @@ function setup() {
   //Add the instruction text
   message = g.text(
     "Use the arrow keys to move the cat",
-    "18px Futura", "black",
+    "Futura", "18px", "black",
     6, 6
   );
 

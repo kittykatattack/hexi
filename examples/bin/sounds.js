@@ -180,7 +180,7 @@ function setup() {
   };
 
   //Display the instructions
-  var instructions = g.text("", "12px PetMe64", "yellowGreen");
+  var instructions = g.text("", "PetMe64", "12px", "yellowGreen");
   instructions.setPosition(10, 0);
 
   //Here's an example of how to create multiline text

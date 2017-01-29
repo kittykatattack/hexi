@@ -36,7 +36,7 @@ function setup() {
   want to use for each frame.
   (The best way to make a sprite with multiple frames is to use a 
   texture atlas - see the next example.)
-  */   
+  */
 
   //You can make a sprite from an array of images, like this:
   pixie = g.sprite([
@@ -44,7 +44,7 @@ function setup() {
     "images/pixie1.png",
     "images/pixie2.png"
   ]);
-  
+
   //You can control the sprites using the same methods and properties
   //you learned in the previous example.
 
@@ -78,7 +78,7 @@ function setup() {
   //pixie.fps = 1;
   //pixie.playAnimation([0, 1]);
 
-  g.state = play;    
+  g.state = play;
 }
 
 function play() {
@@ -87,5 +87,3 @@ function play() {
   //`followEase` arguments: follower, leader, speed
   g.followEase(pixie, g.pointer, 0.1);
 }
-
-

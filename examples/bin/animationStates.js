@@ -131,7 +131,7 @@ function setup() {
   };
 
   //Add text instructions
-  g.text("Use the arrow keys to walk", "14px Futura", "white", 6, 4);
+  g.text("Use the arrow keys to walk", "Futura", "14px", "white", 6, 4);
 
   g.state = play;
 }

@@ -47,6 +47,6 @@ function setup() {
   };
 
   //Add text instructions
-  g.text("Press and hold to make stars", "14px Futura", "white", 6, 4);
+  g.text("Press and hold to make stars", "Futura", "16px", "white", 6, 4);
 }
 //# sourceMappingURL=particleEmitter.js.map

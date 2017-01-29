@@ -65,11 +65,11 @@ function setup() {
   button.y = g.canvas.height / 2 - 48;
 
   //Some text to display the button's state and action
-  stateMessage = g.text("State not set", "14px puzzler", "black");
+  stateMessage = g.text("State not set", "puzzler", "14px", "black");
   stateMessage.x = 12;
   stateMessage.y = 12;
 
-  actionMessage = g.text("Action not set", "14px puzzler", "black");
+  actionMessage = g.text("Action not set", "puzzler", "14px", "black");
   actionMessage.x = 12;
   actionMessage.y = 32;
 
