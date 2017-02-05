@@ -2776,7 +2776,7 @@ var Charm = (function () {
     //Add `scaleX` and `scaleY` properties to Pixi sprites
     this._addScaleProperties = function (sprite) {
       if (_this.renderer === "pixi") {
-        if (!sprite.scaleX && sprite.scale.x) {
+        if (!("scaleX" in sprite) && "scale" in sprite && "x" in sprite.scale) {
           Object.defineProperty(sprite, "scaleX", {
             get: function get() {
               return sprite.scale.x;
@@ -2786,7 +2786,7 @@ var Charm = (function () {
             }
           });
         }
-        if (!sprite.scaleY && sprite.scale.y) {
+        if (!("scaleY" in sprite) && "scale" in sprite && "y" in sprite.scale) {
           Object.defineProperty(sprite, "scaleY", {
             get: function get() {
               return sprite.scale.y;
