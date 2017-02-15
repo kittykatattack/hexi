@@ -2,7 +2,7 @@
 
 /*
 Hexi has a suite of easy-to-use and versatile tweening
-effects for games. See the code below to find out how 
+effects for games. See the code below to find out how
 to use them.
 */
 

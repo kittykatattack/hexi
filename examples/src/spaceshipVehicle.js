@@ -24,7 +24,7 @@ function setup() {
   turret = g.line("red", 4, 0, 0, 32, 0);
 
   //Center the ship's rotation point
-  ship.setPivot(0.5, 0.5);    
+  ship.setPivot(0.5, 0.5);
 
   //Add the turret to the ship and place it in the center
   ship.addChild(turret);
@@ -54,7 +54,7 @@ function setup() {
       upArrow = g.keyboard(38),
       rightArrow = g.keyboard(39),
       downArrow = g.keyboard(40);
-      
+
   //Set the ship's `rotationSpeed` to -0.1 (to rotate left) if the
   //left arrow key is being pressed
   leftArrow.press = () =>  {
@@ -90,7 +90,7 @@ function setup() {
   message = g.text("", "12px puzzler", "black", 8, 8);
 
   //Change the state to `play`
-  g.state = play;  
+  g.state = play;
 }
 
 //The `play` function will run in a loop
@@ -99,15 +99,15 @@ function play() {
   //Use the `rotationSpeed` to set the ship's rotation
   ship.rotation += ship.rotationSpeed;
 
-  //If `ship.moveForward` is `true`, use acceleration with a 
+  //If `ship.moveForward` is `true`, use acceleration with a
   //bit of basic trigonometry to make the ship move in the
   //direction of its rotation
   if (ship.moveForward) {
     ship.vx += ship.accelerationX * Math.cos(ship.rotation);
     ship.vy += ship.accelerationY * Math.sin(ship.rotation);
-  } 
-  
-  //If `ship.moveForward` is `false`, use 
+  }
+
+  //If `ship.moveForward` is `false`, use
   //friction to slow the ship down
   else {
     ship.vx *= ship.frictionX;

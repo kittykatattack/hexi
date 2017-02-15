@@ -153,7 +153,7 @@ function setupGame() {
     function () {
       return g.sprite(dustFrames);
     }, //Particle sprite
-    g.stage, //The container to add the particles to              
+    g.stage, //The container to add the particles to
     3, //Number of particles
     0, //Gravity
     true, //Random spacing
@@ -251,7 +251,7 @@ function play() {
     function () {
       return g.sprite(dustFrames);
     }, //Particle sprite
-    g.stage, //The container to add the particles to 
+    g.stage, //The container to add the particles to
     20, //Number of particles
     0, //Gravity
     false, //Random spacing
@@ -272,7 +272,7 @@ function play() {
   /*
   //Check for a collision between the fairy and the blocks
   let fairyVsBlock = g.hit(
-     //arguments: sprite, array, react, bounce, global 
+     //arguments: sprite, array, react, bounce, global
     fairy, blocks.children, false, false, true,
      //collision function
     () => {
@@ -284,7 +284,7 @@ function play() {
           fairy.centerX, fairy.centerY, //x and y position
           function() {                  //Particle sprite
             return g.sprite(dustFrames)
-          },     
+          },
           20,                           //Number of particles
           0,                            //Gravity
           false,                        //Random spacing
@@ -292,7 +292,7 @@ function play() {
           16, 32,                       //Min/max size
           1, 3                          //Min/max speed
         );
-        
+
         //Stop the dust emitter
         dust.stop();
          //Wait 3 seconds and then reset the game

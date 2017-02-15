@@ -24,7 +24,7 @@ function setup() {
   turret = g.line("red", 4, 0, 0, 32, 0);
 
   //Center the ship's rotation point
-  tank.setPivot(0.5, 0.5);    
+  tank.setPivot(0.5, 0.5);
 
   //Add the turret to the ship and place it in the center
   tank.addChild(turret);
@@ -49,13 +49,13 @@ function setup() {
 
   //Whether or not the tank should move forward
   tank.moveForward = false;
-  
+
   //Define the arrow keys to move the tank
   let leftArrow = g.keyboard(37),
       upArrow = g.keyboard(38),
       rightArrow = g.keyboard(39),
       downArrow = g.keyboard(40);
-      
+
   //Set the tank's `rotationSpeed` to -0.1 (to rotate left) if the
   //left arrow key is being pressed
   leftArrow.press = () => {
@@ -91,7 +91,7 @@ function setup() {
   message = g.text("", "12px puzzler", "black", 8, 8);
 
   //Change the state to `play`
-  g.state = play;  
+  g.state = play;
 }
 
 //The `play` function will run in a loop
@@ -103,9 +103,9 @@ function play() {
   //If `tank.moveForward` is `true`, increase the speed
   if (tank.moveForward) {
     tank.speed += 0.1;
-  } 
-    
-  //If `tank.moveForward` is `false`, use 
+  }
+
+  //If `tank.moveForward` is `false`, use
   //friction to slow the tank down
   else {
     tank.speed *= tank.friction;

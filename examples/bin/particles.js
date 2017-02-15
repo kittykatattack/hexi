@@ -3,7 +3,7 @@
 /*
 Create particles with a versatile method called function called
 `createParticles`. It's all you'll need for most 2D action games.
-Here's an example of how to use it to 
+Here's an example of how to use it to
 produce a starburst effect at the pointer's x and y position.
 
     g.createParticles(
@@ -22,41 +22,41 @@ produce a starburst effect at the pointer's x and y position.
       0.05, 0.1                                //Min/max rotation speed
     );
 
-You can see that most of those arguments describe range between 
-the minimum and maximum values that should be used to change 
+You can see that most of those arguments describe range between
+the minimum and maximum values that should be used to change
 the sprites’ speed, rotation, scale and alpha.
 You can also assign the number of particles that should be created,
-and add optional gravity. 
+and add optional gravity.
 
-You can make particles using any sprites by customizing the third argument. 
+You can make particles using any sprites by customizing the third argument.
 Just supply a function that returns the kind of sprite you want to use for each particle:
 
     () => g.sprite("images/star.png"),
 
-If you supply a sprite that has multiple frames, the `createParticles` 
+If you supply a sprite that has multiple frames, the `createParticles`
 method will automatically choose a random frame for each particle.
 
-The minimum and maximum angle values are important for defining the 
-circular spread of particles as they radiate out from the origin point. 
-For a completely circular explosion effect, use a minimum angle 
+The minimum and maximum angle values are important for defining the
+circular spread of particles as they radiate out from the origin point.
+For a completely circular explosion effect, use a minimum angle
 of 0, and a maximum angle for 6.28.
 
     0, 6.28
 
-(These numbers values are radians; the equivalent in degrees is 0 and 360.) 
-0 starts at the 3 o’clock position, pointing directly to the right. 3.14 
+(These numbers values are radians; the equivalent in degrees is 0 and 360.)
+0 starts at the 3 o’clock position, pointing directly to the right. 3.14
 is the 9 o’clock position, and 6.28 takes you around back to 0 again.
 
-If you want to constrain the particles to a narrower angle range, just supply 
-the minimum and maximum values that describe that range. Here are values 
+If you want to constrain the particles to a narrower angle range, just supply
+the minimum and maximum values that describe that range. Here are values
 you could use to constrain the angle to a pizza-slice with the crust pointing left.
 
 2.4, 3.6
 
-You could use a constrained angle range like this to create a particle stream, 
-like a fountain or rocket engine flames. By carefully choosing the sprite for 
-the particle and finely adjusting each parameter, you can use this 
-all-purpose `createParticles` method to simulate everything from liquid to fire. 
+You could use a constrained angle range like this to create a particle stream,
+like a fountain or rocket engine flames. By carefully choosing the sprite for
+the particle and finely adjusting each parameter, you can use this
+all-purpose `createParticles` method to simulate everything from liquid to fire.
 */
 
 //Create a new Hexi instance, and start it.

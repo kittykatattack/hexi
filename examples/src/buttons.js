@@ -33,7 +33,7 @@ function setup() {
   ];
 
   //Alternatively, you can use the `frames` method to make a button
-  //from a single tileset image that contains sub-images which 
+  //from a single tileset image that contains sub-images which
   //represent each button state
   /*
   let buttonFrames = g.frames(
@@ -46,7 +46,7 @@ function setup() {
   //Make a `button` using the frames
   button = g.button(buttonFrames);
 
-  //Assign the button's optional and customizable `press`, `release`, 
+  //Assign the button's optional and customizable `press`, `release`,
   //`over`, `out` and `tap` actions
   button.press = () => console.log("pressed");
   button.release = () => console.log("released");

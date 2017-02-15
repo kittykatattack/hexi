@@ -18,11 +18,11 @@ Hexi's Application Architecture is made up of four main parts:
 This simple model is all you need to create any kind of game or application.
 You can use it as the starting template for your own projects, and this same
 basic model can scale to any size.
-Take a look at the code ahead to see how it all works. 
+Take a look at the code ahead to see how it all works.
 */
 
-/* 
-1. Setting up and starting Hexi 
+/*
+1. Setting up and starting Hexi
 -------------------------------
 */
 
@@ -39,7 +39,7 @@ let thingsToLoad = [
 //Initialize Hexi with the `hexi` function. It has 5 arguments,
 //although only the first 3 are required:
 //a. Canvas width.
-//b. Canvas height. 
+//b. Canvas height.
 //c. The `setup` function.
 //d. The `thingsToLoad` array you defined above. This is optional.
 //e. The `load` function. This is also optional.
@@ -64,13 +64,13 @@ g.scaleToWindow();
 g.start();
 
 
-/* 
-2. Loading Files 
+/*
+2. Loading Files
 ----------------
 */
 
 //The `load` function will run while assets are loading. This is the
-//same `load` function you assigned as Hexi's 4th initialization argument. 
+//same `load` function you assigned as Hexi's 4th initialization argument.
 //Its optional. You can leave it out if you don't have any files to
 //load, or you don't need to monitor their loading progress
 
@@ -82,7 +82,7 @@ function load() {
   //Display the percentage of files currently loaded
   console.log(`progress: ${g.loadingProgress}`);
 
-  //Add an optional loading bar. 
+  //Add an optional loading bar.
   g.loadingBar();
 
   //This built-in loading bar is fine for prototyping, but I
@@ -92,8 +92,8 @@ function load() {
 }
 
 
-/* 
-3. Initialize and Set up your game objects 
+/*
+3. Initialize and Set up your game objects
 ------------------------------------------
 */
 
@@ -116,7 +116,7 @@ function setup() {
   //`pointer` object each time it's clicked.
   let makeCat = (x, y) => {
 
-    //Create the cat sprite. Supply the `sprite` method with 
+    //Create the cat sprite. Supply the `sprite` method with
     //the name of the loaded image that should be displayed
     let cat = g.sprite("images/cat.png");
 
@@ -134,7 +134,7 @@ function setup() {
     //cat.x = x;
     //cat.y = y;
 
-    //Add some optional tween animation effects from the Hexi's 
+    //Add some optional tween animation effects from the Hexi's
     //built-in tween library (called Charm). `breathe` makes the
     //sprite scale in and out. `pulse` oscillates its transparency
     g.breathe(cat, 2, 2, 20);
@@ -162,7 +162,7 @@ function setup() {
   //Make sure to load the bitmap text's XML file first.
   //message = g.bitmapText("Tap to make cats!", "32p disko");
 
-  //Center the `message` sprite relative to the `stage` 
+  //Center the `message` sprite relative to the `stage`
   g.stage.putCenter(message);
 
   //You can also use
@@ -183,13 +183,13 @@ function setup() {
   //Hexi has a built-in universal pointer object that works for both
   //touch and the mouse.
   //Create a cat sprite when you `tap` Hexi's `pointer`.
-  //(The pointer also has `press` and `release` methods) 
+  //(The pointer also has `press` and `release` methods)
   g.pointer.tap = () => {
 
     //Supply `makeCat` with the pointer's `x` and `y` coordinates.
     makeCat(g.pointer.x, g.pointer.y);
 
-    //Make the `message.content` display the number of cats 
+    //Make the `message.content` display the number of cats
     message.content = `${cats.children.length}`;
   };
 
@@ -207,7 +207,7 @@ function setup() {
 
 
 /*
-4. The game logic 
+4. The game logic
 ------------------
 */
 
@@ -229,7 +229,7 @@ function play() {
   }
   */
 
-  //Rotate the text 
+  //Rotate the text
   message.rotation += 0.1;
 
   //Loop through all of the cats to make them move and bounce off the

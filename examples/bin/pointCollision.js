@@ -1,7 +1,7 @@
 "use strict";
 
 /*
-Learn how to test for a collision between a point and a shape 
+Learn how to test for a collision between a point and a shape
 */
 
 //Create a new Hexi instance, and start it.
@@ -45,7 +45,7 @@ function play() {
   message.content = "No collision...";
 
   /*
-  Check for a collision between the pointer and the 
+  Check for a collision between the pointer and the
   ball and box. The collision variables will be `true`
   if there's a collision and `false` if there isn't.
   Use the universal `hit` method to do the collision check.

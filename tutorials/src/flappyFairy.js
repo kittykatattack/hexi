@@ -17,11 +17,11 @@ g.start();
 //until a more reliable system can be built. There were too many
 //cross-platform bugs to implement this reliably inside Hexi.
 //Enable fullscreen mode using `enableFullscreen`.
-//Fullscreen mode will be activated as soon as the 
+//Fullscreen mode will be activated as soon as the
 //user clicks or touches the canvas.
 //You can supply an optional list of ascii keycodes for keys that
 //will exit fullscreen mode. In this example you can exit fullscreen
-//mode by pressing lowercase `x` (88) or uppercase `X` (120) on 
+//mode by pressing lowercase `x` (88) or uppercase `X` (120) on
 //the keyboard. If you leave these arguments out, the default `esc`
 //key will do the trick.
 //g.enableFullScreen(88, 120);
@@ -133,7 +133,7 @@ function setupGame() {
     }
   }
 
-  //Make the fairy 
+  //Make the fairy
   let fairyFrames = [
     "0.png",
     "1.png",
@@ -146,7 +146,7 @@ function setupGame() {
   fairy.oldVy = 0;
 
   //Create the frames array for the fairy dust images
-  //that trail the fairy 
+  //that trail the fairy
   dustFrames = [
     "pink.png",
     "yellow.png",
@@ -162,7 +162,7 @@ function setupGame() {
         fairy.x + 8, //x position
         fairy.y + fairy.halfHeight + 8, //y position
         () => g.sprite(dustFrames), //Particle sprite
-        g.stage, //The container to add the particles to               
+        g.stage, //The container to add the particles to
         3, //Number of particles
         0, //Gravity
         true, //Random spacing
@@ -179,7 +179,7 @@ function setupGame() {
   //Make the particle stream start playing when the game starts
   dust.play();
 
-  //Make the pointer and increase the fairy's 
+  //Make the pointer and increase the fairy's
   //vertical velocity when it's tapped
   g.pointer.tap = () => {
     fairy.vy += 1.5;
@@ -208,7 +208,7 @@ function play() {
   fairy.vy += -0.05;
   fairy.y -= fairy.vy;
 
-  //Decide whether or not the fairy should flap her wings 
+  //Decide whether or not the fairy should flap her wings
   //If she's starting to go up, make her flap her wings and emit fairy dust
   if (fairy.vy > fairy.oldVy) {
     if (!fairy.playing) {
@@ -217,7 +217,7 @@ function play() {
     }
   }
 
-  //If she's staring to go down, stop flapping her wings, show the first frame 
+  //If she's staring to go down, stop flapping her wings, show the first frame
   //and stop the fairy dust
   if (fairy.vy < 0 && fairy.oldVy > 0) {
     if (fairy.playing) fairy.stopAnimation();
@@ -230,7 +230,7 @@ function play() {
   //in the next frame. (You have to do this as the last step)
   fairy.oldVy = fairy.vy;
 
-  //Keep the fairy contained inside the stage and 
+  //Keep the fairy contained inside the stage and
   //neutralize her velocity if she hits the top or bottom boundary
   let fairyVsStage = g.contain(fairy, g.stage);
   if (fairyVsStage) {
@@ -260,7 +260,7 @@ function play() {
     g.createParticles(
       fairy.centerX, fairy.centerY, //x and y position
       () => g.sprite(dustFrames), //Particle sprite
-      g.stage, //The container to add the particles to  
+      g.stage, //The container to add the particles to
       20, //Number of particles
       0, //Gravity
       false, //Random spacing
@@ -282,7 +282,7 @@ function play() {
   //Check for a collision between the fairy and the blocks
   let fairyVsBlock = g.hit(
 
-    //arguments: sprite, array, react, bounce, global 
+    //arguments: sprite, array, react, bounce, global
     fairy, blocks.children, false, false, true,
 
     //collision function
@@ -297,7 +297,7 @@ function play() {
           fairy.centerX, fairy.centerY, //x and y position
           function() {                  //Particle sprite
             return g.sprite(dustFrames)
-          },     
+          },
           20,                           //Number of particles
           0,                            //Gravity
           false,                        //Random spacing
@@ -305,7 +305,7 @@ function play() {
           16, 32,                       //Min/max size
           1, 3                          //Min/max speed
         );
-        
+
         //Stop the dust emitter
         dust.stop();
 

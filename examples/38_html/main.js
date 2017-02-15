@@ -15,7 +15,7 @@ g.scaleToWindow();
 //It will scale and align itself automatically with Hexi's canvas.
 //(Find out more about how `scaleToWindow` works here: https://github.com/kittykatattack/scaleToWindow)
 scaleToWindow(document.querySelector("#ui"));
-window.addEventListener("resize", function(event){ 
+window.addEventListener("resize", function(event){
   scaleToWindow(document.querySelector("#ui"));
 });
 
@@ -52,7 +52,7 @@ function setup() {
 
   scale = g.sprite("images/scale.png");
   arrow = g.sprite("images/arrow.png");
-  
+
   g.stage.putTop(scale, 0, 220);
   arrow.x = scale.x;
   arrow.y = scale.y + arrow.height;
@@ -102,13 +102,13 @@ function buttonClickHandler(event) {
     gameWon = false;
     endGame();
   }
-  
+
 }
 
 //The `endGame` function
 function endGame() {
   if (gameWon) {
-    message.content 
+    message.content
       = "Yes, it's " + mysteryNumber + "! "
       + "It only took you " + guessesMade + " guesses.";
 

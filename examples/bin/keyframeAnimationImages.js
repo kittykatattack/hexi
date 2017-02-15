@@ -32,7 +32,7 @@ function setup() {
   You can also make animation frames from individual images files.
   Just feed the sprite any array containing the image files that you
   want to use for each frame.
-  (The best way to make a sprite with multiple frames is to use a 
+  (The best way to make a sprite with multiple frames is to use a
   texture atlas - see the next example.)
   */
 
@@ -54,7 +54,7 @@ function setup() {
   //pixie from flapping her wings after 3 seconds
   /*
   g.wait(3000, function(){
-     pixie.stopAnimation(); 
+     pixie.stopAnimation();
   });
   */
 

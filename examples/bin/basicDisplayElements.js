@@ -1,7 +1,7 @@
 "use strict";
 
 /*
-Most of what you need to know to display 
+Most of what you need to know to display
 images, text, access the pointer and do animation
 */
 
@@ -16,7 +16,7 @@ var thingsToLoad = ["images/star.png", //An image file
 ];
 
 /*
-Here's how you'll be able to access the loaded files 
+Here's how you'll be able to access the loaded files
 later in your application:
 
 1. An image:
@@ -24,7 +24,7 @@ later in your application:
    g.image("images/rocket.png")
 
 2. A texture atlas frame id
-    
+
    g.id("cat.png");
 
 3. JSON data file:
@@ -32,7 +32,7 @@ later in your application:
    g.json("images/animals.json");
 
 4. A texture atlas image
-   
+
    g.image("images/animals.png");
 
 5. A sound object
@@ -44,10 +44,10 @@ later in your application:
    g.xml("fonts/disko.xml");
 
 Hexi uses Pixi's resource loader to load and manage files.
-You can access the loader's `resources` object through Hexi's 
+You can access the loader's `resources` object through Hexi's
 `resources` property. You can access Pixi's `loader` object
 though Hexi's `loader` property
-    
+
 */
 
 //Create a new Hexi instance, and start it, using the `thingsToLoad`
@@ -152,7 +152,7 @@ function setup() {
   */
 
   /*
-  You can make a sprite using a frame JSON tileset file in 
+  You can make a sprite using a frame JSON tileset file in
   Texture Packer format. Just load the JSON file that contains the
   frame and supply the frame name in the sprite's argument. (The
   tileset image file will be loaded automatically when the JSON file

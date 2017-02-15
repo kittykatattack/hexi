@@ -73,7 +73,7 @@ function setup() {
       speed = 2,
       direction = 1;
 
-  //An array to store all the enemies   
+  //An array to store all the enemies
   enemies = [];
 
   //Make as many enemies as there are `numberOfEnemies`

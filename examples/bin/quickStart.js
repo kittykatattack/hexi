@@ -20,11 +20,11 @@ Hexi's Application Architecture is made up of four main parts:
 This simple model is all you need to create any kind of game or application.
 You can use it as the starting template for your own projects, and this same
 basic model can scale to any size.
-Take a look at the code ahead to see how it all works. 
+Take a look at the code ahead to see how it all works.
 */
 
-/* 
-1. Setting up and starting Hexi 
+/*
+1. Setting up and starting Hexi
 -------------------------------
 */
 
@@ -61,8 +61,8 @@ g.scaleToWindow();
 //won't run!
 g.start();
 
-/* 
-2. Loading Files 
+/*
+2. Loading Files
 ----------------
 */
 
@@ -88,8 +88,8 @@ function load() {
   //and `makeProgressBar` methods in Hexi's `core.js` file for ideas
 }
 
-/* 
-3. Initialize and Set up your game objects 
+/*
+3. Initialize and Set up your game objects
 ------------------------------------------
 */
 
@@ -202,7 +202,7 @@ function setup() {
 }
 
 /*
-4. The game logic 
+4. The game logic
 ------------------
 */
 

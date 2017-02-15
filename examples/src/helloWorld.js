@@ -11,7 +11,7 @@ function setup() {
   g.text("Hello World!");
 
   //Change the state to `play`
-  g.state = play;  
+  g.state = play;
 }
 
 //The `play` function will run in a loop

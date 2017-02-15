@@ -1,7 +1,7 @@
 "use strict";
 
 /*
-Learn how to use the `shoot` method to create a sprite 
+Learn how to use the `shoot` method to create a sprite
 that can shoot bullets
 */
 

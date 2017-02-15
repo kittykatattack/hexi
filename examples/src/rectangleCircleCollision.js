@@ -23,27 +23,27 @@ function setup() {
   blue = g.rectangle(64, 64, "blue");
   g.stage.putCenter(blue, blue.halfWidth + 16, blue.halfHeight + 16);
   blue.draggable = true;
-  
+
   //Make a red circle
   red = g.circle(64, "red");
   g.stage.putCenter(red, -red.halfWidth -16, -red.halfWidth -16);
   red.draggable = true;
 
-  //Add some text 
+  //Add some text
   message = g.text(
-    "Drag the circles...", 
+    "Drag the circles...",
     "16px sans-serif",
     "black", 10, 10
   );
-    
+
   //Change the state to `play`
-  g.state = play;  
+  g.state = play;
 }
 
 //The `play` function will run in a loop
 function play() {
 
-  //Set the default message content 
+  //Set the default message content
   message.content = "Drag the shapes...";
 
   //Check for a collision between the blue and red squares.
@@ -58,7 +58,7 @@ function play() {
 
   //Change the message if there's a collision between the circles
   if(collision) {
-    message.content = "Collision!"; 
+    message.content = "Collision!";
   }
 }
 

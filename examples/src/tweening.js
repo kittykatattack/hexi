@@ -1,6 +1,6 @@
 /*
 Hexi has a suite of easy-to-use and versatile tweening
-effects for games. See the code below to find out how 
+effects for games. See the code below to find out how
 to use them.
 */
 
@@ -19,7 +19,7 @@ let cat1, cat2, hedgehog1, hedgehog2, tiger1, tiger2,
 //The `setup` function to initialize your application
 function setup() {
 
-  //Create some sprites 
+  //Create some sprites
   cat1 = g.sprite("cat.png");
   text1 = g.text("slide", "20px Futura", "black");
   tiger1 = g.sprite("tiger.png");
@@ -104,7 +104,7 @@ function setup() {
 
   //Use `pulse` to make a sprite fade in and out.
   //`pulse` arguments: sprite, durationInFrames, minimumAlphaValue
-  let hedgehogPulse = g.pulse(hedgehog1, 120, 0.3); 
+  let hedgehogPulse = g.pulse(hedgehog1, 120, 0.3);
 
   //Optionally, find out when the each portion of the tween has
   //completed by using an `onComplete` method.
@@ -124,7 +124,7 @@ function setup() {
 
   //Use `breathe` to scale a sprite in and out in a simulated
   //breathing effect.
-  //`breathe` arguments: sprite, finalXScale, finalYScale, 
+  //`breathe` arguments: sprite, finalXScale, finalYScale,
   //durationInFrames, delayInMillsecondsBeforeRepeating
   let catBreathe = g.breathe(cat2, 1.4, 1.4, 60, true, 300);
 
@@ -135,7 +135,7 @@ function setup() {
   */
 
   //Use `strobe` to create a flashing effect.
-  //`strobe` arguments: sprite, scaleFactor, startMagnitude, endMagnitude, 
+  //`strobe` arguments: sprite, scaleFactor, startMagnitude, endMagnitude,
   //frames, yoyo?, delayInMillisecondsBeforeRepeating
   let tigerStrobe = g.strobe(tiger2, 1.3, 10, 20, 10);
 
@@ -145,10 +145,10 @@ function setup() {
   //`wobble` arguments: sprite, scaleFactorX, scaleFactorY, frames,
   //xStartMagnitude, xEndMagnitude, yStartMagnitude, yEndMagnitude,
   //friction, yoyo, delayBeforeRepeat
- 
+
   let hedgehogWobble = g.wobble(hedgehog2, 1.8, 1.8);
 
-  //Tweens are updated independently in Hexi's internal 
+  //Tweens are updated independently in Hexi's internal
   //game engine loop, so there's no need to update them in
   //your own `play` state to make them work.
 }

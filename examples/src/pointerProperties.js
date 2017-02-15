@@ -19,7 +19,7 @@ g.start();
 //The `setup` function to initialize your application
 function setup() {
 
-  //Get a reference to the output <p> tag 
+  //Get a reference to the output <p> tag
   output = document.querySelector("p");
 
   //Add a custom `press` method
@@ -32,15 +32,15 @@ function setup() {
   g.pointer.tap = () => {console.log("The pointer was tapped");}
 
   //Change the game state to `play`
-  g.state = play;  
+  g.state = play;
 }
 
 //The `play` function will run in a loop
 function play() {
 
-  //Display the pointer properties in the 
+  //Display the pointer properties in the
   //HTML <p> tag called `output`
-  output.innerHTML = 
+  output.innerHTML =
     `Pointer properties: <br>
      pointer.x: ${g.pointer.x} <br>
      pointer.y: ${g.pointer.y} <br>
@@ -48,7 +48,7 @@ function play() {
      pointer.isUp: ${g.pointer.isUp} <br>
      pointer.tapped: ${g.pointer.tapped}<br>
      <br>
-     Open the console window to see the result of the "press", 
+     Open the console window to see the result of the "press",
      "release" and "tap" methods.`;
 }
 

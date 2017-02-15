@@ -55,7 +55,7 @@ function setup() {
   //pixie from flapping her wings after 3 seconds
   /*
   g.wait(3000, function(){
-     pixie.stopAnimation(); 
+     pixie.stopAnimation();
   });
   */
 

@@ -71,7 +71,7 @@ function setup() {
   star = g.sprite("images/star.png");
   star.setPivot(0.5, 0.5);
 
-  //Add the star to the cat and position it to the right of the cat 
+  //Add the star to the cat and position it to the right of the cat
   cat.addChild(star);
   cat.putRight(star);
 

@@ -36,10 +36,10 @@ function setup() {
     tilewidth: 32,
     tileheight: 32,
 
-    //Tileset image properties. You could use a texture atlas, but 
+    //Tileset image properties. You could use a texture atlas, but
     //let's go old-skool on this one and just blit from directly from
     //an image
-    tileset: { 
+    tileset: {
 
       //The source image
       source: "images/platforms.png",
@@ -106,7 +106,7 @@ function setup() {
   };
 
   //Change the state to `play`
-  g.state = play;  
+  g.state = play;
 }
 
 //The `play` function will run in a loop
@@ -126,19 +126,19 @@ function play() {
   }
 
   //Apply the acceleration
-  player.vx += player.accelerationX; 
+  player.vx += player.accelerationX;
   player.vy += player.accelerationY;
-  
+
   //Apply friction
-  player.vx *= player.frictionX; 
-  
+  player.vx *= player.frictionX;
+
   //Apply gravity
   player.vy += player.gravity;
-  
+
   //Move the player
   g.move(player);
 
-  //Use the `hit` method to check for a collision between the 
+  //Use the `hit` method to check for a collision between the
   //player and the platforms
   let playerVsPlatforms = g.hit(
     player, world.platforms, true, false, false,
@@ -149,7 +149,7 @@ function play() {
       if (collision) {
         if (collision === "bottom" && player.vy >= 0) {
 
-          //Tell the game that the player is on the ground if 
+          //Tell the game that the player is on the ground if
           //it's standing on top of a platform
           player.isOnGround = true;
 
@@ -184,13 +184,13 @@ function play() {
   world.platforms.forEach(function(platform) {
 
     //Use `rectangleCollision` to prevent the player and platforms
-    //from overlapping  
+    //from overlapping
     let collision = g.rectangleCollision(player, platform);
-    
+
     //Use the collision variable to figure out what side of the player
     //is hitting the platform
     if(collision === "bottom" && player.vy >= 0) {
-      //Tell the game that the player is on the ground if 
+      //Tell the game that the player is on the ground if
       //it's standing on top of a platform
       player.isOnGround = true;
       //Neutralize gravity by applying its
@@ -216,7 +216,7 @@ function play() {
 
   //Treasure collection
   //Use `filter` and `hit` to check whether the player is touching a
-  //star. If it is, add 1 to the score, remove the `star` sprite and filter it out of the 
+  //star. If it is, add 1 to the score, remove the `star` sprite and filter it out of the
   //`world.treasure` array
   world.treasure = world.treasure.filter(function(star) {
     if (g.hit(player, star)){
@@ -225,21 +225,21 @@ function play() {
       return false;
     } else {
       return true;
-    } 
+    }
   });
 
   //Display the score
   output.content = "score: " + score;
 
   //That's it! The game code is finished here
-  //Just keep reading if you want to find out how the 
+  //Just keep reading if you want to find out how the
   //`makeWorld` function works
 }
 
 //`makeWorld` is a function that uses data from the level` object
 //to create a random platform game world procedurally. There are many
 //way you could do this, so this is just an idea to help you get
-//started making your own procedural game levels 
+//started making your own procedural game levels
 
 function makeWorld(level) {
 
@@ -277,11 +277,11 @@ function makeWorld(level) {
     //Give each cell a 1 in 4 chance to live. If it's "alive", it will
     //be rock, if it's "dead" it will be sky
     let cellIsAlive = () => g.randomInt(0, 3) === 0;
-    
-    //A loop creates a `cell` object for each 
-    //grid cell on the map. Each `cell` has a name, and a `x` and `y` 
+
+    //A loop creates a `cell` object for each
+    //grid cell on the map. Each `cell` has a name, and a `x` and `y`
     //position. The loop uses the `cellIsAlive` function to
-    //give each cell a 25% chance of being "rock" and a 75% 
+    //give each cell a 25% chance of being "rock" and a 75%
     //chance of being "sky".
     //First, figure out the number of cells in the grid
     let numberOfCells = level.heightInTiles * level.widthInTiles;
@@ -292,7 +292,7 @@ function makeWorld(level) {
       //Figure out the x and y position
       let x = i % level.widthInTiles,
           y = Math.floor(i / level.widthInTiles);
-      //Create the `cell` object 
+      //Create the `cell` object
       let cell = {
         x: x,
         y: y,
@@ -319,7 +319,7 @@ function makeWorld(level) {
     let getIndex = (x, y) => {
       return x + (y * level.widthInTiles)
     };
-    
+
     world.map.forEach((cell, index, map) => {
 
       //Some variables to help find the cells to the left, right, below
@@ -329,13 +329,13 @@ function makeWorld(level) {
           cellBelow = world.map[getIndex(cell.x, cell.y + 1)],
           cellAbove = world.map[getIndex(cell.x, cell.y - 1)],
           cellTwoAbove = world.map[getIndex(cell.x, cell.y - 2)];
-      
+
       //If the cell is on the border of the map, change its name to "border"
-      if (cell.x === 0 || cell.y === 0 
-      || cell.x === level.widthInTiles - 1 
-      || cell.y === level.heightInTiles - 1) { 
+      if (cell.x === 0 || cell.y === 0
+      || cell.x === level.widthInTiles - 1
+      || cell.y === level.heightInTiles - 1) {
         cell.terrain = "border";
-      } else { 
+      } else {
 
         //If the cell isn't on the border, find out if we can
         //grow some grass on it. Any rock with a sky cell above
@@ -346,7 +346,7 @@ function makeWorld(level) {
           //2. Is there sky directly above it?
           if (cellAbove && cellAbove.terrain === "sky") {
 
-            //3. Yes there is, so change its name to "grass" 
+            //3. Yes there is, so change its name to "grass"
             cell.terrain = "grass";
 
             //4. Make sure there are 2 sky cells above grass cells
@@ -357,7 +357,7 @@ function makeWorld(level) {
               if (cellTwoAbove.terrain === "rock"
               || cellTwoAbove.terrain === "grass") {
                 cellTwoAbove.terrain = "sky";
-              } 
+              }
             }
           }
         }
@@ -365,8 +365,8 @@ function makeWorld(level) {
     });
 
     //We now have the finished map.
-    //Next, we're going to loop through the map one more time 
-    //to find all the item location cells and push them into the 
+    //Next, we're going to loop through the map one more time
+    //to find all the item location cells and push them into the
     //itemLocations array. itemLocations is a list of cells that
     //we'll use later to place the player and treasure
     world.map.forEach((cell, index, map) => {
@@ -377,7 +377,7 @@ function makeWorld(level) {
         let cellAbove = world.map[getIndex(cell.x, cell.y - 1)];
         world.itemLocations.push(cellAbove);
       }
-    });  
+    });
   }
 
   function addItems() {
@@ -399,7 +399,7 @@ function makeWorld(level) {
     //Find a random cell from the itemLocations array
     let cell = findStartLocation();
     cell.item = "player";
-    
+
     //2. Add 3 treasure boxes
     for (let i = 0; i < 3; i++) {
       cell = findStartLocation();
@@ -410,12 +410,12 @@ function makeWorld(level) {
 
   function makeTileSprites() {
     //The map and gameObjects arrays are complete, so we can
-    //now use them to create the sprites. 
-    //All the map sprites will use the same x, y, width and 
-    //height values as the cell objects in those arrays. 
-    //rock, grass and border sprites will be pushed into the 
+    //now use them to create the sprites.
+    //All the map sprites will use the same x, y, width and
+    //height values as the cell objects in those arrays.
+    //rock, grass and border sprites will be pushed into the
     //`platforms` array so that use them for collision in the game loop
-    
+
     //Make the terrain
     world.map.forEach((cell, index, map) => {
       let sprite,
@@ -428,47 +428,47 @@ function makeWorld(level) {
       switch (cell.terrain) {
         case "rock":
           frame = g.frame(
-            level.tileset.source, 
-            level.tileset.rock[0], 
-            level.tileset.rock[1], 
+            level.tileset.source,
+            level.tileset.rock[0],
+            level.tileset.rock[1],
             width, height
           );
           sprite = g.sprite(frame);
           sprite.setPosition(x, y);
           world.platforms.push(sprite);
           break;
-          
+
         case "grass":
           frame = g.frame(
-            level.tileset.source, 
-            level.tileset.grass[0], 
-            level.tileset.grass[1], 
+            level.tileset.source,
+            level.tileset.grass[0],
+            level.tileset.grass[1],
             width, height
           );
           sprite = g.sprite(frame);
           sprite.setPosition(x, y);
           world.platforms.push(sprite);
           break;
-          
+
         case "sky":
           //Add clouds every 6 cells and only on the top
           //80% of the level
           let sourceY;
-          if (index % 6 === 0 && index < map.length * 0.8) { 
+          if (index % 6 === 0 && index < map.length * 0.8) {
             sourceY = level.tileset.cloud[1];
           } else {
             sourceY = level.tileset.sky[1];
           }
           frame = g.frame(
-            level.tileset.source, 
-            level.tileset.sky[0], 
+            level.tileset.source,
+            level.tileset.sky[0],
             sourceY,
             width, height
           );
           sprite = g.sprite(frame);
           sprite.setPosition(x, y);
           break;
-        
+
         case "border":
           sprite = g.rectangle();
           sprite.fillStyle = "black";
@@ -495,7 +495,7 @@ function makeWorld(level) {
             y = cell.y * level.tileheight + level.tilewidth / 2,
             width = level.tilewidth / 2,
             height = level.tileheight / 2;
-        
+
         switch (cell.item) {
           case "player":
             frame = g.frame("images/platforms.png", 32, 32, 32, 32);
@@ -514,7 +514,7 @@ function makeWorld(level) {
             sprite.isOnGround = true;
             world.player = sprite;
             break;
-          
+
           case "treasure":
             frame = g.frame("images/platforms.png", 32, 0, 32, 32);
             sprite = g.sprite(frame);
@@ -526,7 +526,7 @@ function makeWorld(level) {
             break;
         }
       }
-    }); 
+    });
   }
 
   //OPTIONAL: the `makeSprites` function
@@ -539,12 +539,12 @@ function makeWorld(level) {
 
   function makeSprites() {
     //The map and gameObjects arrays are complete, so we can
-    //now use them to create the sprites. 
-    //All the map sprites will use the same x, y, width and 
-    //height values as the cell objects in those arrays. 
-    //rock, grass and border sprites will be pushed into the 
+    //now use them to create the sprites.
+    //All the map sprites will use the same x, y, width and
+    //height values as the cell objects in those arrays.
+    //rock, grass and border sprites will be pushed into the
     //`platforms` array so that use them for collision in the game loop
-    
+
     //Make the terrain
     world.map.forEach(function(cell) {
       let sprite = g.rectangle();
@@ -558,16 +558,16 @@ function makeWorld(level) {
           sprite.fillStyle = "black";
           world.platforms.push(sprite);
           break;
-          
+
         case "grass":
           sprite.fillStyle = "green";
           world.platforms.push(sprite);
           break;
-          
+
         case "sky":
           sprite.fillStyle = "cyan";
           break;
-        
+
         case "border":
           sprite.fillStyle = "blue";
           world.platforms.push(sprite);
@@ -589,7 +589,7 @@ function makeWorld(level) {
         sprite.y = cell.y * level.tileheight + level.tilewidth / 2;
         sprite.width = level.tilewidth / 2;
         sprite.height = level.tileheight / 2;
-        
+
         switch (cell.item) {
           case "player":
             sprite.fillStyle = "red";
@@ -604,7 +604,7 @@ function makeWorld(level) {
             sprite.isOnGround = true;
             world.player = sprite;
             break;
-          
+
           case "treasure":
             sprite.fillStyle = "gold";
 
@@ -613,7 +613,7 @@ function makeWorld(level) {
             break;
         }
       }
-    }); 
+    });
   }
 
   //Return the `world` object

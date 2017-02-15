@@ -16,7 +16,7 @@ g.start();
 
 function setup() {
 
-  //Create the `world` container that defines our isometric 
+  //Create the `world` container that defines our isometric
   //tile-based world
   world = g.group();
 
@@ -76,7 +76,7 @@ function setup() {
         x = column * world.cartTilewidth;
         y = row * world.cartTileheight;
 
-        //Next, create a different sprite based on what its 
+        //Next, create a different sprite based on what its
         //`gid` number is
         let sprite;
         switch (gid) {
@@ -97,7 +97,7 @@ function setup() {
             //sprite = g.rectangle(world.cartTilewidth, world.cartTileheight, 0x99CC00);
             break;
 
-            //The character  
+            //The character
           case 3:
             sprite = g.isoRectangle(world.cartTilewidth, world.cartTileheight, 0xFF0000);
             //Cartesian rectangle:
@@ -143,7 +143,7 @@ function play() {
   message.content = `
     cartX: ${Math.floor(g.pointer.cartX)}
     cartY: ${Math.floor(g.pointer.cartY)}
-    column: ${g.pointer.column} 
+    column: ${g.pointer.column}
     row: ${g.pointer.row}
     index: ${g.pointer.index}
     layer 1 gid: ${world.layers[0][Math.floor(g.pointer.index)]}

@@ -32,7 +32,7 @@ function setup() {
       gridGroup = grid(
 
         //Set the grid's properties
-        columns, rows, cellWidth, cellHeight, 
+        columns, rows, cellWidth, cellHeight,
         areSpirtesCentered?, xOffset, yOffset,
 
         //A function that returns a sprite
@@ -45,7 +45,7 @@ function setup() {
   marbles = g.grid(
 
     //Set the grid's properties
-    5, 5, 128, 128, 
+    5, 5, 128, 128,
     true, 0, 0,
 
     //A function that describes how to make each peg in the grid
@@ -77,25 +77,25 @@ function setup() {
   capturedMarble = null;
 
   //Change the state to `play`
-  g.state = play;  
+  g.state = play;
 }
 
 //The `play` function will run in a loop
 function play() {
 
-  //If a marble has been captured, draw the 
+  //If a marble has been captured, draw the
   //sling (the yellow line) between the pointer and
   //the center of the captured marble
   if (capturedMarble !== null) {
     sling.visible = true;
     sling.ax = capturedMarble.centerX;
     sling.ay = capturedMarble.centerY;
-    sling.bx = g.pointer.x; 
+    sling.bx = g.pointer.x;
     sling.by = g.pointer.y;
   }
 
-  //Shoot the marble if the pointer has been released 
-  if (g.pointer.isUp) { 
+  //Shoot the marble if the pointer has been released
+  if (g.pointer.isUp) {
     sling.visible = false;
     if (capturedMarble !== null) {
 
@@ -146,16 +146,16 @@ function play() {
   //bounce off another circle in the same array
   g.multipleCircleCollision(marbles.children);
 
-  
+
   //You can alternatively check for for multiple circle collisions
   //the good old fashioned way, like this:
 
   /*
   for (let i = 0; i < marbles.children.length; i++) {
-    //The first marble to use in the collision check 
+    //The first marble to use in the collision check
     var c1 = marbles.children[i];
     for (let j = i + 1; j < marbles.children.length; j++) {
-      //The second marble to use in the collision check 
+      //The second marble to use in the collision check
       let c2 = marbles.children[j];
       //Check for a collision and bounce the marbles apart if
       //they collide. Use an optional mass property on the sprite

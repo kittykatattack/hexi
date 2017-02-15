@@ -23,7 +23,7 @@ g.start();
 g.scaleToWindow();
 
 //Declare variables used in more than one function
-let cat, square, message, star, ball, line, 
+let cat, square, message, star, ball, line,
     localMessage, globalMessage, collisionMessage;
 
 
@@ -44,7 +44,7 @@ function setup() {
   //in the center of the stage. You can also use `putTop`,
   //`putRight`, `putBottom` and `putLeft`. If you want to offset
   //the position, use x and y offset values as the second and third
-  //arguments: `sprite.putTop(anySprite, -10, -5)` 
+  //arguments: `sprite.putTop(anySprite, -10, -5)`
   g.stage.putCenter(square);
 
   //Add a drop shadow filter to the square
@@ -66,7 +66,7 @@ function setup() {
   star = g.sprite("images/star.png");
   star.setPivot(0.5, 0.5);
 
-  //Add the star to the cat and position it to the right of the cat  
+  //Add the star to the cat and position it to the right of the cat
   cat.addChild(star);
   cat.putRight(star);
 
@@ -90,7 +90,7 @@ function setup() {
   localMessage.x = -square.halfWidth + 6;
   localMessage.y = -square.halfHeight + 2;
 
-  //Add an `angle` property to the star that we'll use to 
+  //Add an `angle` property to the star that we'll use to
   //help make the star rotate around the cat
   star.angle = 0;
 
@@ -109,8 +109,8 @@ function setup() {
   //square.alpha = 0.2;
 
   //Change the state to `play`
-  g.state = play;  
-  
+  g.state = play;
+
 }
 
 //The `play` function will run in a loop
@@ -122,7 +122,7 @@ function play() {
   //You can also move a sprite the good old-fashioned way
   //cat.x += cat.vx;
   //cat.y += cat.vy;
-  
+
   //Rotate the square
   square.rotation += 0.005;
 
@@ -130,13 +130,13 @@ function play() {
   //relative to the square's center point. (The square is the cat's
   //parent.) If we hadn't changed the square's pivot point, the cat's
   //x and y values would have been relative to the square's top left corner
-  localMessage.content = 
+  localMessage.content =
     `Local position: cat.x: ${Math.round(cat.x)}, cat.y: ${Math.round(cat.y)}`;
 
   //Display the cat's global `gx` and global `gy` coordinates. These are
   //relative to the `stage`, which is the root container for all the
   //sprites and groups.
-  globalMessage.content = 
+  globalMessage.content =
     `Global position: cat.gx: ${Math.round(cat.gx)}, cat.gy: ${Math.round(cat.gy)}`;
 
   //Contain the cat inside the square's boundary
@@ -158,13 +158,13 @@ function play() {
   //Make the star rotate
   star.rotation += 0.2;
 
-  //Update the star's angle 
+  //Update the star's angle
   star.angle += 0.05;
 
   //The `rotateAroundSprite` method lets you rotate a sprite around
   //another sprite. The first argument is the sprite you want to
   //rotate, and the second argument is the sprite around which it
-  //should rotate. The third argument is the distance 
+  //should rotate. The third argument is the distance
   g.rotateAroundSprite(star, cat, 64, star.angle);
 
   //if you want the rotation to happen around a point that's offset

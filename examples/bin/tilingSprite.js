@@ -1,8 +1,8 @@
 "use strict";
 
 /*
-Learn how to create and use a `tilingSprite`: a sprite with a 
-tiled repeating background pattern. You use them as the basis for making a 
+Learn how to create and use a `tilingSprite`: a sprite with a
+tiled repeating background pattern. You use them as the basis for making a
 scrolling background image.
 */
 

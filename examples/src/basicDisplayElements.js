@@ -1,5 +1,5 @@
 /*
-Most of what you need to know to display 
+Most of what you need to know to display
 images, text, access the pointer and do animation
 */
 
@@ -15,7 +15,7 @@ let thingsToLoad = [
 ];
 
 /*
-Here's how you'll be able to access the loaded files 
+Here's how you'll be able to access the loaded files
 later in your application:
 
 1. An image:
@@ -23,7 +23,7 @@ later in your application:
    g.image("images/rocket.png")
 
 2. A texture atlas frame id
-    
+
    g.id("cat.png");
 
 3. JSON data file:
@@ -31,7 +31,7 @@ later in your application:
    g.json("images/animals.json");
 
 4. A texture atlas image
-   
+
    g.image("images/animals.png");
 
 5. A sound object
@@ -43,10 +43,10 @@ later in your application:
    g.xml("fonts/disko.xml");
 
 Hexi uses Pixi's resource loader to load and manage files.
-You can access the loader's `resources` object through Hexi's 
+You can access the loader's `resources` object through Hexi's
 `resources` property. You can access Pixi's `loader` object
 though Hexi's `loader` property
-    
+
 */
 
 //Create a new Hexi instance, and start it, using the `thingsToLoad`
@@ -67,7 +67,7 @@ g.scaleToWindow();
 
 //Declare global sprites, objects, and variables
 //that you want to access in all the game functions and states
-let box, ball, line, message, cat,  
+let box, ball, line, message, cat,
     pathA, pathB, rocket, star,
     pointerDisplay;
 
@@ -77,9 +77,9 @@ function setup() {
 
   //Optionally hide the mouse pointer
   //g.pointer.visible = false;
-  
+
   //Create a square called `box`, using the `rectangle` method.
-  //`rectangle` arguments: 
+  //`rectangle` arguments:
   //width, height, fillColor, strokeColor, lineWidth, x, y
   box = g.rectangle(32, 32, "cyan", "white", 4, 52, 42);
 
@@ -87,7 +87,7 @@ function setup() {
   //values
 
   //Set the box's rotation pivot point to its center. The two
-  //arguments refer to the x and y pivot positions, as normalized 
+  //arguments refer to the x and y pivot positions, as normalized
   //values between 0 and 1. `0.5` is the very center of the sprite.
   //Setting the pivot changes the sprite's `x` and `y` position
   //values, but it won't shift the position of the sprite on the
@@ -102,7 +102,7 @@ function setup() {
 
   //Create a `circle` sprite called `ball`
   //`circle` argumenets:
-  //diameter, fillstyle, stroketyle, lineWidth, x, y 
+  //diameter, fillstyle, stroketyle, lineWidth, x, y
   ball = g.circle(42, "Plum", "PowderBlue", 8, 20, 110);
 
   //Create a `text` sprite called `message`
@@ -114,11 +114,11 @@ function setup() {
   message.x = 30;
   message.y = 10;
 
-  //Create a sprite from a single image by supplying the 
+  //Create a sprite from a single image by supplying the
   //image name as the first argument
   rocket = g.sprite("images/rocket.png");
 
-  //Optionally change the rocket's `width` and `height` 
+  //Optionally change the rocket's `width` and `height`
   //rocket.width = 50;
   //rocket.height = 50;
 
@@ -144,7 +144,7 @@ function setup() {
   */
 
   /*
-  You can make a sprite using a frame JSON tileset file in 
+  You can make a sprite using a frame JSON tileset file in
   Texture Packer format. Just load the JSON file that contains the
   frame and supply the frame name in the sprite's argument. (The
   tileset image file will be loaded automatically when the JSON file
@@ -152,7 +152,7 @@ function setup() {
   */
 
   cat = g.sprite("cat.png");
-  //Use `setPosition` to set the sprite's `x` and `y` values 
+  //Use `setPosition` to set the sprite's `x` and `y` values
   //with one line of code
 
   cat.setPosition(10, 190);
@@ -170,7 +170,7 @@ function setup() {
   //`slide` arguments:
   //sprite, xDestination, yDestination, durationInFrames, easingType, yoyo?
   g.slide(cat, g.canvas.width - 60, cat.y, 120, "smoothstep", true);
-  
+
   //Create a star sprite from an image
   star = g.sprite("images/star.png");
 
@@ -180,7 +180,7 @@ function setup() {
   star.circular = true;
   console.log(`star.radius: ${star.radius}`);
   console.log(`star.diameter: ${star.diameter}`);
-  
+
   //If you ever have texture-bleed problems with a
   //sprite, set `scaleModeNearest` to `true`
   //star.scaleModeNearest = true;
@@ -200,7 +200,7 @@ function setup() {
   //`stage` object's `children` array.
   console.log(`stage.children: ${g.stage.children}`);
 
-  //Make any sprite interactive by setting its 
+  //Make any sprite interactive by setting its
   //`interact` property to `true`. You can then assign
   //`press` and `release` actions to sprites. You can also
   //access its `state` and `action` properties.
@@ -227,7 +227,7 @@ function setup() {
   line = g.line("Yellow", 4, 162, 52, 220, 94);
 
   //We're going to make the line's start and end points
-  //rotate in space. The line will need two new angle properties 
+  //rotate in space. The line will need two new angle properties
   //to help us do this. Both are initialized to 0
   line.angleA = 0;
   line.angleB = 0;
@@ -236,13 +236,13 @@ function setup() {
   //If you want a sprite to appear stacked above other sprites,
   //set its `layer` property. Sprites appear stacked in the order
   //that they are created, but those with higher `layer` values
-  //will appear above those with lower values. To make sure the 
+  //will appear above those with lower values. To make sure the
   //sprites stack the way you expect them to,
   //set the `layer` values after you've created all your sprites
   star.layer = 1;
 
   //Change the game state to `play`
-  g.state = play;  
+  g.state = play;
 }
 
 //The `play` function will run in a loop
@@ -255,7 +255,7 @@ function play() {
   //`followEase` arguments: follower, leader, speed
   g.followEase(star, g.pointer, 0.1);
 
-  //Alternatively, use the `followConstant` method if you want to 
+  //Alternatively, use the `followConstant` method if you want to
   //make a sprite follow at a constant speed. The third argument
   //is the speed, which is the pixels per frame that the follower
   //will move
@@ -274,11 +274,11 @@ function play() {
   }
 
   //Display the position of the pointer
-  pointerDisplay.content = 
+  pointerDisplay.content =
     `pointer.x: ${Math.round(g.pointer.x)} pointer.y: ${Math.round(g.pointer.y)}`;
 
   //Make the line's `ax` and `ay` points rotate clockwise around
-  //point 162, 52. Use the `rotateAroundPoint` method to help you do this. 
+  //point 162, 52. Use the `rotateAroundPoint` method to help you do this.
   //`rotateAroundPoint` returns an object with `x` and `y` properties
   //containing the point's new rotated position. Supply different
   //rotationRadiusX/Y arguments if you want the rotation to be ellipical.

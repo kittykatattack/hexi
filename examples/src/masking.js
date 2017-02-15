@@ -1,5 +1,5 @@
 /*
-A mask is a shape that hides any part of a sprite that’s 
+A mask is a shape that hides any part of a sprite that’s
 outside of the shape’s area. Learn to use a sprite's `mask`
 property to use a shape to mask a sprite.
 */
@@ -10,7 +10,7 @@ let thingsToLoad = [
 ];
 
 //Create a new Hexi instance, and start it, using the `thingsToLoad`
-//array. 
+//array.
 let g = hexi(256, 256, setup, thingsToLoad);
 g.start();
 

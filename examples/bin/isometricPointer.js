@@ -84,7 +84,7 @@ function setup() {
             //sprite = g.rectangle(world.cartTilewidth, world.cartTileheight, 0x99CC00);
             break;
 
-          //The character 
+          //The character
           case 3:
             sprite = g.isoRectangle(world.cartTilewidth, world.cartTileheight, 0xFF0000);
           //Cartesian rectangle:

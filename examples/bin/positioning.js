@@ -12,7 +12,7 @@ spriteA.putRight(spriteB, xOffset, yOffSet)
 spriteA.putBottom(spriteB, xOffset, yOffSet)
 
 These methods save you from having to write a lot of tedious positioning
-code, and automatically compensate for any possible to change to 
+code, and automatically compensate for any possible to change to
 each sprite's x/y anchor point.
 Take a look at this example file to see how to use these very helpful
 methods in practise.

@@ -1,6 +1,6 @@
 /*
-Learn how to create and use a `tilingSprite`: a sprite with a 
-tiled repeating background pattern. You use them as the basis for making a 
+Learn how to create and use a `tilingSprite`: a sprite with a
+tiled repeating background pattern. You use them as the basis for making a
 scrolling background image.
 */
 
@@ -29,19 +29,19 @@ function setup() {
 
   //Center the box
   g.stage.putCenter(box);
-  
+
   //Set the game state to `play`
-  g.state = play;   
+  g.state = play;
 }
 
 //The `play` function will run in a loop
 function play() {
-  
+
   //Tiling sprites have `tileX`, `tileY`, `tileScaleX` and
   //`tileScaleY` properties that you can use to scroll and scale the
   //sprite's background image
 
-  //Scroll the sprite's tile pattern using the 
+  //Scroll the sprite's tile pattern using the
   //`tileX` and `tileY` properties
   box.tileX += 1;
   box.tileY += 1;

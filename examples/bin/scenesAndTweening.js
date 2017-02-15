@@ -33,13 +33,13 @@ function setup() {
   `blackSquare` and `messageOne` to it.
   Groups are empty containers for sprites. You can think of them
   as a special kind of sprite that doesn't display its own image. a
-  group's job is 
+  group's job is
   just to display the sprites that are inside it. Groups have the
   all same properties as ordinary sprites, so any changes that you
   make the parent, such as its size, position or visibility, will
   affect the child sprites that it contains. The `width` and
   `height` of the group is determined by the size and position of
-  the sprites inside it. Whenever you use `addChild` or `removeChild` to 
+  the sprites inside it. Whenever you use `addChild` or `removeChild` to
   add or remove a sprite from a group, the group's `width` and `height`
   is recalculated based on what it contains
   */
@@ -72,8 +72,8 @@ function setup() {
 
   /*
   Tweening
-  Use one of Ga's many built in tween functions to make the 
-  scene groups move. Here's how to use the `slide` method to 
+  Use one of Ga's many built in tween functions to make the
+  scene groups move. Here's how to use the `slide` method to
   make the scenes move, in a continuous loop, between the top and
   bottom corners of the screen. There's a delay of 2000 milliseconds
   between each repetition of the tween.
@@ -99,7 +99,7 @@ function setup() {
     "inverseSineCubed"
    Experiment by assigning different easing types and observe the
   effect.
-    
+
   If you don't what the effect to repeat in a continuous loop, just
   set `yoyo` (the 6th argument) to `false`.
   */

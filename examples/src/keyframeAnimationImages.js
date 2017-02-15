@@ -34,9 +34,9 @@ function setup() {
   You can also make animation frames from individual images files.
   Just feed the sprite any array containing the image files that you
   want to use for each frame.
-  (The best way to make a sprite with multiple frames is to use a 
+  (The best way to make a sprite with multiple frames is to use a
   texture atlas - see the next example.)
-  */   
+  */
 
   //You can make a sprite from an array of images, like this:
   pixie = g.sprite([
@@ -44,7 +44,7 @@ function setup() {
     "images/pixie1.png",
     "images/pixie2.png"
   ]);
-  
+
   //You can control the sprites using the same methods and properties
   //you learned in the previous example.
 
@@ -60,7 +60,7 @@ function setup() {
   //pixie from flapping her wings after 3 seconds
   /*
   g.wait(3000, function(){
-     pixie.stopAnimation(); 
+     pixie.stopAnimation();
   });
   */
 
@@ -69,16 +69,16 @@ function setup() {
 
   //You can also use the `show` method to display
   //a specific frame. This is usually better to use than `gotoAndStop`
-  //because its more tightly integrated into the sprite's 
+  //because its more tightly integrated into the sprite's
   //state and animation manager.
   //pixie.show(1);
 
   //You can also use `playAnimation` to play a range of frames by
-  //supplying it with an array of the numbers that you want to play 
+  //supplying it with an array of the numbers that you want to play
   //pixie.fps = 1;
   //pixie.playAnimation([0, 1]);
 
-  g.state = play;    
+  g.state = play;
 }
 
 function play() {

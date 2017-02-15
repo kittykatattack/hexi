@@ -34,7 +34,7 @@ function setup() {
   each sprite has been created. Here's the format for creating a grid:
        gridGroup = grid(
          //Set the grid's properties
-        columns, rows, cellWidth, cellHeight, 
+        columns, rows, cellWidth, cellHeight,
         areSpirtesCentered?, xOffset, yOffset,
          //A function that returns a sprite
         () => {return g.circle(16, "blue"),
@@ -150,10 +150,10 @@ function play() {
 
   /*
   for (let i = 0; i < marbles.children.length; i++) {
-    //The first marble to use in the collision check 
+    //The first marble to use in the collision check
     var c1 = marbles.children[i];
     for (let j = i + 1; j < marbles.children.length; j++) {
-      //The second marble to use in the collision check 
+      //The second marble to use in the collision check
       let c2 = marbles.children[j];
       //Check for a collision and bounce the marbles apart if
       //they collide. Use an optional mass property on the sprite
