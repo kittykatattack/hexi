@@ -227,8 +227,6 @@ var Hexi = function () {
     //source code ahead to see how this works
     this.createModulePropertyAliases();
 
-    //NOTE: MOVE TINK INITIALIZATION HERE AND INITIALIZE WITH THE CANVAS ELEMENT
-
     //Add `halfWidth` and `halfHeight` properties to the canvas
     Object.defineProperties.bind(this, this.canvas, {
       "halfWidth": {
@@ -2026,7 +2024,6 @@ var Hexi = function () {
       //Use the `scaleToWindow` function module to scale the canvas to
       //the maximum window size
       this.scale = scaleToWindow(this.canvas, scaleBorderColor);
-      console.log("new scale: " + this.scale);
       this.pointer.scale = this.scale;
       //this.pointer = this.makePointer(this.canvas, this.scale);
       console.log(this.pointer);
