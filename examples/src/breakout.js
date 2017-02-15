@@ -156,7 +156,10 @@ function setup() {
 
   //Position the `gameScene` offscreen at -514 so that its
   //not visible when the game starts
-  gameScene.x = -514;
+  gameScene.x = -514
+
+  //gameScene.setPivot(0.5, 0.5);
+  console.log(gameScene)
 
   //Program the play button's `press` function to start the game.
   //Start the music, set the `state` to `play`
@@ -212,11 +215,12 @@ function play() {
 
         //If `angularShake?` (the 3rd argument) is `true`, the sprite will shake around
         //its axis. (Make sure that you've set your sprite's x/y pivot
-        //point to 0.5 for this to work effectively) The `magnitude` will be the maximum value, in
+        //point to 0.5 for this to work effectively. Also, you can only change the pivot points of
+        //sprites - not `group` objects.) The `magnitude` will be the maximum value, in
         //radians, that it should shake. If `angularShake?` is `false`
         //the shake effect will happen on the x/y axis.
 
-        //g.shake(gameScene, 16, false);
+        //g.shake(gameScene, 16, true);
 
         //In that case
         //the magnitude will be the maximum amount of displacement,

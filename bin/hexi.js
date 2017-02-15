@@ -30111,6 +30111,8 @@ function scaleToWindow(canvas, backgroundColor) {
   var margin;
   if (center === "horizontally") {
     margin = (window.innerWidth - canvas.offsetWidth * scale) / 2;
+    canvas.style.marginTop = 0;
+    canvas.style.marginBottom = 0;
     canvas.style.marginLeft = margin + "px";
     canvas.style.marginRight = margin + "px";
   }
@@ -30120,6 +30122,8 @@ function scaleToWindow(canvas, backgroundColor) {
     margin = (window.innerHeight - canvas.offsetHeight * scale) / 2;
     canvas.style.marginTop = margin + "px";
     canvas.style.marginBottom = margin + "px";
+    canvas.style.marginLeft = 0;
+    canvas.style.marginRight = 0;
   }
 
   //3. Remove any padding from the canvas  and body and set the canvas
@@ -30163,13 +30167,7 @@ var Bump = (function () {
 
     if (renderingEngine === undefined) throw new Error("Please assign a rendering engine in the constructor before using bump.js");
 
-    //Find out which rendering engine is being used (the default is Pixi)
-    this.renderer = "";
-
-    //If the `renderingEngine` is Pixi, set up Pixi object aliases
-    if (renderingEngine.ParticleContainer && renderingEngine.Sprite) {
-      this.renderer = "pixi";
-    }
+    this.renderer = "pixi";
   }
 
   //`addCollisionProperties` adds extra properties to sprites to help
@@ -30257,7 +30255,7 @@ var Bump = (function () {
           Object.defineProperty(sprite, "xAnchorOffset", {
             get: function get() {
               if (sprite.anchor !== undefined) {
-                return sprite.height * sprite.anchor.x;
+                return sprite.width * sprite.anchor.x;
               } else {
                 return 0;
               }
@@ -30272,7 +30270,7 @@ var Bump = (function () {
           Object.defineProperty(sprite, "yAnchorOffset", {
             get: function get() {
               if (sprite.anchor !== undefined) {
-                return sprite.width * sprite.anchor.y;
+                return sprite.height * sprite.anchor.y;
               } else {
                 return 0;
               }
@@ -31815,7 +31813,7 @@ var Charm = (function () {
     //Add `scaleX` and `scaleY` properties to Pixi sprites
     this._addScaleProperties = function (sprite) {
       if (_this.renderer === "pixi") {
-        if (!sprite.scaleX && sprite.scale.x) {
+        if (!("scaleX" in sprite) && "scale" in sprite && "x" in sprite.scale) {
           Object.defineProperty(sprite, "scaleX", {
             get: function get() {
               return sprite.scale.x;
@@ -31825,7 +31823,7 @@ var Charm = (function () {
             }
           });
         }
-        if (!sprite.scaleY && sprite.scale.y) {
+        if (!("scaleY" in sprite) && "scale" in sprite && "y" in sprite.scale) {
           Object.defineProperty(sprite, "scaleY", {
             get: function get() {
               return sprite.scale.y;
@@ -32532,7 +32530,12 @@ var Charm = (function () {
       //tween objects
       if (!tweenObject.tweens) {
         tweenObject.pause();
-        this.globalTweens.splice(this.globalTweens.indexOf(tweenObject), 1);
+
+        //array.splice(-1,1) will always remove last elemnt of array, so this
+        //extra check prevents that (Thank you, MCumic10! https://github.com/kittykatattack/charm/issues/5)
+        if (this.globalTweens.indexOf(tweenObject) != -1) {
+          this.globalTweens.splice(this.globalTweens.indexOf(tweenObject), 1);
+        }
 
         //Otherwise, remove the nested tween objects
       } else {
@@ -32570,10 +32573,9 @@ var Tink = (function () {
 
     _classCallCheck(this, Tink);
 
-    console.log(element);
     //Add element and scale properties
     this.element = element;
-    this.scale = scale;
+    this._scale = scale;
 
     //An array to store all the draggable sprites
     this.draggableSprites = [];
@@ -32591,15 +32593,17 @@ var Tink = (function () {
 
     //Aliases for Pixi objects
     this.TextureCache = this.PIXI.utils.TextureCache;
-    this.MovieClip = this.PIXI.extras.MovieClip;
+
+    //Note: change MovieClip to AnimatedSprite for Pixi v4
+    this.AnimatedSprite = this.PIXI.extras.MovieClip;
     this.Texture = this.PIXI.Texture;
   }
 
-  //`makeDraggable` lets you make a drag-and-drop sprite by pushing it
-  //into the `draggableSprites` array
-
   _createClass(Tink, [{
     key: "makeDraggable",
+
+    //`makeDraggable` lets you make a drag-and-drop sprite by pushing it
+    //into the `draggableSprites` array
     value: function makeDraggable() {
       var _this = this;
 
@@ -33272,11 +33276,11 @@ var Tink = (function () {
         if (this.TextureCache[source[0]]) {
 
           //It does, so it's an array of frame ids
-          o = this.MovieClip.fromFrames(source);
+          o = this.AnimatedSprite.fromFrames(source);
         } else {
 
           //It's not already in the cache, so let's load it
-          o = this.MovieClip.fromImages(source);
+          o = this.AnimatedSprite.fromImages(source);
         }
       }
 
@@ -33285,8 +33289,8 @@ var Tink = (function () {
       else if (source[0] instanceof this.Texture) {
 
           //Yes, it's an array of textures.
-          //Use them to make a MovieClip o
-          o = new this.MovieClip(source);
+          //Use them to make a AnimatedSprite o
+          o = new this.AnimatedSprite(source);
         }
 
       //Add interactive properties to the button
@@ -33437,6 +33441,19 @@ var Tink = (function () {
         }
       };
     }
+  }, {
+    key: "scale",
+    get: function get() {
+      return this._scale;
+    },
+    set: function set(value) {
+      this._scale = value;
+
+      //Update scale values for all pointers
+      this.pointers.forEach(function (pointer) {
+        return pointer.scale = value;
+      });
+    }
   }]);
 
   return Tink;
@@ -33449,7 +33466,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 var Dust = (function () {
   function Dust() {
-    var renderingEngine = arguments[0] === undefined ? PIXI : arguments[0];
+    var renderingEngine = arguments.length <= 0 || arguments[0] === undefined ? PIXI : arguments[0];
 
     _classCallCheck(this, Dust);
 
@@ -33468,10 +33485,10 @@ var Dust = (function () {
     this.globalParticles = [];
   }
 
+  //Random number functions
+
   _createClass(Dust, [{
     key: "randomFloat",
-
-    //Random number functions
     value: function randomFloat(min, max) {
       return min + Math.random() * (max - min);
     }
@@ -33480,37 +33497,38 @@ var Dust = (function () {
     value: function randomInt(min, max) {
       return Math.floor(Math.random() * (max - min + 1)) + min;
     }
-  }, {
-    key: "create",
 
     //Use the create function to create new particle effects
+
+  }, {
+    key: "create",
     value: function create() {
-      var x = arguments[0] === undefined ? 0 : arguments[0];
-      var y = arguments[1] === undefined ? 0 : arguments[1];
-      var spriteFunction = arguments[2] === undefined ? function () {
+      var x = arguments.length <= 0 || arguments[0] === undefined ? 0 : arguments[0];
+      var y = arguments.length <= 1 || arguments[1] === undefined ? 0 : arguments[1];
+      var spriteFunction = arguments.length <= 2 || arguments[2] === undefined ? function () {
         return console.log("Sprite creation function");
       } : arguments[2];
-      var container = arguments[3] === undefined ? function () {
+      var container = arguments.length <= 3 || arguments[3] === undefined ? function () {
         return new _this.Container();
       } : arguments[3];
-      var numberOfParticles = arguments[4] === undefined ? 20 : arguments[4];
-      var gravity = arguments[5] === undefined ? 0 : arguments[5];
-      var randomSpacing = arguments[6] === undefined ? true : arguments[6];
-      var minAngle = arguments[7] === undefined ? 0 : arguments[7];
-      var maxAngle = arguments[8] === undefined ? 6.28 : arguments[8];
-      var minSize = arguments[9] === undefined ? 4 : arguments[9];
-      var maxSize = arguments[10] === undefined ? 16 : arguments[10];
-      var minSpeed = arguments[11] === undefined ? 0.3 : arguments[11];
-      var maxSpeed = arguments[12] === undefined ? 3 : arguments[12];
-      var minScaleSpeed = arguments[13] === undefined ? 0.01 : arguments[13];
-      var maxScaleSpeed = arguments[14] === undefined ? 0.05 : arguments[14];
-      var minAlphaSpeed = arguments[15] === undefined ? 0.02 : arguments[15];
-      var maxAlphaSpeed = arguments[16] === undefined ? 0.02 : arguments[16];
+      var numberOfParticles = arguments.length <= 4 || arguments[4] === undefined ? 20 : arguments[4];
+      var gravity = arguments.length <= 5 || arguments[5] === undefined ? 0 : arguments[5];
+      var randomSpacing = arguments.length <= 6 || arguments[6] === undefined ? true : arguments[6];
+      var minAngle = arguments.length <= 7 || arguments[7] === undefined ? 0 : arguments[7];
+      var maxAngle = arguments.length <= 8 || arguments[8] === undefined ? 6.28 : arguments[8];
+      var minSize = arguments.length <= 9 || arguments[9] === undefined ? 4 : arguments[9];
+      var maxSize = arguments.length <= 10 || arguments[10] === undefined ? 16 : arguments[10];
+      var minSpeed = arguments.length <= 11 || arguments[11] === undefined ? 0.3 : arguments[11];
+      var maxSpeed = arguments.length <= 12 || arguments[12] === undefined ? 3 : arguments[12];
+      var minScaleSpeed = arguments.length <= 13 || arguments[13] === undefined ? 0.01 : arguments[13];
+      var maxScaleSpeed = arguments.length <= 14 || arguments[14] === undefined ? 0.05 : arguments[14];
+      var minAlphaSpeed = arguments.length <= 15 || arguments[15] === undefined ? 0.02 : arguments[15];
+      var maxAlphaSpeed = arguments.length <= 16 || arguments[16] === undefined ? 0.02 : arguments[16];
 
       var _this = this;
 
-      var minRotationSpeed = arguments[17] === undefined ? 0.01 : arguments[17];
-      var maxRotationSpeed = arguments[18] === undefined ? 0.03 : arguments[18];
+      var minRotationSpeed = arguments.length <= 17 || arguments[17] === undefined ? 0.01 : arguments[17];
+      var maxRotationSpeed = arguments.length <= 18 || arguments[18] === undefined ? 0.03 : arguments[18];
 
       //An array to store the curent batch of particles
       var particles = [];
@@ -33540,10 +33558,10 @@ var Dust = (function () {
         //If `randomSpacing` is `false`, space each particle evenly,
         //starting with the `minAngle` and ending with the `maxAngle`
         else {
-          if (angle === undefined) angle = minAngle;
-          angles.push(angle);
-          angle += spacing;
-        }
+            if (angle === undefined) angle = minAngle;
+            angles.push(angle);
+            angle += spacing;
+          }
       }
 
       //A function to make particles
@@ -33627,28 +33645,29 @@ var Dust = (function () {
       //Return the `particles` array back to the main program
       return particles;
     }
-  }, {
-    key: "emitter",
 
     //A particle emitter
+
+  }, {
+    key: "emitter",
     value: function emitter(interval, particleFunction) {
-      var emitter = {},
+      var emitterObject = {},
           timerInterval = undefined;
 
-      emitter.playing = false;
+      emitterObject.playing = false;
 
       function play() {
-        if (!emitter.playing) {
+        if (!emitterObject.playing) {
           particleFunction();
           timerInterval = setInterval(emitParticle.bind(this), interval);
-          emitter.playing = true;
+          emitterObject.playing = true;
         }
       }
 
       function stop() {
-        if (emitter.playing) {
+        if (emitterObject.playing) {
           clearInterval(timerInterval);
-          emitter.playing = false;
+          emitterObject.playing = false;
         }
       }
 
@@ -33656,14 +33675,15 @@ var Dust = (function () {
         particleFunction();
       }
 
-      emitter.play = play;
-      emitter.stop = stop;
-      return emitter;
+      emitterObject.play = play;
+      emitterObject.stop = stop;
+      return emitterObject;
     }
-  }, {
-    key: "update",
 
     //A function to update the particles in the game loop
+
+  }, {
+    key: "update",
     value: function update() {
 
       //Check so see if the `globalParticles` array contains any
@@ -33688,8 +33708,8 @@ var Dust = (function () {
           //Remove the particle array from the `globalParticles` array if doesn't
           //contain any more sprites
           else {
-            this.globalParticles.splice(this.globalParticles.indexOf(particles), 1);
-          }
+              this.globalParticles.splice(this.globalParticles.indexOf(particles), 1);
+            }
         }
       }
     }
@@ -35040,7 +35060,7 @@ var SpriteUtilities = (function () {
       //No it's not a number, so it must be a string
       else {
 
-          return this.colorToHex(value);
+          return parseInt(this.colorToHex(value));
           /*
            //Find out what kind of color string it is.
           //Let's first grab the first character of the string
@@ -37531,8 +37551,6 @@ var Hexi = (function () {
     //source code ahead to see how this works
     this.createModulePropertyAliases();
 
-    //NOTE: MOVE TINK INITIALIZATION HERE AND INITIALIZE WITH THE CANVAS ELEMENT
-
     //Add `halfWidth` and `halfHeight` properties to the canvas
     Object.defineProperties.bind(this, this.canvas, {
       "halfWidth": {
@@ -39325,7 +39343,6 @@ var Hexi = (function () {
       //Use the `scaleToWindow` function module to scale the canvas to
       //the maximum window size
       this.scale = scaleToWindow(this.canvas, scaleBorderColor);
-      console.log("new scale: " + this.scale);
       this.pointer.scale = this.scale;
       //this.pointer = this.makePointer(this.canvas, this.scale);
       console.log(this.pointer);

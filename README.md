@@ -193,7 +193,7 @@ Here's Hexi's core feature list:
 - Seamless integration with HTML and CSS elements for creating rich
   user interfaces. Use Hexi also works with Angular, React and Elm!
 - A complete suite of tools for easily creating isometric game worlds, including: an isometric mouse/touch pointer, isometric tile collision using `hitTestIsoTile`, and full Tiled Editor isometric map support using `makeIsoTiledWorld`.
-- Yes, Hexi applications meet W3C accessibilty guidelines thanks to the [`accessible`](http://www.goodboydigital.com/pixi-becomes-accessible/) property provided by the Pixi renderer.
+- Yes, Hexi applications meet W3C accessibilty guidelines thanks to the [`accessible`](http://www.goodboydigital.com/pixi-becomes-accessible/) property provided by the Pixi renderer (yay Pixi!)
 
 <a id='features'></a>
 ### Hexi's modules
@@ -486,7 +486,7 @@ screen with the mouse (or touch.) So, we need a function that will
 produce new cat **sprites** for us. (Sprites are interactive graphics that you can animate and move around the screen.) Hexi lets you create a new sprite using the `sprite` method. Just supply `sprite` with file name that you want to use for the sprite. Each new cat sprite that's created should be positioned and added add to the cats `group`, using the `addChild` method. We also want the cat to animate its scale using the `breathe` method and animate its transparency using the `pulse` method. A function called `makeCats` does all this. `makeCats` takes two arguments: the x and y
 position where you want the cat to appear, relative to the top left corner of the screen.
 ```js
-makeCat = (x, y) => {
+let makeCat = (x, y) => {
 
   //Create the cat sprite. Supply the `sprite` method with 
   //the name of the loaded image that should be displayed
@@ -667,6 +667,7 @@ With this basic Hexi architecture, you can create anything. Just set Hexi's `sta
 ```js
 g.state = anyStateFunction;
 ```
+States are just plain old JavaScript funtctions!
 Nice and simple!
 
 Write as many state functions as you need. If it's a small project, you can keep all these functions in one file. But, for a big project, load your functions from external JS files as you need them. Use any module system you prefer, like ES6 modules, CommonJS, AMD, or good old HTML `<script>` tags.  This simple architectural model can scale to any size, and is the only architectural model you need to know. Keep it simple and stay happy!
@@ -1285,60 +1286,72 @@ g.arrowControl(player, 5);
 ```
 Using `arrowControl` is an easy and fast way to implement keyboard
 interactivity, but usually need finer control over what happens when
-keys are pressed. Hexi has a built-in keyboard objects with bindings 
-to the arrow keys and space bar. Access them like this:
-`g.leftArray`, `g.rightArrow`, `g.upArrow`, `g.downArrow`,
-`g.spaceBar`. All these keys have `press` and
-`release` methods that you can define. Here's how you could optionally use these
-keyboard objects to help move the player character in
+keys are pressed. Hexi has a built-in `keyboard` method that lets you define custom keys.
+
+```js
+let customKey = g.keyboard(asciiCode);
+```
+Supply the [ascii key code number](http://www.asciitable.com) for key
+you want to to use as the first argument.
+
+All these keys have `press` and
+`release` methods that you can define. Here's how you could optionally create and use these keyboard objects to help move the player character in
 Treasure Hunter. (You would define this code in the `setup` function.):
 ```js
+//Create some keyboard objects using Hexi's `keyboard` method.
+//You would usually use this code in the `setup` function.
+//Supply the ASCII key code value as the single argument
+let leftArrow = g.keyboard(37),
+    upArrow = g.keyboard(38),
+    rightArrow = g.keyboard(39),
+    downArrow = g.keyboard(40);
+
 //Left arrow key `press` method
-g.leftArrow.press = () => {
+leftArrow.press = () => {
   //Change the player's velocity when the key is pressed
   player.vx = -5;
   player.vy = 0;
 };
 
 //Left arrow key `release` method
-g.leftArrow.release = () => {
+leftArrow.release = () => {
   //If the left arrow has been released, and the right arrow isn't down,
   //and the player isn't moving vertically:
   //Stop the player
-  if (!g.rightArrow.isDown && player.vy === 0) {
+  if (!rightArrow.isDown && player.vy === 0) {
     player.vx = 0;
   }
 };
 
 //The up arrow
-g.upArrow.press = () => {
+upArrow.press = () => {
   player.vy = -5;
   player.vx = 0;
 };
-g.upArrow.release = () => {
-  if (!g.downArrow.isDown && player.vx === 0) {
+upArrow.release = () => {
+  if (!downArrow.isDown && player.vx === 0) {
     player.vy = 0;
   }
 };
 
 //The right arrow
-g.rightArrow.press = () => {
+rightArrow.press = () => {
   player.vx = 5;
   player.vy = 0;
 };
-g.rightArrow.release = () => {
-  if (!g.leftArrow.isDown && player.vy === 0) {
+rightArrow.release = () => {
+  if (!leftArrow.isDown && player.vy === 0) {
     player.vx = 0;
   }
 };
 
 //The down arrow
-g.downArrow.press = () => {
+downArrow.press = () => {
   player.vy = 5;
   player.vx = 0;
 };
-g.downArrow.release = () => {
-  if (!g.upArrow.isDown && player.vx === 0) {
+downArrow.release = () => {
+  if (!upArrow.isDown && player.vx === 0) {
     player.vy = 0;
   }
 };
@@ -1356,17 +1369,6 @@ The last four arguments are the [ascii key code numbers](http://www.asciitable.c
 right, bottom and left keys. (You can remember this because their
 order is listed clockwise, starting from the top.)
 
-Reference to the arrow keys and space key are built-in to Hexi, but you
-if want to use other keys, you can easily create and assign your own
-with Hexi's `keyboard` method:
-```js
-let customKey = g.keyboard(asciiCode);
-```
-Supply the [ascii key code number](http://www.asciitable.com) for key
-you want to to use as the first argument.
-
-Your new `customKey` has `press` and `release` methods
-that you can program in the same way as the examples above. 
 
 <a id='gamestate'></a>
 ##### Setting the game state

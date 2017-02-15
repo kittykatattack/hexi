@@ -145,51 +145,57 @@ function setup() {
   //but for more flexibility you can also program the arrow keys
   //manually, like this:
   /*
+  //Create some keyboard objects using Hexi's `keyboard` method.
+  //You would usually use this code in the `setup` function
+  //Supply the ASCII key code value as the single argument
+  let leftArrow = g.keyboard(37),
+    upArrow = g.keyboard(38),
+    rightArrow = g.keyboard(39),
+    downArrow = g.keyboard(40);
+
   //Left arrow key `press` method
-  g.leftArrow.press = () => {
+  leftArrow.press = () => {
     //Change the player's velocity when the key is pressed
     player.vx = -5;
     player.vy = 0;
   };
   //Left arrow key `release` method
-  g.leftArrow.release = () => {
+  leftArrow.release = () => {
     //If the left arrow has been released, and the right arrow isn't down,
     //and the player isn't moving vertically:
     //Stop the player
-    if (!g.rightArrow.isDown && player.vy === 0) {
+    if (!rightArrow.isDown && player.vy === 0) {
       player.vx = 0;
     }
   };
-  g.upArrow.press = () => {
+  upArrow.press = () => {
     player.vy = -5;
     player.vx = 0;
   };
-  g.upArrow.release = () => {
-    if (!g.downArrow.isDown && player.vx === 0) {
+  upArrow.release = () => {
+    if (!downArrow.isDown && player.vx === 0) {
       player.vy = 0;
     }
   };
-  g.rightArrow.press = () => {
+  rightArrow.press = () => {
     player.vx = 5;
     player.vy = 0;
   };
-  g.rightArrow.release = () => {
-    if (!g.leftArrow.isDown && player.vy === 0) {
+  rightArrow.release = () => {
+    if (!leftArrow.isDown && player.vy === 0) {
       player.vx = 0;
     }
   };
-  g.downArrow.press = () => {
+  downArrow.press = () => {
     player.vy = 5;
     player.vx = 0;
   };
-  g.downArrow.release = () => {
-    if (!g.upArrow.isDown && player.vx === 0) {
+  downArrow.release = () => {
+    if (!upArrow.isDown && player.vx === 0) {
       player.vy = 0;
     }
   };
 
-  //Hexi also has a built in `spaceBar` key objec that you can program
-  //in the same way, if you need to
   */
 
   //set the game state to `play`
