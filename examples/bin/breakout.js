@@ -95,7 +95,7 @@ function setup() {
   //Set the `titleMessage` x position to -200 so that it's offscreen
   titleMessage = g.text("start game", "20px puzzler", "white", -200, 300);
 
-  //Make the `playButton` and `titleMessage` slide in from the 
+  //Make the `playButton` and `titleMessage` slide in from the
   //edges of the screen using the `slide` function
   g.slide(playButton, 250, 350, 30, "decelerationCubed");
   g.slide(titleMessage, 250, 300, 30, "decelerationCubed");
@@ -217,9 +217,9 @@ function play() {
   });
 
   /*
-  Check for a collision between the ball and the paddle, and 
-  bounce the ball off the paddle. Play the `bounceSound` when 
-  the collision occurs. 
+  Check for a collision between the ball and the paddle, and
+  bounce the ball off the paddle. Play the `bounceSound` when
+  the collision occurs.
   You can use the universal `hit` collision function to do this.
   `hit` arguments:
   spriteA, spriteB, reactToCollision?, bounce?, useGlobalCoordinates?
@@ -246,7 +246,7 @@ function play() {
   });
 
   /*
-  Check for a collision between the ball and the all 
+  Check for a collision between the ball and the all
   the blocks in the grid.
   You can use the universal `hit` collision function to do this. If one
   of the first two arguments is an array, the `hit` function will loop

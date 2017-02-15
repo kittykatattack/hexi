@@ -24,22 +24,22 @@ function setup() {
   blue.setPivot(0.5, 0.5);
   g.stage.putCenter(blue, blue.halfWidth + 16, blue.halfHeight + 16);
   blue.draggable = true;
-  
+
   //Make a red square
   red = g.rectangle(64, 64, "red");
   red.setPivot(0.5, 0.5);
   g.stage.putCenter(red, -red.halfWidth -16, -red.halfWidth -16);
   red.draggable = true;
 
-  //Add some text 
+  //Add some text
   message = g.text(
-    "Drag the circles...", 
+    "Drag the circles...",
     "16px sans-serif",
     "black", 10, 10
   );
-    
+
   //Change the state to `play`
-  g.state = play;  
+  g.state = play;
 }
 
 //The `play` function will run in a loop
@@ -65,10 +65,10 @@ function play() {
   (the third and fourth arguments default to `true`);
   */
   //let collision = g.rectangleCollision(blue, red);
-  
+
   //Change the message if there's a collision between the rectangles
   if(collision) {
-    message.content = "Collision on: " + collision; 
+    message.content = "Collision on: " + collision;
   } else {
     message.content = "Drag the squares...";
   }

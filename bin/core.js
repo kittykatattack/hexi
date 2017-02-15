@@ -7,7 +7,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 /*
 Hexi
 ====
-   
+
 Welcome to Hexi's source code!
 This file, `core.js` is the glue that holds Hexi together. Most of Hexi's functionality comes
 from some external libraries, written for Hexi, that `core.js` instantiates and wires
@@ -27,28 +27,28 @@ together. Here are the external libraries that Hexi is currently using:
 - [Sound.js](https://github.com/kittykatattack/sound.js): A micro-library for loading, controlling and generating
   sound and music effects. Everything you need to add sound to games.
 - [fullScreen.js](https://github.com/kittykatattack/fullScreen): Adds an easy-to-implement full screen feature.
-- [Smoothie](https://github.com/kittykatattack/smoothie): Ultra-smooth sprite animation using 
-  true delta-time interpolation. It also lets you specify the fps (frames-per-second) at which 
+- [Smoothie](https://github.com/kittykatattack/smoothie): Ultra-smooth sprite animation using
+  true delta-time interpolation. It also lets you specify the fps (frames-per-second) at which
   your game or application runs, and completely separates your sprite rendering loop from your
   application logic loop.
 
-The job of `core.js` (this file!) is to instantiate Hexi, load the assets, start the game loop, and 
+The job of `core.js` (this file!) is to instantiate Hexi, load the assets, start the game loop, and
 create top-level access to most of the properties and methods in the external libraries.
-It also customizes some of those methods and runs them with some useful side-effects, such as 
+It also customizes some of those methods and runs them with some useful side-effects, such as
 automatically adding sprites to Hexi's `stage`. (Hexi's `stage` is the root Pixi `Container` for the display list.)
 
 I've divided this `core.js` file into "Chapters" which describes what each major section of code does.
 You'll find a "Table of Contents" ahead, which is your guide to this file.
-All this code is fully commented, but if there's something you don't understand, please ask 
+All this code is fully commented, but if there's something you don't understand, please ask
 in this repository's Issues and we will do our best to help. All this code is in one single file for now, just for the sake of simplicity,
-until the total scope of this project stabilizes. 
+until the total scope of this project stabilizes.
 
 Hexi's build system
 -------------------
 
-All of Hexi's source code is written in JavaScript ES6, transpiled to ES5 using Babel, and minified using Uglify2. 
+All of Hexi's source code is written in JavaScript ES6, transpiled to ES5 using Babel, and minified using Uglify2.
 Make is currently being used as the build
-system. So, to build Hexi, make sure you have Node, Babel and Uglify2 installed, and call `make` in the 
+system. So, to build Hexi, make sure you have Node, Babel and Uglify2 installed, and call `make` in the
 command line from Hexi's root directory. Make will compile the `core.js` file, concatenate all files (including
 the modules) and produce the `hexi.min.js` file using Uglify2.
 
@@ -66,14 +66,14 @@ If you want to concatenate all the files, run:
   make concatAllFiles
 
 To watch and compile the example files from ES6 to ES5, run:
-  
+
   make watchExamples
 
 To watch and compile the tutorial files from ES6 to ES5, run:
 
   make watchTutorials
 
-If anyone reading this wishes to contribute a simpler, more automated system using Grunt of Gulp, 
+If anyone reading this wishes to contribute a simpler, more automated system using Grunt of Gulp,
 we would welcome the contribution!
 
 Table of Contents
@@ -140,7 +140,7 @@ function hexi(width, height, setup) {
 
   //To change PIXI's renderer, set the `renderer` option to
   //"auto", "canvas" or "webgl", like this:
-  //renderer: "auto" 
+  //renderer: "auto"
   //Add any other Pixi initialization options you need, depending
   //on which Pixi renderer you're using
   return hexi;
@@ -159,7 +159,7 @@ function hexi(width, height, setup) {
 var Hexi = (function () {
 
   /*
-  Initialize Hexi's constructor with an options object literal called `o`. 
+  Initialize Hexi's constructor with an options object literal called `o`.
   Here are the required options:
    `width`: Value in pixels that describes the canvas's width
   `height`: Value in pixels that describes the canvas's height
@@ -172,12 +172,12 @@ var Hexi = (function () {
   `border`: The canvas border style as a CSS border string, such as "1px dashed black"
   `scaleToWindow`: A Boolean that determines whether the canvas should scale to maximum window size.
   `scaleBorderColor`: Color string that defines the color of the border around a scaled canvas.
-  `interpolationProperties: An object that defines 5 Boolean properties that determines which sprite properties are interpolated 
+  `interpolationProperties: An object that defines 5 Boolean properties that determines which sprite properties are interpolated
                             (smoothly animated) by Hexi's rendering engine (Smoothie): `position`, `size`, `rotation`, `scale` or `alpha`
   `interpolate`: A Boolean which should be `false` if you *don't* want any sprite animation smoothing.
   `fps`: The frames-per-second the engine's game logic loop should run at (the default is 60).
   `renderFps`: Clamps the fps rendering to the supplied frame rate.
-   You can also add any of Pixi's initialization options, and those will be applied 
+   You can also add any of Pixi's initialization options, and those will be applied
   to Pixi's renderer when Hexi creates it.
    */
 
@@ -623,7 +623,7 @@ var Hexi = (function () {
       if (document.fullscreenEnabled === true) {
         console.log("fullscreenEnabled")
          //Note: Check Firefox's current FullScreen API and specifically:
-        //https://github.com/neovov/Fullscreen-API-Polyfill/blob/master/fullscreen-api-polyfill.js  
+        //https://github.com/neovov/Fullscreen-API-Polyfill/blob/master/fullscreen-api-polyfill.js
         //if (this.fullScreen.fullscreenScale !== 1) {
         this.scale = this.fullScreen.fullscreenScale;
         //console.log("this.fullScreen.fullscreenScale: " + this.fullScreen.fullscreenScale)

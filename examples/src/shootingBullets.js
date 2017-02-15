@@ -1,5 +1,5 @@
 /*
-Learn how to use the `shoot` method to create a sprite 
+Learn how to use the `shoot` method to create a sprite
 that can shoot bullets
 */
 
@@ -59,15 +59,15 @@ function setup() {
     );
   };
 
-  //Add some text 
+  //Add some text
   message = g.text(
-    "Click or tap to shoot", 
+    "Click or tap to shoot",
     "16px sans-serif",
     "black", 10, 10
   );
-    
+
   //Change the state to `play`
-  g.state = play;  
+  g.state = play;
 
 }
 
@@ -80,7 +80,7 @@ function play() {
   //Id you just want to move all the bullets without removing them
   //they hit the screen boundaries, you can just use the help of the `move` method
   //g.move(bullets);
- 
+
   //Remove the bullets if they cross the screen boundaries
   //Loop through the bullets using `filter` so that we can remove
   //the bullet easily
@@ -93,7 +93,7 @@ function play() {
     let collision = g.outsideBounds(bullet, g.stage);
 
     //If there's a collision, display the side that the collision
-    //happened on, remove the bullet sprite and filter it out of 
+    //happened on, remove the bullet sprite and filter it out of
     //the `bullets` array
     if(collision) {
 
@@ -105,14 +105,14 @@ function play() {
       if (collision.has("bottom")) collisionSide = "bottom";
 
       //Display the result in a text sprite
-      message.content = `The bullet hit the ${collisionSide}`; 
+      message.content = `The bullet hit the ${collisionSide}`;
 
       //The `remove` function will remove a sprite for its parent.
-      g.remove(bullet); 
+      g.remove(bullet);
 
       //Remove the bullet from the `bullets` array
       return false;
-    } 
+    }
 
     //If the bullet hasn't hit the edge of the screen,
     //keep it in the `bullets` array

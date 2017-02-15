@@ -22,7 +22,7 @@ g.start();
 
 function setup() {
 
-  //Create the `world` container that defines our isometric 
+  //Create the `world` container that defines our isometric
   //tile-based world
   world = g.group();
 
@@ -94,7 +94,7 @@ function setup() {
         x = column * world.cartTilewidth;
         y = row * world.cartTileheight;
 
-        //Next, create a different sprite based on what its 
+        //Next, create a different sprite based on what its
         //`gid` number is
         let sprite;
         switch (gid) {
@@ -137,7 +137,7 @@ function setup() {
       }
     });
 
-    //Add `1` to `z` for each new layer  
+    //Add `1` to `z` for each new layer
     z += 1;
   });
 
@@ -205,7 +205,7 @@ function play() {
     }
   }
 
-  //Update the player's Cartesian position 
+  //Update the player's Cartesian position
   //based on its velocity
   player.cartY += player.vy;
   player.cartX += player.vx;

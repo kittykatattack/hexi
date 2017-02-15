@@ -5,7 +5,7 @@ Hexi supports game maps and levels created using the popular Tiled
 Editor level designer:
 
 www.mapeditor.org
-   
+
 See the simpler example `tileEditorSupport.html` for instructions on how to
 integrate Tiled Editor maps into your Hexi code.
 
@@ -17,9 +17,9 @@ custom `name` properties so that they're easy to access in the game
 code.
 
 This example is rather extreme. In a production level game you
-probably shouldn't blit so many individual tile sprites to so many 
+probably shouldn't blit so many individual tile sprites to so many
 depth levels, for performance reasons. It would be better to use a
-single, solid background image for the whole game world, 
+single, solid background image for the whole game world,
 and just use Tiled Editor's layers to generate arrays of obstacle and
 item positions. But, if you need to create a shallow depth effect like
 you now know how!
@@ -92,10 +92,10 @@ function setup() {
   items = itemsLayer.children.slice(0);
 
   /*
-  If you ever need to extract sprites with specific gid numbers in a 
+  If you ever need to extract sprites with specific gid numbers in a
   layer that contains different kinds of things, you can do it like this:
    items = itemsLayer.children.map(function(sprite) {
-    if (sprite.gid !== 0) return sprite; 
+    if (sprite.gid !== 0) return sprite;
   });
    */
   //Get a reference to the array containing the map items

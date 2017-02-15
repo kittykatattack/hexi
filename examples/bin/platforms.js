@@ -180,13 +180,13 @@ function play() {
   //Check for collisions between the player and the platforms
   world.platforms.forEach(function(platform) {
      //Use `rectangleCollision` to prevent the player and platforms
-    //from overlapping  
+    //from overlapping
     let collision = g.rectangleCollision(player, platform);
-    
+
     //Use the collision variable to figure out what side of the player
     //is hitting the platform
     if(collision === "bottom" && player.vy >= 0) {
-      //Tell the game that the player is on the ground if 
+      //Tell the game that the player is on the ground if
       //it's standing on top of a platform
       player.isOnGround = true;
       //Neutralize gravity by applying its

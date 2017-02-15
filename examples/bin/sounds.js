@@ -9,7 +9,7 @@ to control and generate sounds:
 
 https://github.com/kittykatattack/sound.js
 
-The only difference in Hexi's implementation is that you can pre-load sounds 
+The only difference in Hexi's implementation is that you can pre-load sounds
 the same way that you can pre-load images and data files.
 Also, after sounds have loaded you can access them like this:
 

@@ -7,7 +7,7 @@ to control and generate sounds:
 
 https://github.com/kittykatattack/sound.js
 
-The only difference in Hexi's implementation is that you can pre-load sounds 
+The only difference in Hexi's implementation is that you can pre-load sounds
 the same way that you can pre-load images and data files.
 Also, after sounds have loaded you can access them like this:
 
@@ -71,11 +71,11 @@ function setup() {
       i = g.keyboard(73),
       j = g.keyboard(74);
 
-  //Create `press` actions for each sound 
+  //Create `press` actions for each sound
   a.press = () => {
 
     //Allow the music to start playing only once
-    if (!music.playing) music.play(); 
+    if (!music.playing) music.play();
   };
   b.press = () => music.pause();
   c.press = () => music.restart();
@@ -156,7 +156,7 @@ function setup() {
     //High D
     g.soundEffect(1174.66, 0, 0.3, "square", 1, 0, 0.2);
   }
- 
+
   //Program keyboard keys to play the sounds.
   gee.press = () => shootSound();
   h.press = () => jumpSound();
@@ -168,9 +168,9 @@ function setup() {
   instructions.setPosition(10, 0);
 
   //Here's an example of how to create multiline text
-  //using ES6 template strings (surounding the text with 
+  //using ES6 template strings (surounding the text with
   //backtick characters)
-  instructions.content = 
+  instructions.content =
 `
 To shoot, press 1
 
@@ -183,7 +183,7 @@ To control music:
   f - Fade in
 
 Generated sound effects
-  g - Shoot 
+  g - Shoot
   h - Jump
   i - Explosion
   j - Bonus

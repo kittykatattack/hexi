@@ -119,7 +119,7 @@ function setup() {
       }
     });
 
-    //Add `1` to `z` for each new layer 
+    //Add `1` to `z` for each new layer
     z += 1;
   });
 

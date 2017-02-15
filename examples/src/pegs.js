@@ -21,7 +21,7 @@ function setup() {
 
 //Figure out a random diameter for the falling ball
   let randomDiameter = g.randomInt(16, 64);
- 
+
   //Create the ball using the random diameter
   ball = g.circle(randomDiameter, "red");
 
@@ -46,7 +46,7 @@ function setup() {
   let colors = [
     "#FFABAB", "#FFDAAB", "#DDFFAB", "#ABE4FF", "#D9ABFF"
   ];
-  
+
   /*
   Create the grid of pegs using the `grid` function. `grid` returns a
   `group` sprite object that contains a sprite for every cell in the
@@ -60,7 +60,7 @@ function setup() {
       gridGroup = grid(
 
         //Set the grid's properties
-        rows, columns, cellWidth, cellHeight, 
+        rows, columns, cellWidth, cellHeight,
         areSpirtesCentered?, xOffset, yOffset,
 
         //A function that returns a sprite
@@ -74,7 +74,7 @@ function setup() {
   pegs = g.grid(
 
     //Set the grid's properties
-    5, 4, 96, 96, 
+    5, 4, 96, 96,
     true, 0, 0,
 
     //A function that describes how to make each peg in the grid
@@ -91,7 +91,7 @@ function setup() {
   pegs.setPosition(16, 96);
 
   //Change the state to `play`
-  g.state = play;  
+  g.state = play;
 }
 
 //The `play` function will run in a loop
@@ -99,7 +99,7 @@ function play() {
 
   //Apply gravity to the ball's vertical velocity
   ball.vy += ball.gravity;
-  
+
   //Apply friction. ball.frictionX will be 0.96 if the ball is
   //on the ground, and 1 if it's in the air
   ball.vx *= ball.frictionX;
@@ -109,7 +109,7 @@ function play() {
   g.move(ball);
 
   //Check for a collision with the ball and the stage's boundary, and
-  //make the ball bounce by setting setting the last argument 
+  //make the ball bounce by setting setting the last argument
   //in the `contain` method to `true`
   let stageCollision = g.contain(ball, g.stage, true);
 
@@ -126,16 +126,16 @@ function play() {
   //Check for a collision between the ball and the pegs using the
   //universal `hit` method.
   //arguments: circle, arrayOfCircles, reactToCollision?,
-  //bounceApart?, useGlobalPosition? 
+  //bounceApart?, useGlobalPosition?
   g.hit(ball, pegs.children, true, true, true);
 
   //Alternatively, use a `forEach` loop and the lower-level
   //`circleCollision` method
- 
-  /* 
+
+  /*
   pegs.children.forEach(peg => {
-    
-    //Make the ball bounce if it hits any of the pegs. Use the 
+
+    //Make the ball bounce if it hits any of the pegs. Use the
     //`circleCollision` function to check for collisions between
     //a moving circle and a stationary circle. Set the third argument to
     //`false` to prevent the circles from bouncing, and set the fourth
@@ -143,7 +143,7 @@ function play() {
     //coordinates. (The global coordinates will be used by default)
     //`circleCollision` arguments:
     //movingCircle, stationaryCircle, bounce?, globalCoordinates?
-    
+
     g.circleCollision(ball, peg, true, true);
   });
   */

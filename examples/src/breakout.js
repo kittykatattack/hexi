@@ -41,22 +41,22 @@ let paddle, ball, topBorder, blocks, blockFrames,
 
     //The paddle wobble tween
     paddleWobble;
- 
+
 
 //The `load` function will run while assets are loading. This is the
-//same `load` function you assigned as Hexi's 4th initialization argument. 
+//same `load` function you assigned as Hexi's 4th initialization argument.
 //Its optional. You can leave it out if you don't have any files to
 //load, or you don't need to monitor their loading progress
 
 function load(){
 
   //Display the file currently being loaded
-  console.log(`loading: ${g.loadingFile}`); 
+  console.log(`loading: ${g.loadingFile}`);
 
   //Display the percentage of files currently loaded
   console.log(`progress: ${g.loadingProgress}`);
 
-  //Add an optional loading bar 
+  //Add an optional loading bar
   g.loadingBar();
 
   //This built-in loading bar is fine for prototyping, but I
@@ -89,25 +89,25 @@ function setup() {
   //Set the `playButton`'s x property to 514 so that
   //it's offscreen when the sprite is created
   playButton.x = 514;
-  playButton.y = 350; 
+  playButton.y = 350;
 
   //Set the `titleMessage` x position to -200 so that it's offscreen
-  titleMessage = g.text("start game", "20px puzzler", "white", -200, 300); 
+  titleMessage = g.text("start game", "20px puzzler", "white", -200, 300);
 
-  //Make the `playButton` and `titleMessage` slide in from the  
+  //Make the `playButton` and `titleMessage` slide in from the
   //edges of the screen using the `slide` function
   g.slide(playButton, 250, 350, 30, "decelerationCubed");
   g.slide(titleMessage, 250, 300, 30, "decelerationCubed");
 
   //Create the `titleScene` group
   titleScene = g.group(title, playButton, titleMessage);
-  
+
   //2. The `gameScene` sprites
-  
+
   //The paddle
   paddle = g.sprite("paddle.png");
   g.stage.putBottom(paddle, 0, -24);
-  
+
   //The ball
   ball = g.sprite("ball.png");
   g.stage.putBottom(ball, 0, -128);
@@ -123,9 +123,9 @@ function setup() {
   //First create an array that stores references to all the
   //blocks frames in the texture atlas
   blockFrames = [
-    "blue.png", 
-    "green.png", 
-    "orange.png", 
+    "blue.png",
+    "green.png",
+    "orange.png",
     "red.png",
     "violet.png"
   ];
@@ -181,19 +181,19 @@ function play() {
 
   //Keep the paddle within the screen boundaries
   g.contain(paddle, g.stage);
-  
+
   //Move the ball
-  g.move(ball); 
+  g.move(ball);
 
   //Bounce the ball off the screen edges. Use the `contain` method
   //with a custom `bounds` object (the second argument) that defines
   //the area that the ball should bounce around in.
-  //Play the bounceSound when the ball hits one of these edges, 
+  //Play the bounceSound when the ball hits one of these edges,
   //and reduce the score by one if it hits the ground
   let ballHitsWall = g.contain(
-    ball, 
-    {x: 0, y: 32, width: g.canvas.width, height: g.canvas.height}, 
-    true, 
+    ball,
+    {x: 0, y: 32, width: g.canvas.width, height: g.canvas.height},
+    true,
 
     //what should happen when the ball hits the edges of the boundary?
     (collision) => {
@@ -218,10 +218,10 @@ function play() {
         //point to 0.5 for this to work effectively. Also, you can only change the pivot points of
         //sprites - not `group` objects.) The `magnitude` will be the maximum value, in
         //radians, that it should shake. If `angularShake?` is `false`
-        //the shake effect will happen on the x/y axis. 
+        //the shake effect will happen on the x/y axis.
 
         //g.shake(gameScene, 16, true);
-        
+
         //In that case
         //the magnitude will be the maximum amount of displacement,
         //in pixels.
@@ -230,14 +230,14 @@ function play() {
   );
 
   /*
-  Check for a collision between the ball and the paddle, and 
-  bounce the ball off the paddle. Play the `bounceSound` when 
-  the collision occurs. 
+  Check for a collision between the ball and the paddle, and
+  bounce the ball off the paddle. Play the `bounceSound` when
+  the collision occurs.
   You can use the universal `hit` collision function to do this.
   `hit` arguments:
   spriteA, spriteB, reactToCollision?, bounce?, useGlobalCoordinates?
   actionWhenCollisionOccurs
-  */            
+  */
 
   let ballHitsPaddle = g.hit(
     ball, paddle, true, true, true,
@@ -262,10 +262,10 @@ function play() {
       );
     }
   );
-  
+
 
   /*
-  Check for a collision between the ball and the all 
+  Check for a collision between the ball and the all
   the blocks in the grid.
   You can use the universal `hit` collision function to do this. If one
   of the first two arguments is an array, the `hit` function will loop
@@ -287,7 +287,7 @@ function play() {
       g.remove(block);
 
       //Create the particle effect
-      
+
       //1. Find the globalCenterX and globalCenterY
       //position for the block that was hit
       let globalCenterX = block.gx + block.halfWidth,
@@ -321,7 +321,7 @@ function play() {
     //call the `end` function
     g.pause();
     g.wait(1000, () => {
-       end(); 
+       end();
     });
   }
 }
@@ -334,7 +334,7 @@ function end() {
   g.slide(gameScene, -514, 0, 30, "decelerationCubed");
 
   //Display the final score
-  titleMessage.content = `Score: ${score}`; 
+  titleMessage.content = `Score: ${score}`;
 
   //Lower the music volume
   music.volume = 0.3;
@@ -358,7 +358,7 @@ function restart() {
     false, 0, 0,
     () => {
 
-      //Choose a random block from the 
+      //Choose a random block from the
       //`blockFrames` array for each grid cell
       let randomBlock = g.randomInt(0, 4);
       return g.sprite(blockFrames[randomBlock]);
@@ -383,11 +383,11 @@ function restart() {
 
   //Set the music volume to full
   music.volume = 1;
-  
+
   //Hide the titleScene and reveal the gameScene
   g.slide(titleScene, 514, 0, 30, "decelerationCubed");
   g.slide(gameScene, 0, 0, 30, "decelerationCubed");
-  
+
   //Set the game state to `play` and `resume` the game
   g.state = play;
   g.resume();

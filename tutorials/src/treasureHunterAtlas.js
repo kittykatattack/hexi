@@ -23,7 +23,7 @@ g.start();
 let dungeon, player, treasure, enemies, chimes, exit,
     healthBar, message, gameScene, gameOverScene;
 
-//The `setup` function runs once and is used to initializes your game 
+//The `setup` function runs once and is used to initializes your game
 function setup() {
 
   //Create the `chimes` sound object
@@ -66,7 +66,7 @@ function setup() {
       speed = 2,
       direction = 1;
 
-  //An array to store all the enemies    
+  //An array to store all the enemies
   enemies = [];
 
   //Make as many enemies as there are `numberOfEnemies`
@@ -293,7 +293,7 @@ function play() {
   if (g.hitTestRectangle(treasure, exit)) {
     g.state = end;
     message.content = "You won!";
-  }  
+  }
 }
 
 function end() {

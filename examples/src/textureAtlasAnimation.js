@@ -1,5 +1,5 @@
 /*
-Learn how to make an animated sprite using multiple frames 
+Learn how to make an animated sprite using multiple frames
 in a texture atlas
 */
 
@@ -21,12 +21,12 @@ function setup() {
 
 /*
   An easier way to create animated sprites is to use a texture atlas,
-  made with a software tool like Texture Packer. Save the PNG and JSON 
+  made with a software tool like Texture Packer. Save the PNG and JSON
   files that Texture Packer
   produces in the same "images" folder. Then load the JSON file when you
   initialize Hexi, as you can see at the beginning of this file. Next, create an array that
   lists the frame id names of all the images from the texture atlas
-  that you want your sprite to contain. 
+  that you want your sprite to contain.
   */
 
   let pixieFrames = ["pixie0.png", "pixie1.png", "pixie2.png"];
@@ -51,7 +51,7 @@ function setup() {
   //pixie from flapping her wings after 3 seconds
   /*
   g.wait(3000, function(){
-     pixie.stopAnimation(); 
+     pixie.stopAnimation();
   });
   */
 
@@ -61,18 +61,18 @@ function setup() {
   /*
   You can also use the `show` method to display
   a specific frame. This is usually better to use than `gotoAndStop`
-  because its more tightly integrated into the sprite's 
+  because its more tightly integrated into the sprite's
   state and animation manager.
-  
+
       pixie.show(1);
   */
 
   //Optionally supply `playAnimation` with a range range of frames
-  //that you'd like it to play. 
+  //that you'd like it to play.
   //pixie.fps = 1;
   //pixie.playAnimation([0, 1]);
 
-  g.state = play;    
+  g.state = play;
 }
 
 function play() {

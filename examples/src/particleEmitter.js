@@ -1,15 +1,15 @@
 /*
 Use the `particleEmitter` method to create a constant stream of particles
-at fixed intervals. The emitter is a simple timer that calls the 
+at fixed intervals. The emitter is a simple timer that calls the
 `createParticles` method repeatedly at intervals in milliseconds that
 you define. Here's how to create a particle emitter
 
 let particleStream = g.particleEmitter(intervalInMilliseconds, createParticlesMethod);
 
-Use the emitter's `play` and `stop` methods to start and 
+Use the emitter's `play` and `stop` methods to start and
 stop the particle stream.
 
-This example shows you how to create a particle emitter, and how to use the 
+This example shows you how to create a particle emitter, and how to use the
 pointer's `press` and `release` methods to start and stop the particle stream.
 */
 
@@ -29,8 +29,8 @@ function setup() {
   let particleStream = g.particleEmitter(
     100,                                   //The interval, in milliseconds
     () => g.createParticles(               //The `createParticles` method
-      g.pointer.x, 
-      g.pointer.y, 
+      g.pointer.x,
+      g.pointer.y,
       () => g.sprite("images/star.png"),
       g.stage,
       50

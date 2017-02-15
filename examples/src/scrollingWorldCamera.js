@@ -3,7 +3,7 @@ Hexi supports game maps and levels created using the popular Tiled
 Editor level designer:
 
 www.mapeditor.org
-   
+
 See the simpler example `tileEditorSupport.html` for instructions on how to
 integrate Tiled Editor maps into your Hexi code.
 
@@ -15,9 +15,9 @@ custom `name` properties so that they're easy to access in the game
 code.
 
 This example is rather extreme. In a production level game you
-probably shouldn't blit so many individual tile sprites to so many 
+probably shouldn't blit so many individual tile sprites to so many
 depth levels, for performance reasons. It would be better to use a
-single, solid background image for the whole game world, 
+single, solid background image for the whole game world,
 and just use Tiled Editor's layers to generate arrays of obstacle and
 item positions. But, if you need to create a shallow depth effect like
 you now know how!
@@ -41,7 +41,7 @@ g.scaleToWindow();
 g.start();
 
 //Game variables
-let world, elf, elfTextures, camera, 
+let world, elf, elfTextures, camera,
     itemsLayer, itemsMapArray, items, message,
     leftArrow, upArrow, downArrow, rightArrow;
 
@@ -50,7 +50,7 @@ function setup() {
 
   //Make the world from the Tiled JSON data and the tileset PNG image
   world = g.makeTiledWorld(
-    "maps/fantasy.json", 
+    "maps/fantasy.json",
     "images/fantasy.png"
   );
 
@@ -80,20 +80,20 @@ function setup() {
   //Use `world.getObjects` to get an array of objects on the map
   //console.log(world.getObjects("marmot", "skull", "heart"));
 
-  //Get all the items on the items layer (the skull, marmot and heart). 
+  //Get all the items on the items layer (the skull, marmot and heart).
   //The `itemLayer` group's `children` array contains all of them.
   itemsLayer = world.getObject("items");
 
   //Clone the `itemLayer.children` array so that you have your own
   //array of all three item sprites (the heart, skull and marmot)
   items = itemsLayer.children.slice(0);
-  
+
   /*
-  If you ever need to extract sprites with specific gid numbers in a 
+  If you ever need to extract sprites with specific gid numbers in a
   layer that contains different kinds of things, you can do it like this:
 
   items = itemsLayer.children.map(function(sprite) {
-    if (sprite.gid !== 0) return sprite; 
+    if (sprite.gid !== 0) return sprite;
   });
 
   */
@@ -110,10 +110,10 @@ function setup() {
   The `world.woldWidth` and `world.worldHeight` values are the dimensions
   of the Tiled map data's width and height.
   */
-  
+
   camera = g.worldCamera(world, world.worldWidth, world.worldHeight);
   camera.centerOver(elf);
-  
+
   //Define a `collisionArea` on the elf that will be sensitive to
   //collisions. `hitTestTile` will use this information later to check
   //whether the elf is colliding with any of the tiles
@@ -147,13 +147,13 @@ function setup() {
   //Use the `show` method to display the elf's `right` state
   elf.show(elf.states.right);
   elf.fps = 18;
- 
+
   //Create some keyboard objects
   leftArrow = g.keyboard(37);
   upArrow = g.keyboard(38);
   rightArrow = g.keyboard(39);
   downArrow = g.keyboard(40);
-  
+
   //Assign key `press` and release methods that
   //show and play the elf's different states
   leftArrow.press = () => {
@@ -208,7 +208,7 @@ function setup() {
   message.visible = false;
 
   //Change the game state to `play`
-  g.state = play;  
+  g.state = play;
 }
 
 //The `play` function contains all the game logic and runs in a loop
@@ -216,7 +216,7 @@ function play() {
 
   //Move the elf and constrain it to the world boundaries
   //(-10 and -18 are to compensate for image padding around the sprite)
-  elf.x = Math.max(-18, Math.min(elf.x + elf.vx, world.worldWidth - elf.width + 18)); 
+  elf.x = Math.max(-18, Math.min(elf.x + elf.vx, world.worldWidth - elf.width + 18));
   elf.y = Math.max(-10, Math.min(elf.y + elf.vy, world.worldHeight - elf.height));
 
   //Make the camera follow the elf
@@ -239,7 +239,7 @@ function play() {
     elf.y -= elf.vy;
     elf.vx = 0;
     elf.vy = 0;
-    
+
     //You can find the gid number of the thing the elf hit like this:
     //console.log(obstaclesMapArray[elfVsGround.index]);
   }
@@ -275,7 +275,7 @@ function play() {
       } else {
         return true;
       }
-    }); 
+    });
   }
 }
 

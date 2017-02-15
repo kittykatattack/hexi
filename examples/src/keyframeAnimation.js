@@ -22,7 +22,7 @@ function setup() {
   The first, lower level way, is to use the `frames` method. `frames`
   lets you list an array of x/y positions on an image that refer to
   each sub-image that you wan to use. Here's how to use it:
-  */   
+  */
 
   //Create the pixie's animation frames using the `frames` method
   let pixieFrames = g.frames(
@@ -38,7 +38,7 @@ function setup() {
   //sprite with an array of image file names. See the next example file
   //if you want to find out how to do that.
   //But the best way to make a sprite with multiple frames is to use
-  //a texture atlas. Another example file ahead will show you how. But 
+  //a texture atlas. Another example file ahead will show you how. But
   //no matter how you add frames to a sprite, you control those frames
   //same way, which you'll learn next.
 
@@ -54,7 +54,7 @@ function setup() {
   //pixie from flapping her wings after 3 seconds
   /*
   g.wait(3000, function(){
-     pixie.stopAnimation(); 
+     pixie.stopAnimation();
   });
   */
 
@@ -63,17 +63,17 @@ function setup() {
 
   //You can also use the `show` method to display
   //a specific frame. This is usually better to use than `gotoAndStop`
-  //because its more tightly integrated into the sprite's 
+  //because its more tightly integrated into the sprite's
   //state and animation manager.
   //pixie.show(1);
 
   //You can also use `playAnimation` to play a range of frames by
-  //supplying it with an array of the numbers that you want to play 
+  //supplying it with an array of the numbers that you want to play
   //pixie.fps = 1;
   //pixie.playAnimation([0, 1]);
 
 
-  g.state = play;    
+  g.state = play;
 }
 
 function play() {

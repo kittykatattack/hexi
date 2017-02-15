@@ -15,10 +15,10 @@ g.scaleToWindow();
 function setup() {
 
   //The cat sprite
-  let cat = g.sprite("cat.png"); 
+  let cat = g.sprite("cat.png");
   cat.setPosition(32, 32);
 
-  //Use `walkPath` to make the cat follow a straight path 
+  //Use `walkPath` to make the cat follow a straight path
   //between a series of connected waypoints. Here's how to use it:
 
   let catPath = g.walkPath(
@@ -31,26 +31,26 @@ function setup() {
       [300, 128],          //Next x/y point
       [300, 32],           //Next x/y point
       [32, 32]             //Last x/y point
-    ], 
+    ],
 
     300,                   //Total duration, in frames
     "smoothstep",          //Easing type
     true,                  //Should the path loop?
     true,                  //Should the path reverse?
     1000                   //Delay in milliseconds between segments
-  ); 
+  );
 
   //The hedgehog sprite
-  let hedgehog = g.sprite("hedgehog.png"); 
+  let hedgehog = g.sprite("hedgehog.png");
   hedgehog.setPosition(32, 256);
 
-  //Use `walkCurve` to make the hedgehog follow a curved path 
+  //Use `walkCurve` to make the hedgehog follow a curved path
   //between a series of connected waypoints. Here's how to use it:
 
   let hedgehogPath = g.walkCurve(
     hedgehog,              //The sprite
 
-    //An array of Bezier curve points that 
+    //An array of Bezier curve points that
     //you want to connect in sequence
     [
       [[hedgehog.x, hedgehog.y],[75, 500],[200, 500],[300, 300]],
@@ -64,7 +64,7 @@ function setup() {
     1000                   //Delay in milliseconds between segments
   );
 
-  //Tweens are updated independently in Hexi's internal 
+  //Tweens are updated independently in Hexi's internal
   //game engine loop, so there's no need to update them in
   //your own `play` state to make them work.
 }

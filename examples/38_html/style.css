@@ -48,7 +48,7 @@ button
 
   ; -webkit-user-select : none
   ; -moz-user-select : none
-  ; user-select : none 
+  ; user-select : none
   }
 
 button:hover
@@ -59,7 +59,7 @@ button:active
   { background : linear-gradient(to bottom, #85856, #c5c9a9)
   }
 
-button:focus 
+button:focus
   { outline: none;
   }
 

@@ -32,8 +32,8 @@ function setup() {
   forest = g.sprite("images/forest.png");
 
   /*
-  If you have a complex animation made up of sequential 
-  tileset frames in a single image,  you can use 
+  If you have a complex animation made up of sequential
+  tileset frames in a single image,  you can use
   `filmStrip` to automatically create an array of x,y
   coordinates for each animation frame.
   `filmStrip` arguments:

@@ -2,7 +2,7 @@
 /*
 Hexi
 ====
-   
+
 Welcome to Hexi's source code!
 This file, `core.js` is the glue that holds Hexi together. Most of Hexi's functionality comes
 from some external libraries, written for Hexi, that `core.js` instantiates and wires
@@ -22,28 +22,28 @@ together. Here are the external libraries that Hexi is currently using:
 - [Sound.js](https://github.com/kittykatattack/sound.js): A micro-library for loading, controlling and generating
   sound and music effects. Everything you need to add sound to games.
 - [fullScreen.js](https://github.com/kittykatattack/fullScreen): Adds an easy-to-implement full screen feature.
-- [Smoothie](https://github.com/kittykatattack/smoothie): Ultra-smooth sprite animation using 
-  true delta-time interpolation. It also lets you specify the fps (frames-per-second) at which 
+- [Smoothie](https://github.com/kittykatattack/smoothie): Ultra-smooth sprite animation using
+  true delta-time interpolation. It also lets you specify the fps (frames-per-second) at which
   your game or application runs, and completely separates your sprite rendering loop from your
   application logic loop.
 
-The job of `core.js` (this file!) is to instantiate Hexi, load the assets, start the game loop, and 
+The job of `core.js` (this file!) is to instantiate Hexi, load the assets, start the game loop, and
 create top-level access to most of the properties and methods in the external libraries.
-It also customizes some of those methods and runs them with some useful side-effects, such as 
+It also customizes some of those methods and runs them with some useful side-effects, such as
 automatically adding sprites to Hexi's `stage`. (Hexi's `stage` is the root Pixi `Container` for the display list.)
 
 I've divided this `core.js` file into "Chapters" which describes what each major section of code does.
 You'll find a "Table of Contents" ahead, which is your guide to this file.
-All this code is fully commented, but if there's something you don't understand, please ask 
+All this code is fully commented, but if there's something you don't understand, please ask
 in this repository's Issues and we will do our best to help. All this code is in one single file for now, just for the sake of simplicity,
-until the total scope of this project stabilizes. 
+until the total scope of this project stabilizes.
 
 Hexi's build system
 -------------------
 
-All of Hexi's source code is written in JavaScript ES6, transpiled to ES5 using Babel, and minified using Uglify2. 
+All of Hexi's source code is written in JavaScript ES6, transpiled to ES5 using Babel, and minified using Uglify2.
 Make is currently being used as the build
-system. So, to build Hexi, make sure you have Node, Babel and Uglify2 installed, and call `make` in the 
+system. So, to build Hexi, make sure you have Node, Babel and Uglify2 installed, and call `make` in the
 command line from Hexi's root directory. Make will compile the `core.js` file, concatenate all files (including
 the modules) and produce the `hexi.min.js` file using Uglify2.
 
@@ -61,14 +61,14 @@ If you want to concatenate all the files, run:
   make concatAllFiles
 
 To watch and compile the example files from ES6 to ES5, run:
-  
+
   make watchExamples
 
 To watch and compile the tutorial files from ES6 to ES5, run:
 
   make watchTutorials
 
-If anyone reading this wishes to contribute a simpler, more automated system using Grunt of Gulp, 
+If anyone reading this wishes to contribute a simpler, more automated system using Grunt of Gulp,
 we would welcome the contribution!
 
 Table of Contents
@@ -133,7 +133,7 @@ function hexi(width, height, setup, thingsToLoad = undefined, load = undefined) 
 
     //To change PIXI's renderer, set the `renderer` option to
     //"auto", "canvas" or "webgl", like this:
-    //renderer: "auto"  
+    //renderer: "auto"
     //Add any other Pixi initialization options you need, depending
     //on which Pixi renderer you're using
   });
@@ -154,7 +154,7 @@ function hexi(width, height, setup, thingsToLoad = undefined, load = undefined) 
 class Hexi {
 
   /*
-  Initialize Hexi's constructor with an options object literal called `o`. 
+  Initialize Hexi's constructor with an options object literal called `o`.
   Here are the required options:
 
   `width`: Value in pixels that describes the canvas's width
@@ -170,13 +170,13 @@ class Hexi {
   `border`: The canvas border style as a CSS border string, such as "1px dashed black"
   `scaleToWindow`: A Boolean that determines whether the canvas should scale to maximum window size.
   `scaleBorderColor`: Color string that defines the color of the border around a scaled canvas.
-  `interpolationProperties: An object that defines 5 Boolean properties that determines which sprite properties are interpolated 
+  `interpolationProperties: An object that defines 5 Boolean properties that determines which sprite properties are interpolated
                             (smoothly animated) by Hexi's rendering engine (Smoothie): `position`, `size`, `rotation`, `scale` or `alpha`
   `interpolate`: A Boolean which should be `false` if you *don't* want any sprite animation smoothing.
   `fps`: The frames-per-second the engine's game logic loop should run at (the default is 60).
   `renderFps`: Clamps the fps rendering to the supplied frame rate.
 
-  You can also add any of Pixi's initialization options, and those will be applied 
+  You can also add any of Pixi's initialization options, and those will be applied
   to Pixi's renderer when Hexi creates it.
 
   */
@@ -314,7 +314,7 @@ class Hexi {
       this.setupState = o.setup;
     }
 
-    //A variable to track the current percentage of loading assets 
+    //A variable to track the current percentage of loading assets
     this.loadingProgress = 0;
 
     //A variable to track the currently loading asset
@@ -389,7 +389,7 @@ class Hexi {
     this.smoothie.start();
   }
 
-  //Use the `load` method to load any files into Hexi. Pass it a 
+  //Use the `load` method to load any files into Hexi. Pass it a
   //callback function as the second argument to launch a function that
   //should run when all the assets have finished loading. Hexi's
   //default callback function is `validateAssets`, which you'll find
@@ -429,7 +429,7 @@ class Hexi {
       fontFiles.forEach(source => {
 
         //Loads the font files by writing CSS code to the HTML document head.
-        //Use the font's filename as the `fontFamily` name. This code captures 
+        //Use the font's filename as the `fontFamily` name. This code captures
         //the font file's name without the extension or file path
         let fontFamily = source.split("/").pop().split(".")[0];
 
@@ -442,7 +442,7 @@ class Hexi {
         newStyle.appendChild(document.createTextNode(fontFace));
         document.head.appendChild(newStyle);
 
-        //Trick the browser into loading the font file by 
+        //Trick the browser into loading the font file by
         //displaying an invisible element
         let span = document.createElement("span");
         span.style.fontFamily = fontFamily;
@@ -493,7 +493,7 @@ class Hexi {
 
   //The `validateAssets` method runs when all the assets have finished
   //loading. It checks to see if there are any sounds files and, if
-  //there are, decodes them and turns them into sound objects using the 
+  //there are, decodes them and turns them into sound objects using the
   //`sounds.js` module's `makeSound` function. If there are no sounds
   //to load, the loading state is finished and the setup state is run.
   //But, if there are sounds to load, the setup state will only run
@@ -520,7 +520,7 @@ class Hexi {
         this.progressBar.remove();
       }
 
-      //If any fonts were tricked into loading 
+      //If any fonts were tricked into loading
       //make the <span> tags that use them invisible
       if (this.spanElements) {
         this.spanElements.forEach(element => {
@@ -619,7 +619,7 @@ class Hexi {
       console.log("fullscreenEnabled")
 
       //Note: Check Firefox's current FullScreen API and specifically:
-      //https://github.com/neovov/Fullscreen-API-Polyfill/blob/master/fullscreen-api-polyfill.js  
+      //https://github.com/neovov/Fullscreen-API-Polyfill/blob/master/fullscreen-api-polyfill.js
       //if (this.fullScreen.fullscreenScale !== 1) {
       this.scale = this.fullScreen.fullscreenScale;
       //console.log("this.fullScreen.fullscreenScale: " + this.fullScreen.fullscreenScale)
@@ -916,7 +916,7 @@ class Hexi {
   //5. SPRITE CREATION METHODS
 
   //Hexi uses methods from the
-  //SpriteUtilities module to help create sprites. But, as a helpful bonus, Hexi automatically adds sprites 
+  //SpriteUtilities module to help create sprites. But, as a helpful bonus, Hexi automatically adds sprites
   //to the `stage` container. (The `stage` is Hexi's root container for all
   //Hexi sprites.) Hexi also adds a whole bunch of
   //extra, useful properties and methods to sprites with the
@@ -1058,8 +1058,8 @@ class Hexi {
     return o;
   }
 
-  //Use `remove` to remove a sprite from its parent. You can supply a 
-  //single sprite, a list of sprites, or an array of sprites 
+  //Use `remove` to remove a sprite from its parent. You can supply a
+  //single sprite, a list of sprites, or an array of sprites
   remove(...sprites) {
     this.spriteUtilities.remove(...sprites);
   }
@@ -1085,7 +1085,7 @@ class Hexi {
       }
     };
 
-    //Check if `sprites` is a an array of sprites, or an 
+    //Check if `sprites` is a an array of sprites, or an
     //array containing sprite objects
     if (!(sprites[0] instanceof Array)) {
 
@@ -1666,7 +1666,7 @@ class Hexi {
   //window using the `scaleToWindow.js` function module
   scaleToWindow(scaleBorderColor = "#2C3539") {
 
-    //Set the default CSS padding and margins of HTML elements to 0 
+    //Set the default CSS padding and margins of HTML elements to 0
     //<style>* {padding: 0; margin: 0}</style>
     let newStyle = document.createElement("style");
     let style = "* {padding: 0; margin: 0}";
@@ -1701,7 +1701,7 @@ class Hexi {
   //The `makeProgressBar` method creates a `progressBar` object with
   //`create`, `update` and `remove` methods. It's called by the
   //`loadingBar` method, which should be run inside the `load`
-  //function of your application code. 
+  //function of your application code.
   makeProgressBar(hexiObject) {
 
     let hexi = hexiObject;
@@ -1745,7 +1745,7 @@ class Hexi {
         this.percentage.y = (hexi.canvas.height / 2) - 17;
       },
 
-      //Use the `update` method to update the width of the bar and 
+      //Use the `update` method to update the width of the bar and
       //percentage loaded each frame
       update() {
 
@@ -1776,7 +1776,7 @@ class Hexi {
   //`load` method in the application code. This function will run in a
   //loop. It will create the loading bar, and then call the loading
   //bar's `update` method each frame. After all the assets have been
-  //loaded, Hexi's `validateAssets` method removes the loading bar. 
+  //loaded, Hexi's `validateAssets` method removes the loading bar.
   loadingBar() {
 
     if (!this._progressBarAdded) {
@@ -1798,7 +1798,7 @@ class Hexi {
 
   //Hexi's root `stage` object will have a width and height equal to
   //its contents, not the size of the canvas. So, let's use the more
-  //useful canvas width and height for relative positioning instead 
+  //useful canvas width and height for relative positioning instead
   compensateForStageSize(o) {
     if (o._stage === true) {
       let a = {};

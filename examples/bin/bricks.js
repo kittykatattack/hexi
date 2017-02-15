@@ -1,7 +1,7 @@
 "use strict";
 
 /*
-Learn how to test for a collisions between a circle and 
+Learn how to test for a collisions between a circle and
 a grid of rectangles
 */
 
@@ -60,7 +60,7 @@ function setup() {
   each sprite has been created. Here's the format for creating a grid:
        gridGroup = grid(
          //Set the grid's properties
-        rows, columns, cellWidth, cellHeight, 
+        rows, columns, cellWidth, cellHeight,
         areSpirtesCentered?, xOffset, yOffset,
          //A function that returns a sprite
         () => g.circle(16, "blue"),
@@ -132,8 +132,8 @@ function play() {
 
   /*
   bricks.children.forEach(brick => {
-    
-    //Make the ball bounce if it hits any of the pegs. Use the 
+
+    //Make the ball bounce if it hits any of the pegs. Use the
     //`circleCollision` function to check for collisions between
     //a moving circle and a stationary circle. Set the third argument to
     //`false` to prevent the circles from bouncing, and set the fourth
@@ -141,7 +141,7 @@ function play() {
     //coordinates. (The global coordinates will be used by default)
     //`circleCollision` arguments:
     //movingCircle, stationaryCircle, bounce?, globalCoordinates?
-    
+
     g.circleRectangleCollision(ball, brick, true, true);
   });
   */

@@ -16,7 +16,7 @@ let thingsToLoad = [
 ];
 
 //Create a new Hexi instance, and start it, using the `thingsToLoad`
-//array. 
+//array.
 let g = hexi(512, 512, setup, thingsToLoad);
 g.start();
 
@@ -53,7 +53,7 @@ function setup() {
   //g.flowUp(10, cat, hedgehog, tiger);
 
   //Change the game state to `play`
-  //g.state = play;  
+  //g.state = play;
 }
 
 //The `play` function will run in a loop

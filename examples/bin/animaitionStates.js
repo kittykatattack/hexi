@@ -1,7 +1,7 @@
 "use strict";
 
 /*
-Learn how to make an animated sprite using multiple frames 
+Learn how to make an animated sprite using multiple frames
 in a texture atlas
 */
 
@@ -32,8 +32,8 @@ function setup() {
   forest = g.sprite("images/forest.png");
 
   /*
-  If you have a complex animation made up of sequential 
-  tileset frames in a single image,  you can use 
+  If you have a complex animation made up of sequential
+  tileset frames in a single image,  you can use
   `filmStrip` to automatically create an array of x,y
   coordinates for each animation frame.
   `filmStrip` arguments:
@@ -52,7 +52,7 @@ function setup() {
   //Set the elf's x and y position
   elf.setPosition(32, 128);
 
-  //g.state = play;  
+  //g.state = play;
 }
 
 function play() {}

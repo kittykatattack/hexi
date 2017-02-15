@@ -1,37 +1,37 @@
 /*
 
 An example of how to use `makeIsoTiledWorld` to create
-an isometric game world using Tiled Editor JSON map data. 
-It uses the same API as its Cartesian equivalent `makeTiledWorld` method. 
+an isometric game world using Tiled Editor JSON map data.
+It uses the same API as its Cartesian equivalent `makeTiledWorld` method.
 However, you need to make sure you set Tile Editor up correctly and add s
 ome custom map properties to make it work. Let's find out how.
 
 ###Configuring and building the map
-Before you start creating your Tiled Editor map, prepare a sprite 
-sheet with the isometric tiles that you want to use. And, 
-very importantly, note down the isometric dimensions of sprites. 
+Before you start creating your Tiled Editor map, prepare a sprite
+sheet with the isometric tiles that you want to use. And,
+very importantly, note down the isometric dimensions of sprites.
 Here are the pixel dimensions you need to know:
 
 •   `tilewidth`: The width of the sprite, from its left to right edge.
 •   `tileheight`: The height of the tileheighte’s base area. This is just the height of the squashed diamond shape which defines the base on which the isometric sprite is standing. Usually its half the `tilewidth` value.
 
-These properties are the property names that are used by Tiled Editor, 
-and you’ll be able to access them in the JSON data file 
+These properties are the property names that are used by Tiled Editor,
+and you’ll be able to access them in the JSON data file
 that Tiled Editor generates.
 
-You can now use the values to create a new isometric map in Tiled Editor. 
-Open Tiled Editor and select File ~TRA New from the main menu. 
-In the New Map dialog box, select isometric as the Orientation, 
-and use the tilewidth and tileheight values I described above 
-for the Width and Height. 
+You can now use the values to create a new isometric map in Tiled Editor.
+Open Tiled Editor and select File ~TRA New from the main menu.
+In the New Map dialog box, select isometric as the Orientation,
+and use the tilewidth and tileheight values I described above
+for the Width and Height.
 
 But we’re not done yet! There are three more values we need to figure out:
 
-•   tileDepth: The total height of the isometric sprite, in pixels. 
+•   tileDepth: The total height of the isometric sprite, in pixels.
 •   cartWidth: The Cartesian width of each tile grid cell, in pixels.
 •   cartHeight: The Cartesian height of each tile grid cell, in pixels.
 
-You need to add these values as custom properties in Tiled Editor’s 
+You need to add these values as custom properties in Tiled Editor’s
 Map Properties panel.
 
 When Tiled Editor generates the JSON map data, you'll be able to access these values in the `properties` field.
@@ -43,11 +43,11 @@ When Tiled Editor generates the JSON map data, you'll be able to access these va
      "tileDepth":"64"
     },
 ```
-Now that you’ve got the Map Properties all set up, use your 
-isometric tileset to build your world. 
-When you're finished designing your map, export it as a JSON file, 
-and you’re now ready to use it to start coding a game. Here's how to use 
-`makeIsoTiledWorld` from the JSON map data and isometric `cubes.png` tileset. 
+Now that you’ve got the Map Properties all set up, use your
+isometric tileset to build your world.
+When you're finished designing your map, export it as a JSON file,
+and you’re now ready to use it to start coding a game. Here's how to use
+`makeIsoTiledWorld` from the JSON map data and isometric `cubes.png` tileset.
 ```
 world = tu.makeIsoTiledWorld(
   "images/cubes.json",
@@ -160,7 +160,7 @@ function play() {
     }
   }
 
-  //Update the player's Cartesian position 
+  //Update the player's Cartesian position
   //based on its velocity
   player.cartY += player.vy;
   player.cartX += player.vx;

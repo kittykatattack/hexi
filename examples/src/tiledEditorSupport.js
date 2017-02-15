@@ -5,17 +5,17 @@ Hexi supports game maps and levels created using the popular Tiled
 Editor level designer:
 
 www.mapeditor.org
-   
+
 To prepare your Tiled Editor game world for use in Hexi, give any significant thing a
-`name` property. Anything with a `name` property in Tiled Editor can 
-be accessed in your code by its string name, as you'll see ahead. Tiled Editor layers have a 
+`name` property. Anything with a `name` property in Tiled Editor can
+be accessed in your code by its string name, as you'll see ahead. Tiled Editor layers have a
 `name` property by default, and you can assign custom `name`
 properties to tiles and objects.
 
 Open `maps/timeBomPanic.tmx` file in Tiled Editor and take a careful
 look at how it's been structured. Notice how sprites have been
 organized into layers, and how those layers have been named and
-stacked. Also, notice that the tileset images of the alien and bomb 
+stacked. Also, notice that the tileset images of the alien and bomb
 both have custom `name` properties: "alien" and "bomb".
 */
 
@@ -63,18 +63,18 @@ function setup() {
   `world.getObject` Tiled Editor's `tilelayers` have a `data` property
   that is an array containing all the grid index numbers (`gid`) of
   the tiles in that array. In this example we want to access all the
-  wall sprites. In Tiled Editor, all the wall sprites were added to 
+  wall sprites. In Tiled Editor, all the wall sprites were added to
   a tile layer called `wallLayer`. We can access the `wallLayer`'s
-  `data` array of sprites like this: 
+  `data` array of sprites like this:
   */
 
   wallMapArray = world.getObject("wallLayer").data;
 
   /*
-  We also need a reference to the bomb layer. All Tiled Editor layers are 
+  We also need a reference to the bomb layer. All Tiled Editor layers are
   created as `groups` by Hexi's `makeTiledWorld` method. That means they
   all have a `children` array that lets' you access all the sprites on
-  that layer, if you even need to do that. 
+  that layer, if you even need to do that.
   */
 
   bombLayer = world.getObject("bombLayer");
@@ -157,10 +157,10 @@ function play() {
   g.contain(alien, g.stage);
 
   /*
-  Prevent the alien from walking through walls using the 
+  Prevent the alien from walking through walls using the
   versatile `hitTestTile` method. `hitTestTile` checks for a
   collision between a sprite and a tile in any map array that you
-  specify. It returns a `collision` object. 
+  specify. It returns a `collision` object.
   `collision.hit` is a Boolean that tells you if a sprite is colliding
   with the tile that you're checking. `collision.index` tells you the
   map array's index number of the colliding sprite. You can check for
@@ -170,7 +170,7 @@ function play() {
   them.)
 
   `hitTestTile` arguments:
-  sprite, array, collisionTileGridIdNumber, worldObject, spritesPointsToCheck 
+  sprite, array, collisionTileGridIdNumber, worldObject, spritesPointsToCheck
 
   The `world` object (the 4th argument) has to have these properties:
   `tileheight`, `tilewidth`, `widthInTiles`.
@@ -207,7 +207,7 @@ function play() {
       //Does the bomb sprite have the same index number as the alien?
       if (bomb.index === alienVsBomb.index) {
 
-        //If it does, remove the bomb from the 
+        //If it does, remove the bomb from the
         //`bombMapArray` by setting its gid to `0`
         bombMapArray[bomb.index] = 0;
 

@@ -35,8 +35,8 @@ function setup() {
     rightArrow = g.keyboard(39),
     downArrow = g.keyboard(40);
    console.log(rightArrow)
-   //Here 's how to customize the `press` and `release` methods of   
-  //these new arrow keys: 
+   //Here 's how to customize the `press` and `release` methods of
+  //these new arrow keys:
    //Assign key `press` methods
   leftArrow.press = () => {
     //Change the cat's velocity when the key is pressed
@@ -45,7 +45,7 @@ function setup() {
   };
   leftArrow.release = () => {
     //If the left arrow has been released, and the right arrow isn't down,
-    //and the cat isn't moving vertically: 
+    //and the cat isn't moving vertically:
     //Stop the cat
     if (!rightArrow.isDown && cat.vy === 0) {
       cat.vx = 0;
@@ -111,8 +111,8 @@ let leftArrow = g.keyboard(37),
     rightArrow = g.keyboard(39),
     downArrow = g.keyboard(40);
 
-Here's how to customize the `press` and `release` methods of   
-these new arrow keys: 
+Here's how to customize the `press` and `release` methods of
+these new arrow keys:
 
 //Assign key `press` methods
 leftArrow.press = () => {
@@ -122,7 +122,7 @@ leftArrow.press = () => {
 };
 leftArrow.release = () => {
   //If the left arrow has been released, and the right arrow isn't down,
-  //and the cat isn't moving vertically: 
+  //and the cat isn't moving vertically:
   //Stop the cat
   if (!g.rightArrow.isDown && cat.vy === 0) {
     cat.vx = 0;

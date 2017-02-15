@@ -46,7 +46,7 @@ function load() {
   g.loadingBar();
 }
 
-//The `setup` function runs once and is used to initializes your game 
+//The `setup` function runs once and is used to initializes your game
 function setup() {
 
   //Make the background.
@@ -185,9 +185,9 @@ function play() {
   /* Make the Aliens */
 
   //Make the aliens with the help of an `alienTimer` that
-  //creates aliens with ever-increasing frequency. The 
+  //creates aliens with ever-increasing frequency. The
   //`alienTimer` starts at 0, and is updated by 1 each frame.
-  //When it reaches the value of `alienFrequency` (100), 
+  //When it reaches the value of `alienFrequency` (100),
   //a new alien is created, and the value
   //of `alienFrequency` is reduced by one. That means the next
   //Alien will be created when the timer reacher 99, and the
@@ -202,7 +202,7 @@ function play() {
   if (alienTimer === alienFrequency) {
 
     //Create the alien.
-    //Assign two frames from the texture atlas as the 
+    //Assign two frames from the texture atlas as the
     //alien's two states.
     let alienFrames = [
       "alien.png",
@@ -281,7 +281,7 @@ function play() {
         //removed from the array.
         alienIsAlive = false;
 
-        //Wait for 1 second (1000 milliseconds) then 
+        //Wait for 1 second (1000 milliseconds) then
         //remove the alien sprite.
         g.wait(1000, () => g.remove(alien));
 
@@ -299,9 +299,9 @@ function play() {
       }
     });
 
-    //Return the value of `alienIsAlive` back to the 
+    //Return the value of `alienIsAlive` back to the
     //filter loop. If it's `true`, the alien will be
-    //kept in the `aliens` array. 
+    //kept in the `aliens` array.
     //If it's `false` it will be removed from the `aliens` array.
     return alienIsAlive;
   });
