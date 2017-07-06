@@ -162,7 +162,7 @@ Define the audio context
 ------------------------
 
 All this code uses a single `AudioContext` If you want to use any of these functions
-independently of this file, make sure that have an `AudioContext` called `actx`.
+independently of this file, make sure that have an `AudioContext` called `actx`. 
 */
 var actx = new AudioContext();
 
@@ -170,17 +170,17 @@ var actx = new AudioContext();
 sounds
 ------
 
-`sounds` is an object that you can use to store all your loaded sound fles.
+`sounds` is an object that you can use to store all your loaded sound fles. 
 It also has a helpful `load` method that manages asset loading. You can load sounds at
 any time during the game by using the `sounds.load` method. You don't have to use
-the `sounds` object or its `load` method, but it's a really convenient way to
+the `sounds` object or its `load` method, but it's a really convenient way to 
 work with sound file assets.
 
-Here's how could use the `sound` object to load three sound files from a `sounds` folder and
+Here's how could use the `sound` object to load three sound files from a `sounds` folder and 
 call a `setup` method when all the files have finished loading:
 
     sounds.load([
-      "sounds/shoot.wav",
+      "sounds/shoot.wav", 
       "sounds/music.wav",
       "sounds/bounce.mp3"
     ]);
@@ -277,15 +277,15 @@ makeSound
 
 `makeSound` is the function you want to use to load and play sound files.
 It creates and returns and WebAudio sound object with lots of useful methods you can
-use to control the sound.
+use to control the sound. 
 You can use it to load a sound like this:
 
     var anySound = makeSound("sounds/anySound.mp3", loadHandler);
 
 
 The code above will load the sound and then call the `loadHandler`
-when the sound has finished loading.
-(However, it's more convenient to load the sound file using
+when the sound has finished loading. 
+(However, it's more convenient to load the sound file using 
 the `sounds.load` method described above, so I don't recommend loading sounds
 like this unless you need more low-level control.)
 
@@ -303,8 +303,8 @@ After the sound has been loaded you can access and use it like this:
       anySound.setEcho(0.2, 0.2, 0);
       anySound.playbackRate = 0.5;
     }
-
-For advanced configurations, you can optionally supply `makeSound` with optional 3rd and
+   
+For advanced configurations, you can optionally supply `makeSound` with optional 3rd and 
 4th arguments:
 
    var anySound = makeSound(source, loadHandler, loadTheSound?, xhrObject);
@@ -314,7 +314,7 @@ from being loaded. You would only want to set it to `false` like this if you wer
 using another file loading library to load the sound, and didn't want it to be loaded
 twice.
 
-`xhrObject`, the optional 4th argument, is the XHR object that was used to load the sound. Again, you
+`xhrObject`, the optional 4th argument, is the XHR object that was used to load the sound. Again, you 
 would only supply this if you were using another file loading library to load the sound,
 and that library had generated its own XHR object. If you supply the `xhr` argument, `makeSound`
 will skip the file loading step (because you've already done that), but still decode the audio buffer for you.
@@ -384,7 +384,7 @@ function makeSound(source, loadHandler, loadSound, xhr) {
   //Reverb properties
   o.reverb = false;
   o.reverbImpulse = null;
-
+  
   //The sound object's methods.
   o.play = function() {
 
@@ -408,7 +408,7 @@ function makeSound(source, loadHandler, loadSound, xhr) {
     //If there's no reverb, bypass the convolverNode
     if (o.reverb === false) {
       o.volumeNode.connect(o.panNode);
-    }
+    } 
 
     //If there is reverb, connect the `convolverNode` and apply
     //the impulse response
@@ -417,7 +417,7 @@ function makeSound(source, loadHandler, loadSound, xhr) {
       o.convolverNode.connect(o.panNode);
       o.convolverNode.buffer = o.reverbImpulse;
     }
-
+    
     //Connect the `panNode` to the destination to complete the chain.
     o.panNode.connect(actx.destination);
 
@@ -523,19 +523,19 @@ function makeSound(source, loadHandler, loadSound, xhr) {
 
   //Fade a sound in, from an initial volume level of zero.
   o.fadeIn = function(durationInSeconds) {
-
+    
     //Set the volume to 0 so that you can fade
     //in from silence
     o.volumeNode.gain.value = 0;
     o.fade(1, durationInSeconds);
-
+  
   };
 
   //Fade a sound out, from its current volume level to zero.
   o.fadeOut = function(durationInSeconds) {
     o.fade(0, durationInSeconds);
   };
-
+  
   //Volume and pan getters/setters.
   Object.defineProperties(o, {
     volume: {
@@ -550,7 +550,7 @@ function makeSound(source, loadHandler, loadSound, xhr) {
     },
 
     //The pan node uses the high-efficiency stereo panner, if it's
-    //available. But, because this is a new addition to the
+    //available. But, because this is a new addition to the 
     //WebAudio spec, it might not be available on all browsers.
     //So the code checks for this and uses the older 3D panner
     //if 2D isn't available.
@@ -606,13 +606,13 @@ function loadSound(o, source, loadHandler) {
 
   //When the sound has finished loading, decode it using the
   //`decodeAudio` function (which you'll see ahead)
-  xhr.addEventListener("load", decodeAudio.bind(this, o, xhr, loadHandler));
+  xhr.addEventListener("load", decodeAudio.bind(this, o, xhr, loadHandler)); 
 
   //Send the request to load the file.
   xhr.send();
 }
 
-//The `decodeAudio` function decodes the audio file for you and
+//The `decodeAudio` function decodes the audio file for you and 
 //launches the `loadHandler` when it's done
 function decodeAudio(o, xhr, loadHandler) {
 
@@ -722,7 +722,7 @@ function soundEffect(
   if (!actx.createStereoPanner) {
     pan.setPosition(panValue, 0, 1 - Math.abs(panValue));
   } else {
-    pan.pan.value = panValue;
+    pan.pan.value = panValue; 
   }
   oscillator.type = type;
 
@@ -756,7 +756,7 @@ function soundEffect(
   play(oscillator);
 
   //The helper functions:
-
+  
   function addReverb(volumeNode) {
     var convolver = actx.createConvolver();
     convolver.buffer = impulseResponse(reverb[0], reverb[1], reverb[2], actx);
@@ -832,11 +832,11 @@ function soundEffect(
     //If `reverse` is true, make the sound drop in pitch
     if (!reverse) {
       oscillatorNode.frequency.linearRampToValueAtTime(
-        frequency,
+        frequency, 
         actx.currentTime + wait
       );
       oscillatorNode.frequency.linearRampToValueAtTime(
-        frequency - pitchBendAmount,
+        frequency - pitchBendAmount, 
         actx.currentTime + wait + attack + decay
       );
     }
@@ -845,11 +845,11 @@ function soundEffect(
     //jumping sounds
     else {
       oscillatorNode.frequency.linearRampToValueAtTime(
-        frequency,
+        frequency, 
         actx.currentTime + wait
       );
       oscillatorNode.frequency.linearRampToValueAtTime(
-        frequency + pitchBendAmount,
+        frequency + pitchBendAmount, 
         actx.currentTime + wait + attack + decay
       );
     }
@@ -914,9 +914,9 @@ function soundEffect(
   function play(node) {
     node.start(actx.currentTime + wait);
 
-    //Oscillators have to be stopped otherwise they accumulate in
+    //Oscillators have to be stopped otherwise they accumulate in 
     //memory and tax the CPU. They'll be stopped after a default
-    //timeout of 2 seconds, which should be enough for most sound
+    //timeout of 2 seconds, which should be enough for most sound 
     //effects. Override this in the `soundEffect` parameters if you
     //need a longer sound
     node.stop(actx.currentTime + wait + 2);
@@ -927,8 +927,8 @@ function soundEffect(
 impulseResponse
 ---------------
 
-The `makeSound` and `soundEffect` functions uses `impulseResponse`  to help create an optional reverb effect.
-It simulates a model of sound reverberation in an acoustic space which
+The `makeSound` and `soundEffect` functions uses `impulseResponse`  to help create an optional reverb effect.  
+It simulates a model of sound reverberation in an acoustic space which 
 a convolver node can blend with the source sound. Make sure to include this function along with `makeSound`
 and `soundEffect` if you need to use the reverb feature.
 */
@@ -973,7 +973,7 @@ function impulseResponse(duration, decay, reverse, actx) {
 keyboard
 --------
 
-This isn't really necessary - I just included it for fun to help with the
+This isn't really necessary - I just included it for fun to help with the 
 examples in the `index.html` files.
 The `keyboard` helper function creates `key` objects
 that listen for keyboard events. Create a new key object like
@@ -991,7 +991,7 @@ Then assign `press` and `release` methods like this:
     };
 
 Keyboard objects also have `isDown` and `isUp` Booleans that you can check.
-This is so much easier than having to write out tedious keyboard even capture
+This is so much easier than having to write out tedious keyboard even capture 
 code from scratch.
 
 Like I said, the `keyboard` function has nothing to do with generating sounds,
@@ -1040,7 +1040,7 @@ function scaleToWindow(canvas, backgroundColor) {
 
   backgroundColor = backgroundColor || "#2C3539";
   var scaleX, scaleY, scale, center;
-
+  
   //1. Scale the canvas to the correct size
   //Figure out the scale amount on each axis
   scaleX = window.innerWidth / canvas.offsetWidth;
@@ -1054,22 +1054,22 @@ function scaleToWindow(canvas, backgroundColor) {
 
   //2. Center the canvas.
   //Decide whether to center the canvas vertically or horizontally.
-  //Wide canvases should be centered vertically, and
+  //Wide canvases should be centered vertically, and 
   //square or tall canvases should be centered horizontally
   if (canvas.offsetwidth > canvas.offsetHeight) {
     if (canvas.offsetWidth * scale < window.innerWidth) {
       center = "horizontally";
-    } else {
+    } else { 
       center = "vertically";
     }
   } else {
     if (canvas.offsetHeight * scale < window.innerHeight) {
       center = "vertically";
-    } else {
+    } else { 
       center = "horizontally";
     }
   }
-
+  
   //Center horizontally (for square or tall canvases)
   var margin;
   if (center === "horizontally") {
@@ -1080,7 +1080,7 @@ function scaleToWindow(canvas, backgroundColor) {
     canvas.style.marginRight = margin + "px";
   }
 
-  //Center vertically (for wide canvases)
+  //Center vertically (for wide canvases) 
   if (center === "vertically") {
     margin = (window.innerHeight - canvas.offsetHeight * scale) / 2;
     canvas.style.marginTop = margin + "px";
@@ -1096,13 +1096,13 @@ function scaleToWindow(canvas, backgroundColor) {
   canvas.style.paddingTop = 0;
   canvas.style.paddingBottom = 0;
   canvas.style.display = "block";
-
+  
   //4. Set the color of the HTML body background
   document.body.style.backgroundColor = backgroundColor;
-
+  
   //Fix some quirkiness in scaling for Safari
-  var ua = navigator.userAgent.toLowerCase();
-  if (ua.indexOf("safari") != -1) {
+  var ua = navigator.userAgent.toLowerCase(); 
+  if (ua.indexOf("safari") != -1) { 
     if (ua.indexOf("chrome") > -1) {
       // Chrome
     } else {
@@ -1112,7 +1112,7 @@ function scaleToWindow(canvas, backgroundColor) {
     }
   }
 
-  //5. Return the `scale` value. This is important, because you'll nee this value
+  //5. Return the `scale` value. This is important, because you'll nee this value 
   //for correct hit testing between the pointer and sprites
   return scale;
 }
@@ -1313,7 +1313,7 @@ var Bump = (function () {
     hitTestPoint
     ------------
      Use it to find out if a point is touching a circlular or rectangular sprite.
-    Parameters:
+    Parameters: 
     a. An object with `x` and `y` properties.
     b. A sprite object with `x`, `y`, `centerX` and `centerY` properties.
     If the sprite has a `radius` property, the function will interpret
@@ -1380,7 +1380,7 @@ var Bump = (function () {
     hitTestCircle
     -------------
      Use it to find out if two circular sprites are touching.
-    Parameters:
+    Parameters: 
     a. A sprite object with `centerX`, `centerY` and `radius` properties.
     b. A sprite object with `centerX`, `centerY` and `radius`.
     */
@@ -1431,7 +1431,7 @@ var Bump = (function () {
     ---------------
      Use it to prevent a moving circular sprite from overlapping and optionally
     bouncing off a non-moving circular sprite.
-    Parameters:
+    Parameters: 
     a. A sprite object with `x`, `y` `centerX`, `centerY` and `radius` properties.
     b. A sprite object with `x`, `y` `centerX`, `centerY` and `radius` properties.
     c. Optional: true or false to indicate whether or not the first sprite
@@ -1526,7 +1526,7 @@ var Bump = (function () {
     movingCircleCollision
     ---------------------
      Use it to make two moving circles bounce off each other.
-    Parameters:
+    Parameters: 
     a. A sprite object with `x`, `y` `centerX`, `centerY` and `radius` properties.
     b. A sprite object with `x`, `y` `centerX`, `centerY` and `radius` properties.
     The sprites can contain an optional mass property that should be greater than 1.
@@ -1736,18 +1736,18 @@ var Bump = (function () {
 
       //Calculate the distance vector
       if (global) {
-        vx = r1.gx + r1.halfWidth - r1.xAnchorOffset - (r2.gx + r2.halfWidth - r2.xAnchorOffset);
-        vy = r1.gy + r1.halfHeight - r1.yAnchorOffset - (r2.gy + r2.halfHeight - r2.yAnchorOffset);
+        vx = r1.gx + Math.abs(r1.halfWidth) - r1.xAnchorOffset - (r2.gx + Math.abs(r2.halfWidth) - r2.xAnchorOffset);
+        vy = r1.gy + Math.abs(r1.halfHeight) - r1.yAnchorOffset - (r2.gy + Math.abs(r2.halfHeight) - r2.yAnchorOffset);
       } else {
         //vx = r1.centerX - r2.centerX;
         //vy = r1.centerY - r2.centerY;
-        vx = r1.x + r1.halfWidth - r1.xAnchorOffset - (r2.x + r2.halfWidth - r2.xAnchorOffset);
-        vy = r1.y + r1.halfHeight - r1.yAnchorOffset - (r2.y + r2.halfHeight - r2.yAnchorOffset);
+        vx = r1.x + Math.abs(r1.halfWidth) - r1.xAnchorOffset - (r2.x + Math.abs(r2.halfWidth) - r2.xAnchorOffset);
+        vy = r1.y + Math.abs(r1.halfHeight) - r1.yAnchorOffset - (r2.y + Math.abs(r2.halfHeight) - r2.yAnchorOffset);
       }
 
       //Figure out the combined half-widths and half-heights
-      combinedHalfWidths = r1.halfWidth + r2.halfWidth;
-      combinedHalfHeights = r1.halfHeight + r2.halfHeight;
+      combinedHalfWidths = Math.abs(r1.halfWidth) + Math.abs(r2.halfWidth);
+      combinedHalfHeights = Math.abs(r1.halfHeight) + Math.abs(r2.halfHeight);
 
       //Check whether vx is less than the combined half widths
       if (Math.abs(vx) < combinedHalfWidths) {
@@ -1835,7 +1835,7 @@ var Bump = (function () {
     hitTestRectangle
     ----------------
      Use it to find out if two rectangular sprites are touching.
-    Parameters:
+    Parameters: 
     a. A sprite object with `centerX`, `centerY`, `halfWidth` and `halfHeight` properties.
     b. A sprite object with `centerX`, `centerY`, `halfWidth` and `halfHeight` properties.
      */
@@ -1860,16 +1860,16 @@ var Bump = (function () {
 
       //Calculate the distance vector
       if (global) {
-        vx = r1.gx + r1.halfWidth - r1.xAnchorOffset - (r2.gx + r2.halfWidth - r2.xAnchorOffset);
-        vy = r1.gy + r1.halfHeight - r1.yAnchorOffset - (r2.gy + r2.halfHeight - r2.yAnchorOffset);
+        vx = r1.gx + Math.abs(r1.halfWidth) - r1.xAnchorOffset - (r2.gx + Math.abs(r2.halfWidth) - r2.xAnchorOffset);
+        vy = r1.gy + Math.abs(r1.halfHeight) - r1.yAnchorOffset - (r2.gy + Math.abs(r2.halfHeight) - r2.yAnchorOffset);
       } else {
-        vx = r1.x + r1.halfWidth - r1.xAnchorOffset - (r2.x + r2.halfWidth - r2.xAnchorOffset);
-        vy = r1.y + r1.halfHeight - r1.yAnchorOffset - (r2.y + r2.halfHeight - r2.yAnchorOffset);
+        vx = r1.x + Math.abs(r1.halfWidth) - r1.xAnchorOffset - (r2.x + Math.abs(r2.halfWidth) - r2.xAnchorOffset);
+        vy = r1.y + Math.abs(r1.halfHeight) - r1.yAnchorOffset - (r2.y + Math.abs(r2.halfHeight) - r2.yAnchorOffset);
       }
 
       //Figure out the combined half-widths and half-heights
-      combinedHalfWidths = r1.halfWidth + r2.halfWidth;
-      combinedHalfHeights = r1.halfHeight + r2.halfHeight;
+      combinedHalfWidths = Math.abs(r1.halfWidth) + Math.abs(r2.halfWidth);
+      combinedHalfHeights = Math.abs(r1.halfHeight) + Math.abs(r2.halfHeight);
 
       //Check for a collision on the x axis
       if (Math.abs(vx) < combinedHalfWidths) {
@@ -1898,7 +1898,7 @@ var Bump = (function () {
     hitTestCircleRectangle
     ----------------
      Use it to find out if a circular shape is touching a rectangular shape
-    Parameters:
+    Parameters: 
     a. A sprite object with `centerX`, `centerY`, `halfWidth` and `halfHeight` properties.
     b. A sprite object with `centerX`, `centerY`, `halfWidth` and `halfHeight` properties.
      */
@@ -1933,13 +1933,13 @@ var Bump = (function () {
       }
 
       //Is the circle above the rectangle's top edge?
-      if (c1y - c1.yAnchorOffset < r1y - r1.halfHeight - r1.yAnchorOffset) {
+      if (c1y - c1.yAnchorOffset < r1y - Math.abs(r1.halfHeight) - r1.yAnchorOffset) {
 
         //If it is, we need to check whether it's in the
         //top left, top center or top right
-        if (c1x - c1.xAnchorOffset < r1x - 1 - r1.halfWidth - r1.xAnchorOffset) {
+        if (c1x - c1.xAnchorOffset < r1x - 1 - Math.abs(r1.halfWidth) - r1.xAnchorOffset) {
           region = "topLeft";
-        } else if (c1x - c1.xAnchorOffset > r1x + 1 + r1.halfWidth - r1.xAnchorOffset) {
+        } else if (c1x - c1.xAnchorOffset > r1x + 1 + Math.abs(r1.halfWidth) - r1.xAnchorOffset) {
           region = "topRight";
         } else {
           region = "topMiddle";
@@ -1948,13 +1948,13 @@ var Bump = (function () {
 
       //The circle isn't above the top edge, so it might be
       //below the bottom edge
-      else if (c1y - c1.yAnchorOffset > r1y + r1.halfHeight - r1.yAnchorOffset) {
+      else if (c1y - c1.yAnchorOffset > r1y + Math.abs(r1.halfHeight) - r1.yAnchorOffset) {
 
           //If it is, we need to check whether it's in the bottom left,
           //bottom center, or bottom right
-          if (c1x - c1.xAnchorOffset < r1x - 1 - r1.halfWidth - r1.xAnchorOffset) {
+          if (c1x - c1.xAnchorOffset < r1x - 1 - Math.abs(r1.halfWidth) - r1.xAnchorOffset) {
             region = "bottomLeft";
-          } else if (c1x - c1.xAnchorOffset > r1x + 1 + r1.halfWidth - r1.xAnchorOffset) {
+          } else if (c1x - c1.xAnchorOffset > r1x + 1 + Math.abs(r1.halfWidth) - r1.xAnchorOffset) {
             region = "bottomRight";
           } else {
             region = "bottomMiddle";
@@ -1964,7 +1964,7 @@ var Bump = (function () {
         //The circle isn't above the top edge or below the bottom edge,
         //so it must be on the left or right side
         else {
-            if (c1x - c1.xAnchorOffset < r1x - r1.halfWidth - r1.xAnchorOffset) {
+            if (c1x - c1.xAnchorOffset < r1x - Math.abs(r1.halfWidth) - r1.xAnchorOffset) {
               region = "leftMiddle";
             } else {
               region = "rightMiddle";
@@ -2022,7 +2022,7 @@ var Bump = (function () {
     hitTestCirclePoint
     ------------------
      Use it to find out if a circular shape is touching a point
-    Parameters:
+    Parameters: 
     a. A sprite object with `centerX`, `centerY`, and `radius` properties.
     b. A point object with `x` and `y` properties.
      */
@@ -2056,7 +2056,7 @@ var Bump = (function () {
     circleRectangleCollision
     ------------------------
      Use it to bounce a circular shape off a rectangular shape
-    Parameters:
+    Parameters: 
     a. A sprite object with `centerX`, `centerY`, `halfWidth` and `halfHeight` properties.
     b. A sprite object with `centerX`, `centerY`, `halfWidth` and `halfHeight` properties.
      */
@@ -2092,13 +2092,13 @@ var Bump = (function () {
       }
 
       //Is the circle above the rectangle's top edge?
-      if (c1y - c1.yAnchorOffset < r1y - r1.halfHeight - r1.yAnchorOffset) {
+      if (c1y - c1.yAnchorOffset < r1y - Math.abs(r1.halfHeight) - r1.yAnchorOffset) {
 
         //If it is, we need to check whether it's in the
         //top left, top center or top right
-        if (c1x - c1.xAnchorOffset < r1x - 1 - r1.halfWidth - r1.xAnchorOffset) {
+        if (c1x - c1.xAnchorOffset < r1x - 1 - Math.abs(r1.halfWidth) - r1.xAnchorOffset) {
           region = "topLeft";
-        } else if (c1x - c1.xAnchorOffset > r1x + 1 + r1.halfWidth - r1.xAnchorOffset) {
+        } else if (c1x - c1.xAnchorOffset > r1x + 1 + Math.abs(r1.halfWidth) - r1.xAnchorOffset) {
           region = "topRight";
         } else {
           region = "topMiddle";
@@ -2107,13 +2107,13 @@ var Bump = (function () {
 
       //The circle isn't above the top edge, so it might be
       //below the bottom edge
-      else if (c1y - c1.yAnchorOffset > r1y + r1.halfHeight - r1.yAnchorOffset) {
+      else if (c1y - c1.yAnchorOffset > r1y + Math.abs(r1.halfHeight) - r1.yAnchorOffset) {
 
           //If it is, we need to check whether it's in the bottom left,
           //bottom center, or bottom right
-          if (c1x - c1.xAnchorOffset < r1x - 1 - r1.halfWidth - r1.xAnchorOffset) {
+          if (c1x - c1.xAnchorOffset < r1x - 1 - Math.abs(r1.halfWidth) - r1.xAnchorOffset) {
             region = "bottomLeft";
-          } else if (c1x - c1.xAnchorOffset > r1x + 1 + r1.halfWidth - r1.xAnchorOffset) {
+          } else if (c1x - c1.xAnchorOffset > r1x + 1 + Math.abs(r1.halfWidth) - r1.xAnchorOffset) {
             region = "bottomRight";
           } else {
             region = "bottomMiddle";
@@ -2123,7 +2123,7 @@ var Bump = (function () {
         //The circle isn't above the top edge or below the bottom edge,
         //so it must be on the left or right side
         else {
-            if (c1x - c1.xAnchorOffset < r1x - r1.halfWidth - r1.xAnchorOffset) {
+            if (c1x - c1.xAnchorOffset < r1x - Math.abs(r1.halfWidth) - r1.xAnchorOffset) {
               region = "leftMiddle";
             } else {
               region = "rightMiddle";
@@ -2179,7 +2179,7 @@ var Bump = (function () {
     circlePointCollision
     --------------------
      Use it to boucnce a circle off a point.
-    Parameters:
+    Parameters: 
     a. A sprite object with `centerX`, `centerY`, and `radius` properties.
     b. A point object with `x` and `y` properties.
      */
@@ -2214,7 +2214,7 @@ var Bump = (function () {
     bounceOffSurface
     ----------------
      Use this to bounce an object off another object.
-    Parameters:
+    Parameters: 
     a. An object with `v.x` and `v.y` properties. This represents the object that is colliding
     with a surface.
     b. An object with `x` and `y` properties. This represents the surface that the object
@@ -2285,7 +2285,7 @@ var Bump = (function () {
     `contain` can be used to contain a sprite with `x` and
     `y` properties inside a rectangular area.
      The `contain` function takes four arguments: a sprite with `x` and `y`
-    properties, an object literal with `x`, `y`, `width` and `height` properties. The
+    properties, an object literal with `x`, `y`, `width` and `height` properties. The 
     third argument is a Boolean (true/false) value that determines if the sprite
     should bounce when it hits the edge of the container. The fourth argument
     is an extra user-defined callback function that you can call when the
@@ -2295,7 +2295,7 @@ var Bump = (function () {
     ```
     The code above will contain the sprite's position inside the 512 by
     512 pixel area defined by the object. If the sprite hits the edges of
-    the container, it will bounce. The `callBackFunction` will run if
+    the container, it will bounce. The `callBackFunction` will run if 
     there's a collision.
      An additional feature of the `contain` method is that if the sprite
     has a `mass` property, it will be used to dampen the sprite's bounce
@@ -2310,14 +2310,14 @@ var Bump = (function () {
     let collision = contain(anySprite, {x: 0, y: 0, width: 512, height: 512});
      //If there's a collision, display the boundary that the collision happened on
     if(collision) {
-      if collision.has("left") console.log("The sprite hit the left");
-      if collision.has("top") console.log("The sprite hit the top");
-      if collision.has("right") console.log("The sprite hit the right");
-      if collision.has("bottom") console.log("The sprite hit the bottom");
+      if collision.has("left") console.log("The sprite hit the left");  
+      if collision.has("top") console.log("The sprite hit the top");  
+      if collision.has("right") console.log("The sprite hit the right");  
+      if collision.has("bottom") console.log("The sprite hit the bottom");  
     }
     ```
     If the sprite doesn't hit a boundary, the value of
-    `collision` will be `undefined`.
+    `collision` will be `undefined`. 
     */
 
     /*
@@ -2332,7 +2332,7 @@ var Bump = (function () {
              return value;
            }
          } else {
-           return value;
+           return value; 
          }
        };
         let compensateForAnchor = (o, value, axis) => {
@@ -2343,12 +2343,12 @@ var Bump = (function () {
              return 0;
            }
          } else {
-           return 0;
+           return 0; 
          }
        };
         let compensateForAnchors = (a, b, property1, property2) => {
           return compensateForAnchor(a, a[property1], property2) + compensateForAnchor(b, b[property1], property2)
-       };
+       };    
        //Create a set called `collision` to keep track of the
        //boundaries with which the sprite is colliding
        let collision = new Set();
@@ -2675,6 +2675,7 @@ var Bump = (function () {
 
   return Bump;
 })();
+
 //# sourceMappingURL=bump.js.map"use strict";
 
 var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
@@ -4303,7 +4304,7 @@ var Tink = (function () {
       //key object released
     };
     ```
-    Keyboard objects also have `isDown` and `isUp` Boolean properties that you can use to check the state of each key.
+    Keyboard objects also have `isDown` and `isUp` Boolean properties that you can use to check the state of each key. 
     */
 
   }, {
@@ -4888,7 +4889,7 @@ var SpriteUtilities = (function () {
         if(numberOfFrames === 1) {
           numberOfFrames = 2;
           frameCounter += 1;
-        }
+        }  
         */
 
         //Calculate the frame rate. Set the default fps to 12
@@ -6020,7 +6021,7 @@ var SpriteUtilities = (function () {
         return value;
       }
 
-      //No it's not a number, so it must be a string
+      //No it's not a number, so it must be a string   
       else {
 
           return parseInt(this.colorToHex(value));
@@ -6039,16 +6040,16 @@ var SpriteUtilities = (function () {
       /*
       //Find out if the first character in the string is a number
       if (!isNaN(parseInt(string.charAt(0)))) {
-
+        
         //It's not, so convert it to a hex code
         return colorToHex(string);
-
+        
       //The use input a number, so it must be a hex code. Just return it
       } else {
-
+      
         return string;
       }
-
+      
       */
     }
   }]);
@@ -6070,9 +6071,9 @@ var GameUtilities = (function () {
   distance
   ----------------
    Find the distance in pixels between two sprites.
-  Parameters:
-  a. A sprite object.
-  b. A sprite object.
+  Parameters: 
+  a. A sprite object. 
+  b. A sprite object. 
   The function returns the number of pixels distance between the sprites.
       let distanceBetweenSprites = gu.distance(spriteA, spriteB);
    */
@@ -6089,7 +6090,7 @@ var GameUtilities = (function () {
     followEase
     ----------------
      Make a sprite ease to the position of another sprite.
-    Parameters:
+    Parameters: 
     a. A sprite object. This is the `follower` sprite.
     b. A sprite object. This is the `leader` sprite that the follower will chase.
     c. The easing value, such as 0.3. A higher number makes the follower move faster.
@@ -6124,7 +6125,7 @@ var GameUtilities = (function () {
     followConstant
     ----------------
      Make a sprite move towards another sprite at a constant speed.
-    Parameters:
+    Parameters: 
     a. A sprite object. This is the `follower` sprite.
     b. A sprite object. This is the `leader` sprite that the follower will chase.
     c. The speed value, such as 3. The is the pixels per frame that the sprite will move. A higher number makes the follower move faster.
@@ -6152,7 +6153,7 @@ var GameUtilities = (function () {
     angle
     -----
      Return the angle in Radians between two sprites.
-    Parameters:
+    Parameters: 
     a. A sprite object.
     b. A sprite object.
     You can use it to make a sprite rotate towards another sprite like this:
@@ -6243,7 +6244,7 @@ var GameUtilities = (function () {
     randomInt
     ---------
      Return a random integer between a minimum and maximum value
-    Parameters:
+    Parameters: 
     a. An integer.
     b. An integer.
     Here's how you can use it to get a random number between, 1 and 10:
@@ -6260,7 +6261,7 @@ var GameUtilities = (function () {
     randomFloat
     -----------
      Return a random floating point number between a minimum and maximum value
-    Parameters:
+    Parameters: 
     a. Any number.
     b. Any number.
     Here's how you can use it to get a random floating point number between, 1 and 10:
@@ -6277,10 +6278,10 @@ var GameUtilities = (function () {
     Wait
     ----
      Lets you wait for a specific number of milliseconds before running the
-    next function.
-
+    next function. 
+     
       wait(1000, runThisFunctionNext());
-
+    
     */
 
   }, {
@@ -6292,7 +6293,7 @@ var GameUtilities = (function () {
     /*
     Move
     ----
-     Move a sprite by adding it's velocity to it's position. The sprite
+     Move a sprite by adding it's velocity to it's position. The sprite 
     must have `vx` and `vy` values for this to work. You can supply a
     single sprite, or a list of sprites, separated by commas.
          move(sprite);
@@ -7286,7 +7287,7 @@ var TileUtilities = (function () {
 
     //### updateMap
     /*
-    `updateMap` takes a map array and adds a sprite's grid index number (`gid`) to it.
+    `updateMap` takes a map array and adds a sprite's grid index number (`gid`) to it. 
     It finds the sprite's new index position, and retuns the new map array.
     You can use it to do very efficient collision detection in tile based game worlds.
     `updateMap` arguments:
@@ -7296,9 +7297,9 @@ var TileUtilities = (function () {
     The sprite objects have to have have these properties:
     `centerX`, `centerY`, `index`, `gid` (The number in the array that represpents the sprite)
     Here's an example of how you could use `updateMap` in your game code like this:
-
+    
         blockLayer.data = updateMap(blockLayer.data, blockLayer.children, world);
-     The `blockLayer.data` array would now contain the new index position numbers of all the
+     The `blockLayer.data` array would now contain the new index position numbers of all the 
     child sprites on that layer.
     */
 
@@ -7349,29 +7350,29 @@ var TileUtilities = (function () {
     /*
     ###makeTiledWorld
      `makeTiledWorld` is a quick and easy way to display a game world designed in
-    Tiled Editor. Supply `makeTiledWorld` with 2 **string arguments**:
-
-    1. A JSON file generated by Tiled Editor.
+    Tiled Editor. Supply `makeTiledWorld` with 2 **string arguments**: 
+    
+    1. A JSON file generated by Tiled Editor. 
     2. A source image that represents the tile set you used to create the Tiled Editor world.
     ```js
     let world = makeTiledWorld("tiledEditorMapData.json", "tileset.png");
     ```
-    (Note: `makeTiledWorld` looks for the JSON data file in Pixi's `loader.resources` object. So,
+    (Note: `makeTiledWorld` looks for the JSON data file in Pixi's `loader.resources` object. So, 
     make sure you've loaded the JSON file using Pixi's `loader`.)
      `makeTiledWorld` will return a Pixi `Container` that contains all the things in your Tiled Editor
     map as Pixi sprites.
      All the image tiles you create in Tiled Editor are automatically converted into Pixi sprites
     for you by `makeTiledWorld`. You can access all of them using two methods: `getObject` (for
     single sprites) and `getObjects` (with an "s") for multiple sprites. Let's find out how they work.
-
+    
     ####world.getObject
      Tile Editor lets you assign a "name" properties any object.
     You can access any sprite by this name using the `getObject` method. `getObject` searches for and
     returns a sprite in the `world` that has the same `name` property that you assigned
     in Tiled Editor. Here's how to use `getObject` to look for an object called "alien"
     in the Tiled map data and assign it to a variable called `alien`
-    ```js
-    let alien = world.getObject("alien");
+    ```js  
+    let alien = world.getObject("alien");  
     ```
     `alien` is now an ordinary Pixi sprite that you can control just like any other Pixi
     sprite in your games.
@@ -7387,21 +7388,21 @@ var TileUtilities = (function () {
     //Create a new Pixi MovieClip sprite
     let elf = new PIXI.MovieClip(elfSpriteTextures);
     ```
-    Then use the `x` and `y` data from the generic "elf" object you created in Tiled Editor to position the
+    Then use the `x` and `y` data from the generic "elf" object you created in Tiled Editor to position the 
     `elf` sprite.
     ```js
     elf.x = world.getObject("elf").x;
     elf.y = world.getObject("elf").y;
     ```
-    This is a simple example, but you could make very complex data objects in Tiled Editor and
+    This is a simple example, but you could make very complex data objects in Tiled Editor and 
     use them to build complex sprites in the same way.
-     ####Accessing Tiled Editor layer groups
-
+     ####Accessing Tiled Editor layer groups 
+    
     Tiled Editor lets you create **layer groups**. Each layer group you create
     in Tiled Editor is automatically converted by `makeTiledWorld` into a Pixi `Container`
     object. You can access those containers using `getObject` to extract the layer group
-    container.
-     Here's how you could extract the layer group called "objects" and add the
+    container. 
+     Here's how you could extract the layer group called "objects" and add the 
     `elf` sprite to it.
     ```js
     let objectsLayer = world.getObject("objects");
@@ -7418,21 +7419,21 @@ var TileUtilities = (function () {
     let itemsLayer = world.getObject("items");
     ```
     `itemsLayer` is now a Pixi container with a `children` array that contains all the sprites
-    on that layer.
+    on that layer.  
      To be safe, clone this array to create a new version
     that doesn't point to the original data file:
     ```js
-    items = itemsLayer.children.slice(0);
+    items = itemsLayer.children.slice(0);  
     ```
     You can now manipulate the `items` array freely without worrying about changing
     the original array. This can possibly help prevent some weird bugs in a complex game.
      ###Finding the "gid" values
      Tiled Editor uses "gid" numbers to identify different kinds of things in the world.
-    If you ever need to extract sprites with specific `gid` numbers in a
+    If you ever need to extract sprites with specific `gid` numbers in a 
     layer that contains different kinds of things, you can do it like this:
     ```js
     let items = itemsLayer.children.map(sprite => {
-      if (sprite.gid !== 0) return sprite;
+      if (sprite.gid !== 0) return sprite; 
     });
     ```
     Every sprite created by `makeTiledWorld` has a `gid` property with a value that matches its
@@ -7442,8 +7443,8 @@ var TileUtilities = (function () {
     that is an array containing all the grid index numbers (`gid`) of
     the tiles in that array. Imagine that you've got a layer full of similar
     tiles representing the walls in a game. How do you access the array
-    containing all the "gid" numbers of the wall sprites in that layer? If the layer's name is called "wallLayer", you
-    can access the `wallLayer`'s `data` array of sprites like this:
+    containing all the "gid" numbers of the wall sprites in that layer? If the layer's name is called "wallLayer", you 
+    can access the `wallLayer`'s `data` array of sprites like this: 
     ```js
     wallMapArray = world.getObject("wallLayer").data;
     ```
@@ -7736,7 +7737,7 @@ var TileUtilities = (function () {
     ### hitTestIsoTile
     Same API as `hitTestTile`, except that it works with isometric sprites.
     Make sure that your `world` object has properties called
-    `cartTileWidth` and `cartTileHeight` that define the Cartesian with and
+    `cartTileWidth` and `cartTileHeight` that define the Cartesian with and 
     height of your tile cells, in pixels.
      */
 
@@ -7866,9 +7867,9 @@ var TileUtilities = (function () {
 
     /*
     ### makeIsoPointer
-    Used to add a isometric properties to any mouse/touch `pointer` object with
+    Used to add a isometric properties to any mouse/touch `pointer` object with 
     `x` and `y` properties. Supply `makeIsoPointer` with the pointer object and
-    the isometric `world` object
+    the isometric `world` object 
     */
 
     //Create some useful properties on the pointer
@@ -7973,7 +7974,7 @@ var TileUtilities = (function () {
     /*
     ### addIsoProperties
     Add properties to a sprite to help work between Cartesian
-    and isometric properties: `isoX`, `isoY`, `cartX`,
+    and isometric properties: `isoX`, `isoY`, `cartX`, 
     `cartWidth` and `cartHeight`.
     */
 
@@ -8026,7 +8027,7 @@ var TileUtilities = (function () {
       //A. You need to add three custom properties to your Tiled Editor
       //map: `cartTilewidth`,`cartTileheight` and `tileDepth`. They define the Cartesian
       //dimesions of the tiles (32x32x64).
-      //Check to make sure that these custom properties exist
+      //Check to make sure that these custom properties exist 
       if (!tiledMap.properties.cartTilewidth && !tiledMap.properties.cartTileheight && !tiledMao.properties.tileDepth) {
         throw new Error("Set custom cartTilewidth, cartTileheight and tileDepth map properties in Tiled Editor");
       }
