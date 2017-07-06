@@ -131,8 +131,7 @@ function play() {
 
   /*
   pegs.children.forEach(peg => {
-
-    //Make the ball bounce if it hits any of the pegs. Use the
+     //Make the ball bounce if it hits any of the pegs. Use the
     //`circleCollision` function to check for collisions between
     //a moving circle and a stationary circle. Set the third argument to
     //`false` to prevent the circles from bouncing, and set the fourth
@@ -140,8 +139,7 @@ function play() {
     //coordinates. (The global coordinates will be used by default)
     //`circleCollision` arguments:
     //movingCircle, stationaryCircle, bounce?, globalCoordinates?
-
-    g.circleCollision(ball, peg, true, true);
+     g.circleCollision(ball, peg, true, true);
   });
   */
 }

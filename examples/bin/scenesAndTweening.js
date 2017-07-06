@@ -99,8 +99,7 @@ function setup() {
     "inverseSineCubed"
    Experiment by assigning different easing types and observe the
   effect.
-
-  If you don't what the effect to repeat in a continuous loop, just
+   If you don't what the effect to repeat in a continuous loop, just
   set `yoyo` (the 6th argument) to `false`.
   */
 

@@ -65,8 +65,7 @@ function setup() {
   a specific frame. This is usually better to use than `gotoAndStop`
   because its more tightly integrated into the sprite's
   state and animation manager.
-
-      pixie.show(1);
+       pixie.show(1);
   */
 
   //Optionally supply `playAnimation` with a range range of frames

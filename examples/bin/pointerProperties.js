@@ -48,6 +48,6 @@ function play() {
 
   //Display the pointer properties in the
   //HTML <p> tag called `output`
-  output.innerHTML = "Pointer properties: <br>\n     pointer.x: " + g.pointer.x + " <br>\n     pointer.y: " + g.pointer.y + " <br>\n     pointer.isDown: " + g.pointer.isDown + " <br>\n     pointer.isUp: " + g.pointer.isUp + " <br>\n     pointer.tapped: " + g.pointer.tapped + "<br>\n     <br>\n     Open the console window to see the result of the \"press\", \n     \"release\" and \"tap\" methods.";
+  output.innerHTML = "Pointer properties: <br>\n     pointer.x: " + g.pointer.x + " <br>\n     pointer.y: " + g.pointer.y + " <br>\n     pointer.isDown: " + g.pointer.isDown + " <br>\n     pointer.isUp: " + g.pointer.isUp + " <br>\n     pointer.tapped: " + g.pointer.tapped + "<br>\n     <br>\n     Open the console window to see the result of the \"press\",\n     \"release\" and \"tap\" methods.";
 }
 //# sourceMappingURL=pointerProperties.js.map

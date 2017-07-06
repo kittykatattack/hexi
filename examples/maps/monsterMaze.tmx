@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.0" orientation="orthogonal" renderorder="right-down" width="11" height="8" tilewidth="64" tileheight="64" nextobjectid="1">
+ <tileset firstgid="1" name="monsterMaze" tilewidth="64" tileheight="64" tilecount="6" columns="3">
+  <image source="../images/monsterMaze.png" width="192" height="128"/>
+  <tile id="2">
+   <properties>
+    <property name="name" value="monster"/>
+   </properties>
+  </tile>
+  <tile id="3">
+   <properties>
+    <property name="name" value="alien"/>
+   </properties>
+  </tile>
+  <tile id="5">
+   <properties>
+    <property name="name" value="monsterOpen"/>
+   </properties>
+  </tile>
+ </tileset>
+ <layer name="floorLayer" width="11" height="8">
+  <data encoding="csv">
+1,1,1,1,1,1,1,1,1,1,1,
+1,1,1,1,1,1,1,1,1,1,1,
+1,1,1,1,1,1,1,1,1,1,1,
+1,1,1,1,1,1,1,1,1,1,1,
+1,1,1,1,1,1,1,1,1,1,1,
+1,1,1,1,1,1,1,1,1,1,1,
+1,1,1,1,1,1,1,1,1,1,1,
+1,1,1,1,1,1,1,1,1,1,1
+</data>
+ </layer>
+ <layer name="wallLayer" width="11" height="8">
+  <data encoding="csv">
+5,5,5,5,5,5,5,5,5,5,5,
+5,0,0,0,0,0,0,0,0,0,5,
+5,0,2,2,2,0,2,0,2,0,5,
+5,0,0,2,0,0,0,0,0,0,5,
+5,0,0,0,0,2,0,0,2,0,5,
+5,0,2,0,2,2,0,2,2,0,5,
+5,0,0,0,0,0,2,0,0,0,5,
+5,5,5,5,5,5,5,5,5,5,5
+</data>
+ </layer>
+ <layer name="playerLayer" width="11" height="8">
+  <data encoding="csv">
+0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,4,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0
+</data>
+ </layer>
+ <layer name="monsterLayer" width="11" height="8">
+  <data encoding="csv">
+0,0,0,0,0,0,0,0,0,0,0,
+0,3,0,0,0,0,0,0,0,3,0,
+0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,3,0,
+0,0,0,0,0,0,0,0,0,0,0
+</data>
+ </layer>
+</map>

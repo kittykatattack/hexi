@@ -186,6 +186,6 @@ function setup() {
   //Here's an example of how to create multiline text
   //using ES6 template strings (surounding the text with
   //backtick characters)
-  instructions.content = "\nTo shoot, press 1\n\nTo control music:\n  a - Play\n  b - Pause\n  c - Restart\n  d - Go to 10 second mark\n  e - Fade out\n  f - Fade in\n\nGenerated sound effects\n  g - Shoot \n  h - Jump\n  i - Explosion\n  j - Bonus\n";
+  instructions.content = "\nTo shoot, press 1\n\nTo control music:\n  a - Play\n  b - Pause\n  c - Restart\n  d - Go to 10 second mark\n  e - Fade out\n  f - Fade in\n\nGenerated sound effects\n  g - Shoot\n  h - Jump\n  i - Explosion\n  j - Bonus\n";
 }
 //# sourceMappingURL=sounds.js.map

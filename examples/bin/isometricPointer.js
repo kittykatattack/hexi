@@ -126,6 +126,6 @@ function setup() {
 }
 
 function play() {
-  message.content = "\n    cartX: " + Math.floor(g.pointer.cartX) + "\n    cartY: " + Math.floor(g.pointer.cartY) + "\n    column: " + g.pointer.column + " \n    row: " + g.pointer.row + "\n    index: " + g.pointer.index + "\n    layer 1 gid: " + world.layers[0][Math.floor(g.pointer.index)] + "\n    layer 2 gid: " + world.layers[1][Math.floor(g.pointer.index)] + "\n  ";
+  message.content = "\n    cartX: " + Math.floor(g.pointer.cartX) + "\n    cartY: " + Math.floor(g.pointer.cartY) + "\n    column: " + g.pointer.column + "\n    row: " + g.pointer.row + "\n    index: " + g.pointer.index + "\n    layer 1 gid: " + world.layers[0][Math.floor(g.pointer.index)] + "\n    layer 2 gid: " + world.layers[1][Math.floor(g.pointer.index)] + "\n  ";
 }
 //# sourceMappingURL=isometricPointer.js.map

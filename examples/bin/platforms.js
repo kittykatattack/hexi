@@ -182,8 +182,7 @@ function play() {
      //Use `rectangleCollision` to prevent the player and platforms
     //from overlapping
     let collision = g.rectangleCollision(player, platform);
-
-    //Use the collision variable to figure out what side of the player
+     //Use the collision variable to figure out what side of the player
     //is hitting the platform
     if(collision === "bottom" && player.vy >= 0) {
       //Tell the game that the player is on the ground if
