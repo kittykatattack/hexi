@@ -206,6 +206,14 @@ var sounds = {
   //Assign this when you load the fonts, like this: `assets.whenLoaded = makeSprites;`.
   whenLoaded: undefined,
 
+  //The callback function to run after each asset is loaded
+  onProgress: undefined,
+
+  //The callback function to run if an asset fails to load or decode
+  onFailed: function(source, error) {
+      throw new Error("Audio could not be loaded: " + source);
+  },
+
   //The load method creates and loads all the assets. Use it like this:
   //`assets.load(["images/anyImage.png", "fonts/anyFont.otf"]);`.
 
@@ -229,7 +237,7 @@ var sounds = {
       if (self.audioExtensions.indexOf(extension) !== -1) {
 
         //Create a sound sprite.
-        var soundSprite = makeSound(source, self.loadHandler.bind(self), true, false);
+        var soundSprite = makeSound(source, self.loadHandler.bind(self), true, false, self.onFailed);
 
         //Get the sound file name.
         soundSprite.name = source;
@@ -254,7 +262,10 @@ var sounds = {
   loadHandler: function () {
     var self = this;
     self.loaded += 1;
-    console.log(self.loaded);
+
+    if (self.onProgress) {
+	self.onProgress(100 * self.loaded / self.toLoad);
+    }
 
     //Check whether everything has loaded.
     if (self.toLoad === self.loaded) {
@@ -336,7 +347,7 @@ of you application. (The [Hexi game engine](https://github.com/kittykatattack/he
 
 */
 
-function makeSound(source, loadHandler, loadSound, xhr) {
+function makeSound(source, loadHandler, loadSound, xhr, failHandler) {
 
   //The sound object that this function returns.
   var o = {};
@@ -584,12 +595,12 @@ function makeSound(source, loadHandler, loadSound, xhr) {
 
   //Optionally Load and decode the sound.
   if (loadSound) {
-    this.loadSound(o, source, loadHandler);
+    this.loadSound(o, source, loadHandler, failHandler);
   }
 
   //Optionally, if you've loaded the sound using some other loader, just decode the sound
   if (xhr) {
-    this.decodeAudio(o, xhr, loadHandler);
+    this.decodeAudio(o, xhr, loadHandler, failHandler);
   }
 
   //Return the sound object.
@@ -597,7 +608,7 @@ function makeSound(source, loadHandler, loadSound, xhr) {
 }
 
 //The `loadSound` function loads the sound file using XHR
-function loadSound(o, source, loadHandler) {
+function loadSound(o, source, loadHandler, failHandler) {
   var xhr = new XMLHttpRequest();
 
   //Use xhr to load the sound file.
@@ -606,7 +617,7 @@ function loadSound(o, source, loadHandler) {
 
   //When the sound has finished loading, decode it using the
   //`decodeAudio` function (which you'll see ahead)
-  xhr.addEventListener("load", decodeAudio.bind(this, o, xhr, loadHandler)); 
+  xhr.addEventListener("load", decodeAudio.bind(this, o, xhr, loadHandler, failHandler)); 
 
   //Send the request to load the file.
   xhr.send();
@@ -614,7 +625,7 @@ function loadSound(o, source, loadHandler) {
 
 //The `decodeAudio` function decodes the audio file for you and 
 //launches the `loadHandler` when it's done
-function decodeAudio(o, xhr, loadHandler) {
+function decodeAudio(o, xhr, loadHandler, failHandler) {
 
   //Decode the sound and store a reference to the buffer.
   actx.decodeAudioData(
@@ -630,10 +641,8 @@ function decodeAudio(o, xhr, loadHandler) {
         loadHandler();
       }
     },
-
-    //Throw an error if the sound can't be decoded.
     function(error) {
-      throw new Error("Audio could not be decoded: " + error);
+      if (failHandler) failHandler(o.source, error);
     }
   );
 }
@@ -1035,12 +1044,9 @@ function keyboard(keyCode) {
   return key;
 }
 
-
 function scaleToWindow(canvas, backgroundColor) {
-
-  backgroundColor = backgroundColor || "#2C3539";
   var scaleX, scaleY, scale, center;
-  
+
   //1. Scale the canvas to the correct size
   //Figure out the scale amount on each axis
   scaleX = window.innerWidth / canvas.offsetWidth;
@@ -1050,32 +1056,31 @@ function scaleToWindow(canvas, backgroundColor) {
   scale = Math.min(scaleX, scaleY);
   canvas.style.transformOrigin = "0 0";
   canvas.style.transform = "scale(" + scale + ")";
-  console.log(scaleX)
 
   //2. Center the canvas.
   //Decide whether to center the canvas vertically or horizontally.
   //Wide canvases should be centered vertically, and 
   //square or tall canvases should be centered horizontally
-  if (canvas.offsetwidth > canvas.offsetHeight) {
+  if (canvas.offsetWidth > canvas.offsetHeight) {
     if (canvas.offsetWidth * scale < window.innerWidth) {
       center = "horizontally";
-    } else { 
+    } else {
       center = "vertically";
     }
   } else {
     if (canvas.offsetHeight * scale < window.innerHeight) {
       center = "vertically";
-    } else { 
+    } else {
       center = "horizontally";
     }
   }
-  
+
   //Center horizontally (for square or tall canvases)
   var margin;
   if (center === "horizontally") {
     margin = (window.innerWidth - canvas.offsetWidth * scale) / 2;
-    canvas.style.marginTop = 0;
-    canvas.style.marginBottom = 0;
+    canvas.style.marginTop = 0 + "px";
+    canvas.style.marginBottom = 0 + "px";
     canvas.style.marginLeft = margin + "px";
     canvas.style.marginRight = margin + "px";
   }
@@ -1085,24 +1090,24 @@ function scaleToWindow(canvas, backgroundColor) {
     margin = (window.innerHeight - canvas.offsetHeight * scale) / 2;
     canvas.style.marginTop = margin + "px";
     canvas.style.marginBottom = margin + "px";
-    canvas.style.marginLeft = 0;
-    canvas.style.marginRight = 0;
+    canvas.style.marginLeft = 0 + "px";
+    canvas.style.marginRight = 0 + "px";
   }
 
   //3. Remove any padding from the canvas  and body and set the canvas
   //display style to "block"
-  canvas.style.paddingLeft = 0;
-  canvas.style.paddingRight = 0;
-  canvas.style.paddingTop = 0;
-  canvas.style.paddingBottom = 0;
+  canvas.style.paddingLeft = 0 + "px";
+  canvas.style.paddingRight = 0 + "px";
+  canvas.style.paddingTop = 0 + "px";
+  canvas.style.paddingBottom = 0 + "px";
   canvas.style.display = "block";
-  
+
   //4. Set the color of the HTML body background
   document.body.style.backgroundColor = backgroundColor;
-  
+
   //Fix some quirkiness in scaling for Safari
-  var ua = navigator.userAgent.toLowerCase(); 
-  if (ua.indexOf("safari") != -1) { 
+  var ua = navigator.userAgent.toLowerCase();
+  if (ua.indexOf("safari") != -1) {
     if (ua.indexOf("chrome") > -1) {
       // Chrome
     } else {
@@ -1115,8 +1120,7 @@ function scaleToWindow(canvas, backgroundColor) {
   //5. Return the `scale` value. This is important, because you'll nee this value 
   //for correct hit testing between the pointer and sprites
   return scale;
-}
-"use strict";
+}"use strict";
 
 var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
 
@@ -4105,16 +4109,18 @@ var Tink = (function () {
         this.makePointer(this.element, this.scale);
       }
 
-      //Loop through all the button-like sprites that were created
-      //using the `makeInteractive` method
-      this.buttons.forEach(function (o) {
+      //Loop through all of Tink's pointers (there will usually
+      //just be one)
+      this.pointers.forEach(function (pointer) {
 
-        //Only do this if the interactive object is enabled
-        if (o.enabled) {
+        pointer.shouldBeHand = false;
 
-          //Loop through all of Tink's pointers (there will usually
-          //just be one)
-          _this3.pointers.forEach(function (pointer) {
+        //Loop through all the button-like sprites that were created
+        //using the `makeInteractive` method
+        _this3.buttons.forEach(function (o) {
+
+          //Only do this if the interactive object is enabled
+          if (o.enabled) {
 
             //Figure out if the pointer is touching the sprite
             var hit = pointer.hitTestSprite(o);
@@ -4157,6 +4163,14 @@ var Tink = (function () {
                   }
                 }
               }
+
+              //Flag this pointer to be changed to a hand
+              pointer.shouldBeHand = true;
+              //if (pointer.visible) pointer.cursor = "pointer";
+              // } else {
+              //   //Turn the pointer to an ordinary arrow icon if the
+              //   //pointer isn't touching a sprite
+              //   if (pointer.visible) pointer.cursor = "auto";
 
               //Change the pointer icon to a hand
               if (pointer.visible) pointer.cursor = "pointer";
@@ -4213,7 +4227,13 @@ var Tink = (function () {
                 o.hoverOver = false;
               }
             }
-          });
+          }
+        });
+
+        if (pointer.shouldBeHand) {
+          pointer.cursor = "pointer";
+        } else {
+          pointer.cursor = "auto";
         }
       });
     }
@@ -4422,7 +4442,7 @@ var Tink = (function () {
 
   return Tink;
 })();
-//# sourceMappingURL=tink.js.map"use strict";
+"use strict";
 
 var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
 
