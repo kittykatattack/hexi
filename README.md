@@ -285,7 +285,7 @@ way to being productive with Hexi fast - so let's find out!
 more methodical, introduction to Hexi, check out the [Tutorials](#tutorials) section ahead. You'll learn how to make 3 complete games from scratch, and each game gradually builds on the skills you learnt in the previous game.)
 
 <a id='thehtmlcontainer'></a>
-###The HTML container
+### The HTML container
 
 The only file you need to start using Hexi is
 [`hexi.min.js`](https://github.com/kittykatattack/hexi/blob/master/bin/hexi.min.js). It has an incredibly simple "installation": Just link it to an HTML page with a `<script>` tag. Then link your main JavaScript file that will contain your game or application code. Here's what a typical Hexi HTML container page might look like:
@@ -324,7 +324,7 @@ specific version of Pixi that you want to use. Or maybe you made some
 other crazy modifications to Hexi's modules that you want to try out. But typically, you'll probably never need to do this.
 
 <a id='hexisarchitecture'></a>
-###Hexi's Architecture
+### Hexi's Architecture
 
 All the fun happens in your main JavaScript file. Hexi
 applications have a very simple but flexible architecture that you can
@@ -381,7 +381,7 @@ Let's find out how this architectural model was used to build the Quick
 Start application.
 
 <a id='settingupandstartinghexi'></a>
-###1. Setting up and starting Hexi
+### 1. Setting up and starting Hexi
 
 First, create an array that lists all the files you want to load. The Quick
 Start project loads an image file, a font file, and a music file.
@@ -442,7 +442,7 @@ This is important! Without calling the `start` method Hexi won't
 start!
 
 <a id='theloadfunction'></a>
-###2. The `load` function, that runs while things are loading
+### 2. The `load` function, that runs while things are loading
 
 If you supplied Hexi with a function called `load` when you initialized it, you can display a loading bar and loading progress information. Just create a function called `load`, like this:
 ```js
@@ -459,7 +459,7 @@ function load(){
 }
 ```
 <a id='thesetupfunction'></a>
-###3. The `setup` function, which initializes and creates your game objects
+### 3. The `setup` function, which initializes and creates your game objects
 
 Now that you've started Hexi and loaded all your files, you can start
 making things! This happens in the `setup` function. If you have any
@@ -577,7 +577,7 @@ The `play` state is a function that will run in a loop, and is where
 all our application logic is. Let's find out how that works next.
 
 <a id='thesplayfunction'></a>
-###4. The `play` function: the looping application logic
+### 4. The `play` function: the looping application logic
 
 The last thing you need in your Hexi application is a `play` function.
 ```js
@@ -661,7 +661,7 @@ cat.y += cat.vy;
 And that's all there is to it! This is everything you know about the Quick Start application, and almost everything you need to know about Hexi!
 
 <a id='takingitfurther'></a>
-###Taking it further
+### Taking it further
 
 With this basic Hexi architecture, you can create anything. Just set Hexi's `state` property to any other function to switch the behaviour of your application. Here's how:
 ```js
@@ -2100,7 +2100,7 @@ scoreDisplay = g.text("0", "20px emulogic", "#00FF00", 400, 10);
 You can and load and use any fonts in TTF, OTF, TTC or WOFF format.
 
 <a id='progressbar'></a>
-####A loading progress bar
+#### A loading progress bar
 
 Alien Armada loads three MP3 sound files: a shooting sound, an
 explosion sound, and music. The music sound is about 2 MB in size so
@@ -3048,7 +3048,7 @@ And that's all you need to do to make an infinitely scrolling
 background.
 
 <a id='particleeffects'></a>
-####Particle effects
+#### Particle effects
 
 How do you create effects like fire, smoke, magic, and explosions? 
 You make lots of tiny sprites; dozens, hundreds or thousands of them. 
@@ -3119,7 +3119,7 @@ to simulate everything from liquid to fire. In Flappy Fairy, it's used
 to create fairy dust.
 
 <a id='thefairydustexplosions'></a>
-#####The fairy dust explosions
+##### The fairy dust explosions
 
 When Flappy Fairy hits a block, she disappears in a puff of dust. 
 
@@ -3190,7 +3190,7 @@ if (fairyVsBlock && fairy.visible) {
 ```
 
 <a id='useaparticleemitter'></a>
-#####Use a particle emitter
+##### Use a particle emitter
 
 A particle emitter is just a simple timer that creates particles at 
 fixed intervals. That means instead of just calling the 
@@ -3266,7 +3266,7 @@ dust = g.particleEmitter(
 You can now control the `dust` emitter with `play` and `stop` methods.
 
 <a id='creatingandmovingthepillars'></a>
-####Creating and moving the pillars
+#### Creating and moving the pillars
 
 You now know how Flappy Fairy implements some of Hexi's special features
 for some fun and useful effects. But, if you're new to game
