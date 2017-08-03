@@ -37678,7 +37678,7 @@ var TileUtilities = (function () {
     /*
     ### tileBasedLineOfSight
      Use the `tileBasedLineOfSight` function to find out whether two sprites
-    are visible to each other inside a tile based maze environment
+    are visible to each other inside a tile based maze environment.
      */
 
   }, {
@@ -37791,6 +37791,207 @@ var TileUtilities = (function () {
       } else {
         return false;
       }
+    }
+
+    /*
+    surroundingCrossCells
+    ---------------------
+     Returns an array of index numbers matching the cells that are orthogonally 
+    adjacent to the center `index` cell
+     */
+
+  }, {
+    key: "surroundingCrossCells",
+    value: function surroundingCrossCells(index, widthInTiles) {
+      return [index - widthInTiles, index - 1, index + 1, index + widthInTiles];
+    }
+
+    /*
+    surroundingDiagonalCells
+    ---------------------
+     Returns an array of index numbers matching the cells that touch the
+    4 corners of the center the center `index` cell
+     */
+
+  }, {
+    key: "surroundingDiagonalCells",
+    value: function surroundingDiagonalCells(index, widthInTiles) {
+      return [index - widthInTiles - 1, index - widthInTiles + 1, index + widthInTiles - 1, index + widthInTiles + 1];
+    }
+
+    /*
+    validDirections
+    ---------------
+     Returns an array with the values "up", "down", "left" or "right"
+    that represent all the valid directions in which a sprite can move
+    The `validGid` is the grid index number for the "walkable" part of the world
+    (such as, possibly, `0`.)
+    */
+
+  }, {
+    key: "validDirections",
+    value: function validDirections(sprite, mapArray, validGid, world) {
+
+      //Get the sprite's current map index position number
+      var index = g.getIndex(sprite.x, sprite.y, world.tilewidth, world.tileheight, world.widthInTiles);
+
+      //An array containing the index numbers of tile cells
+      //above, below and to the left and right of the sprite
+      var surroundingCrossCells = function surroundingCrossCells(index, widthInTiles) {
+        return [index - widthInTiles, index - 1, index + 1, index + widthInTiles];
+      };
+
+      //Get the index position numbers of the 4 cells to the top, right, left
+      //and bottom of the sprite
+      var surroundingIndexNumbers = surroundingCrossCells(index, world.widthInTiles);
+
+      //Find all the tile gid numbers that match the surrounding index numbers
+      var surroundingTileGids = surroundingIndexNumbers.map(function (index) {
+        return mapArray[index];
+      });
+
+      //`directionList` is an array of 4 string values that can be either
+      //"up", "left", "right", "down" or "none", depending on
+      //whether there is a cell with a valid gid that matches that direction.
+      var directionList = surroundingTileGids.map(function (gid, i) {
+
+        //The possible directions
+        var possibleDirections = ["up", "left", "right", "down"];
+
+        //If the direction is valid, choose the matching string
+        //identifier for that direction. Otherwise, return "none"
+        if (gid === validGid) {
+          return possibleDirections[i];
+        } else {
+          return "none";
+        }
+      });
+
+      //We don't need "none" in the list of directions
+      //(it's just a placeholder), so let's filter it out
+      var filteredDirectionList = directionList.filter(function (direction) {
+        return direction != "none";
+      });
+
+      //Return the filtered list of valid directions
+      return filteredDirectionList;
+    }
+
+    /*
+    canChangeDirection
+    ------------------
+     Returns `true` or `false` depending on whether a sprite in at a map
+    array location in which it able to change its direction
+    */
+
+  }, {
+    key: "canChangeDirection",
+    value: function canChangeDirection() {
+      var validDirections = arguments.length <= 0 || arguments[0] === undefined ? [] : arguments[0];
+
+      //Is the sprite in a dead-end (cul de sac.) This will be true if there's only
+      //one element in the `validDirections` array
+      var inCulDeSac = validDirections.length === 1;
+
+      //Is the sprite trapped? This will be true if there are no elements in
+      //the `validDirections` array
+      var trapped = validDirections.length === 0;
+
+      //Is the sprite in a passage? This will be `true` if the the sprite
+      //is at a location that contain the values
+      //“left” or “right” and “up” or “down”
+      var up = validDirections.find(function (x) {
+        return x === "up";
+      }),
+          down = validDirections.find(function (x) {
+        return x === "down";
+      }),
+          left = validDirections.find(function (x) {
+        return x === "left";
+      }),
+          right = validDirections.find(function (x) {
+        return x === "right";
+      }),
+          atIntersection = (up || down) && (left || right);
+
+      //Return `true` if the sprite can change direction or
+      //`false` if it can't
+      return trapped || atIntersection || inCulDeSac;
+    }
+
+    /*
+    randomDirection
+    ---------------
+     Randomly returns the values "up", "down", "left" or "right" based on
+    valid directions supplied. If the are no valid directions, it returns "trapped"
+     
+    */
+
+  }, {
+    key: "randomDirection",
+    value: function randomDirection(sprite) {
+      var validDirections = arguments.length <= 1 || arguments[1] === undefined ? [] : arguments[1];
+
+      //The `randomInt` helper function returns a random integer between a minimum
+      //and maximum value
+      var randomInt = function randomInt(min, max) {
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+      };
+
+      //Is the sprite trapped?
+      var trapped = validDirections.length === 0;
+
+      //If the sprite isn't trapped, randomly choose one of the valid
+      //directions. Otherwise, return the string "trapped"
+      if (!trapped) {
+        return validDirections[randomInt(0, validDirections.length - 1)];
+      } else {
+        return "trapped";
+      }
+    }
+
+    /*
+    closestDirection
+    ----------------
+     Tells you the closes direction to `spriteTwo` from `spriteOne` based on
+    supplied validDirections. The function returns any of these 
+    4 values: "up", "down", "left" or "right"
+     */
+
+  }, {
+    key: "closestDirection",
+    value: function closestDirection(spriteOne, spriteTwo) {
+      var validDirections = arguments.length <= 2 || arguments[2] === undefined ? [] : arguments[2];
+
+      //A helper function to find the closest direction
+      var closest = function closest() {
+
+        //Plot a vector between spriteTwo and spriteOne
+        var vx = spriteTwo.centerX - spriteOne.centerX,
+            vy = spriteTwo.centerY - spriteOne.centerY;
+
+        //If the distance is greater on the X axis...
+        if (Math.abs(vx) >= Math.abs(vy)) {
+
+          //Try left and right
+          if (vx <= 0) {
+            return "left";
+          } else {
+            return "right";
+          }
+        }
+
+        //If the distance is greater on the Y axis...
+        else {
+
+            //Try up and down
+            if (vy <= 0) {
+              return "up";
+            } else {
+              return "down";
+            }
+          }
+      };
     }
   }]);
 
