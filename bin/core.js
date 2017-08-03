@@ -977,6 +977,12 @@ var Hexi = (function () {
         var useDiagonalNodes = arguments.length <= 6 || arguments[6] === undefined ? true : arguments[6];
         return _this3.tileUtilities.shortestPath(startIndex, destinationIndex, mapArray, mapWidthInTiles, obstacleGids, heuristic, useDiagonalNodes);
       };
+      this.tileBasedLineOfSight = function (spriteOne, spriteTwo, mapArray, world) {
+        var emptyGid = arguments.length <= 4 || arguments[4] === undefined ? 0 : arguments[4];
+        var segment = arguments.length <= 5 || arguments[5] === undefined ? 32 : arguments[5];
+        var angles = arguments.length <= 6 || arguments[6] === undefined ? [] : arguments[6];
+        return _this3.tileUtilities.tileBasedLineOfSight(spriteOne, spriteTwo, mapArray, world, emptyGid, segment, angles);
+      };
 
       //Intercept the Bump library's `contain` and `outsideBounds` methods to make sure that
       //the stage `width` and `height` match the canvas width and height

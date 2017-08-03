@@ -8637,6 +8637,124 @@ var TileUtilities = (function () {
       //the shortest path
       return theShortestPath;
     }
+
+    /*
+    ### tileBasedLineOfSight
+     Use the `tileBasedLineOfSight` function to find out whether two sprites
+    are visible to each other inside a tile based maze environment
+     */
+
+  }, {
+    key: "tileBasedLineOfSight",
+    value: function tileBasedLineOfSight(spriteOne, //The first sprite, with `centerX` and `centerY` properties
+    spriteTwo, //The second sprite, with `centerX` and `centerY` properties
+    mapArray, //The tile map array
+    world) //An array of angles to which you want to
+    //restrict the line of sight
+    {
+      var emptyGid = arguments.length <= 4 || arguments[4] === undefined ? 0 : arguments[4];
+
+      var _this6 = this;
+
+      var segment = arguments.length <= 5 || arguments[5] === undefined ? 32 : arguments[5];
+      var angles = arguments.length <= 6 || arguments[6] === undefined ? [] : arguments[6];
+
+      //Plot a vector between spriteTwo and spriteOne
+      var vx = spriteTwo.centerX - spriteOne.centerX,
+          vy = spriteTwo.centerY - spriteOne.centerY;
+
+      //Find the vector's magnitude (its length in pixels)
+      var magnitude = Math.sqrt(vx * vx + vy * vy);
+
+      //How many points will we need to test?
+      var numberOfPoints = magnitude / segment;
+
+      //Create an array of x/y points that
+      //extends from `spriteOne` to `spriteTwo` 
+      var points = function points() {
+
+        //Initialize an array that is going to store all our points
+        //along the vector
+        var arrayOfPoints = [];
+
+        //Create a point object for each segment of the vector and
+        //store its x/y position as well as its index number on
+        //the map array
+        for (var i = 1; i <= numberOfPoints; i++) {
+
+          //Calculate the new magnitude for this iteration of the loop
+          var newMagnitude = segment * i;
+
+          //Find the unit vector
+          var dx = vx / magnitude,
+              dy = vy / magnitude;
+
+          //Use the unit vector and newMagnitude to figure out the x/y
+          //position of the next point in this loop iteration
+          var x = spriteOne.centerX + dx * newMagnitude,
+              y = spriteOne.centerY + dy * newMagnitude;
+
+          //The getIndex function converts x/y coordinates into
+          //map array index positon numbers
+          var getIndex = function getIndex(x, y, tilewidth, tileheight, mapWidthInTiles) {
+
+            //Convert pixel coordinates to map index coordinates
+            var index = {};
+            index.x = Math.floor(x / tilewidth);
+            index.y = Math.floor(y / tileheight);
+
+            //Return the index number
+            return index.x + index.y * mapWidthInTiles;
+          };
+
+          //Find the map index number that this x and y point corresponds to
+          var index = _this6.getIndex(x, y, world.tilewidth, world.tileheight, world.widthInTiles);
+
+          //Push the point into the `arrayOfPoints`
+          arrayOfPoints.push({
+            x: x, y: y, index: index
+          });
+        }
+
+        //Return the array
+        return arrayOfPoints;
+      };
+
+      //The tile-based collision test.
+      //The `noObstacles` function will return `true` if all the tile
+      //index numbers along the vector are `0`, which means they contain
+      //no walls. If any of them aren't 0, then the function returns
+      //`false` which means there's a wall in the way
+      var noObstacles = points().every(function (point) {
+        return mapArray[point.index] === emptyGid;
+      });
+
+      //Restrict the line of sight to right angles only (we don't want to
+      //use diagonals)
+      var validAngle = function validAngle() {
+
+        //Find the angle of the vector between the two sprites
+        var angle = Math.atan2(vy, vx) * 180 / Math.PI;
+
+        //If the angle matches one of the valid angles, return
+        //`true`, otherwise return `false`
+        if (angles.length !== 0) {
+          return angles.some(function (x) {
+            return x === angle;
+          });
+        } else {
+          return true;
+        }
+      };
+
+      //Return `true` if there are no obstacles and the line of sight
+      //is at a 90 degree angle
+      if (noObstacles === true && validAngle() === true) {
+        return true;
+      } else {
+        return false;
+      }
+    }
   }]);
 
   return TileUtilities;

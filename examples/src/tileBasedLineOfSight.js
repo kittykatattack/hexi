@@ -145,7 +145,7 @@ function play() {
       );
 
       //3. Check whether the monster has line of sight
-      monster.hasLineOfSight = tileBasedLineOfSight(
+      monster.hasLineOfSight = g.tileBasedLineOfSight(
         monster, //The first sprite
         alien, //The second sprite
         wallMapArray, //The tile map array
@@ -435,6 +435,7 @@ function closestDirection(spriteOne, spriteTwo, validDirections = []) {
   }
 }
 
+/*
 function tileBasedLineOfSight(
   spriteOne, //The first sprite, with `centerX` and `centerY` properties
   spriteTwo, //The second sprite, with `centerX` and `centerY` properties
@@ -547,6 +548,7 @@ function tileBasedLineOfSight(
     return false;
   }
 }
+*/
 
 //Geometry based Line of sight
 function lineOfSight(

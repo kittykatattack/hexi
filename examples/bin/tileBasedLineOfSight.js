@@ -153,7 +153,7 @@ function play() {
       monster.validDirections = validDirections(monster, wallMapArray, 0, world);
 
       //3. Check whether the monster has line of sight
-      monster.hasLineOfSight = tileBasedLineOfSight(monster, //The first sprite
+      monster.hasLineOfSight = g.tileBasedLineOfSight(monster, //The first sprite
       alien, //The second sprite
       wallMapArray, //The tile map array
       world, //The `world` object
@@ -441,70 +441,79 @@ function closestDirection(spriteOne, spriteTwo) {
   }
 }
 
-function tileBasedLineOfSight(spriteOne, //The first sprite, with `centerX` and `centerY` properties
-spriteTwo, //The second sprite, with `centerX` and `centerY` properties
-mapArray, //The tile map array
-world) //An array of angles to which you want to
-//restrict the line of sight
-{
-  var emptyGid = arguments.length <= 4 || arguments[4] === undefined ? 0 : arguments[4];
-  var segment = arguments.length <= 5 || arguments[5] === undefined ? 32 : arguments[5];
-  var angles = arguments.length <= 6 || arguments[6] === undefined ? [] : arguments[6];
+/*
+function tileBasedLineOfSight(
+  spriteOne, //The first sprite, with `centerX` and `centerY` properties
+  spriteTwo, //The second sprite, with `centerX` and `centerY` properties
+  mapArray, //The tile map array
+  world, //The `world` object that contains the `tilewidth
+  //`tileheight` and `widthInTiles` properties
+  emptyGid = 0, //The Gid that represents and empty tile, usually `0`
+  segment = 32, //The distance between collision points
+  angles = [] //An array of angles to which you want to 
+  //restrict the line of sight
+) {
 
   //Plot a vector between spriteTwo and spriteOne
-  var vx = spriteTwo.centerX - spriteOne.centerX,
-      vy = spriteTwo.centerY - spriteOne.centerY;
+  let vx = spriteTwo.centerX - spriteOne.centerX,
+    vy = spriteTwo.centerY - spriteOne.centerY;
 
   //Find the vector's magnitude (its length in pixels)
-  var magnitude = Math.sqrt(vx * vx + vy * vy);
+  let magnitude = Math.sqrt(vx * vx + vy * vy);
 
   //How many points will we need to test?
-  var numberOfPoints = magnitude / segment;
+  let numberOfPoints = magnitude / segment;
 
   //Create an array of x/y points that
-  //extends from `spriteOne` to `spriteTwo` 
-  var points = function points() {
+  //extends from `spriteOne` to `spriteTwo`  
+  let points = () => {
 
     //Initialize an array that is going to store all our points
     //along the vector
-    var arrayOfPoints = [];
+    let arrayOfPoints = [];
 
-    //Create a point object for each segment of the vector and
+    //Create a point object for each segment of the vector and 
     //store its x/y position as well as its index number on
-    //the map array
-    for (var i = 1; i <= numberOfPoints; i++) {
+    //the map array 
+    for (let i = 1; i <= numberOfPoints; i++) {
 
       //Calculate the new magnitude for this iteration of the loop
-      var newMagnitude = segment * i;
+      let newMagnitude = segment * i;
 
       //Find the unit vector
-      var dx = vx / magnitude,
-          dy = vy / magnitude;
+      let dx = vx / magnitude,
+        dy = vy / magnitude;
 
       //Use the unit vector and newMagnitude to figure out the x/y
       //position of the next point in this loop iteration
-      var x = spriteOne.centerX + dx * newMagnitude,
-          y = spriteOne.centerY + dy * newMagnitude;
+      let x = spriteOne.centerX + dx * newMagnitude,
+        y = spriteOne.centerY + dy * newMagnitude;
+
 
       //The getIndex function converts x/y coordinates into
       //map array index positon numbers
-      var getIndex = function getIndex(x, y, tilewidth, tileheight, mapWidthInTiles) {
+      let getIndex = (x, y, tilewidth, tileheight, mapWidthInTiles) => {
 
         //Convert pixel coordinates to map index coordinates
-        var index = {};
+        let index = {};
         index.x = Math.floor(x / tilewidth);
         index.y = Math.floor(y / tileheight);
 
         //Return the index number
-        return index.x + index.y * mapWidthInTiles;
+        return index.x + (index.y * mapWidthInTiles);
       };
 
       //Find the map index number that this x and y point corresponds to
-      var index = getIndex(x, y, world.tilewidth, world.tileheight, world.widthInTiles);
+      let index = getIndex(
+        x, y,
+        world.tilewidth,
+        world.tileheight,
+        world.widthInTiles
+      );
 
       //Push the point into the `arrayOfPoints`
       arrayOfPoints.push({
-        x: x, y: y, index: index
+        x, y, index
       });
     }
 
@@ -514,26 +523,24 @@ world) //An array of angles to which you want to
 
   //The tile-based collision test.
   //The `noObstacles` function will return `true` if all the tile
-  //index numbers along the vector are `0`, which means they contain
+  //index numbers along the vector are `0`, which means they contain 
   //no walls. If any of them aren't 0, then the function returns
-  //`false` which means there's a wall in the way
-  var noObstacles = points().every(function (point) {
-    return mapArray[point.index] === emptyGid;
+  //`false` which means there's a wall in the way 
+  let noObstacles = points().every(point => {
+    return mapArray[point.index] === emptyGid
   });
 
   //Restrict the line of sight to right angles only (we don't want to
   //use diagonals)
-  var validAngle = function validAngle() {
+  let validAngle = () => {
 
     //Find the angle of the vector between the two sprites
-    var angle = Math.atan2(vy, vx) * 180 / Math.PI;
+    let angle = Math.atan2(vy, vx) * 180 / Math.PI;
 
     //If the angle matches one of the valid angles, return
     //`true`, otherwise return `false`
     if (angles.length !== 0) {
-      return angles.some(function (x) {
-        return x === angle;
-      });
+      return angles.some(x => x === angle);
     } else {
       return true;
     }
@@ -547,6 +554,7 @@ world) //An array of angles to which you want to
     return false;
   }
 }
+*/
 
 //Geometry based Line of sight
 function lineOfSight(spriteOne, //The first sprite, with `centerX` and `centerY` properties

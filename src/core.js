@@ -782,6 +782,7 @@ class Hexi {
     this.bounceOffSurface = (o, s) => this.bump.bounceOffSurface(o, s);
     this.hit = (a, b, react = false, bounce = false, global, extra = undefined) => this.bump.hit(a, b, react, bounce, global, extra);
     this.shortestPath = (startIndex, destinationIndex, mapArray, mapWidthInTiles, obstacleGids = [], heuristic = "manhattan", useDiagonalNodes = true) => this.tileUtilities.shortestPath(startIndex, destinationIndex, mapArray, mapWidthInTiles, obstacleGids, heuristic, useDiagonalNodes)
+    this.tileBasedLineOfSight = (spriteOne, spriteTwo, mapArray, world, emptyGid = 0, segment = 32, angles = []) => this.tileUtilities.tileBasedLineOfSight(spriteOne, spriteTwo, mapArray, world, emptyGid, segment, angles);
 
     //Intercept the Bump library's `contain` and `outsideBounds` methods to make sure that
     //the stage `width` and `height` match the canvas width and height
