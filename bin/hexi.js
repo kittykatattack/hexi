@@ -37333,6 +37333,347 @@ var TileUtilities = (function () {
       //Finally, return the `world` object back to the game program
       return world;
     }
+
+    /*
+    //### The `shortestPath` function
+    
+    An A-Star search algorithm that returns an array of grid index numbers that
+    represent the shortest path between two points on a map. Use it like this:
+    
+    let shortestPath = tu.shortestPath(
+      startIndex,               //The start map index
+      destinationIndex,         //The destination index
+      mapArray,                 //The map array
+      mapWidthInTiles,          //Map wdith, in tiles
+      [1,2],                    //Obstacle gid array
+      "manhattan"               //Heuristic to use: "manhatten", "euclidean" or "diagonal"
+    );
+      
+    */
+
+  }, {
+    key: "shortestPath",
+    value: function shortestPath(startIndex, destinationIndex, mapArray, mapWidthInTiles) {
+      var obstacleGids = arguments.length <= 4 || arguments[4] === undefined ? [] : arguments[4];
+      var heuristic = arguments.length <= 5 || arguments[5] === undefined ? "manhattan" : arguments[5];
+      var useDiagonalNodes = arguments.length <= 6 || arguments[6] === undefined ? true : arguments[6];
+
+      //The `nodes` function creates the array of node objects
+      var nodes = function nodes(mapArray, mapWidthInTiles) {
+        return mapArray.map(function (cell, index) {
+
+          //Figure out the row and column of this cell
+          var column = index % mapWidthInTiles;
+          var row = Math.floor(index / mapWidthInTiles);
+
+          //The node object
+          return node = {
+            f: 0,
+            g: 0,
+            h: 0,
+            parent: null,
+            column: column,
+            row: row,
+            index: index
+          };
+        });
+      };
+
+      //Initialize theShortestPath array
+      var theShortestPath = [];
+
+      //Initialize the node map
+      var nodeMap = nodes(mapArray, mapWidthInTiles);
+
+      //Initialize the closed and open list arrays
+      var closedList = [];
+      var openList = [];
+
+      //Declare the "costs" of travelling in straight or
+      //diagonal lines
+      var straightCost = 10;
+      var diagonalCost = 14;
+
+      //Get the start node
+      var startNode = nodeMap[startIndex];
+
+      //Get the current center node. The first one will
+      //match the path's start position
+      var centerNode = startNode;
+
+      //Push the `centerNode` into the `openList`, because
+      //it's the first node that we're going to check
+      openList.push(centerNode);
+
+      //Get the current destination node. The first one will
+      //match the path's end position
+      var destinationNode = nodeMap[destinationIndex];
+
+      //All the nodes that are surrounding the current map index number
+      var surroundingNodes = function surroundingNodes(index, mapArray, mapWidthInTiles, useDiagonalNodes) {
+
+        //Find out what all the surrounding nodes are, including those that
+        //might be beyond the borders of the map
+        var allSurroundingNodes = [nodeMap[index - mapWidthInTiles - 1], nodeMap[index - mapWidthInTiles], nodeMap[index - mapWidthInTiles + 1], nodeMap[index - 1], nodeMap[index + 1], nodeMap[index + mapWidthInTiles - 1], nodeMap[index + mapWidthInTiles], nodeMap[index + mapWidthInTiles + 1]];
+
+        //Optionaly exlude the diagonal nodes, which is often perferable
+        //for 2D maze games
+        var crossSurroundingNodes = [nodeMap[index - mapWidthInTiles], nodeMap[index - 1], nodeMap[index + 1], nodeMap[index + mapWidthInTiles]];
+
+        //Use either `allSurroundingNodes` or `crossSurroundingNodes` depending
+        //on the the value of `useDiagonalNodes`
+        var nodesToCheck = undefined;
+        if (useDiagonalNodes) {
+          nodesToCheck = allSurroundingNodes;
+        } else {
+          nodesToCheck = crossSurroundingNodes;
+        }
+
+        //Find the valid sourrounding nodes, which are ones inside
+        //the map border that don't incldue obstacles. Change `allSurroundingNodes`
+        //to `crossSurroundingNodes` to prevent the path from choosing diagonal routes
+        var validSurroundingNodes = nodesToCheck.filter(function (node) {
+
+          //The node will be beyond the top and bottom edges of the
+          //map if it is `undefined`
+          var nodeIsWithinTopAndBottomBounds = node !== undefined;
+
+          //Only return nodes that are within the top and bottom map bounds
+          if (nodeIsWithinTopAndBottomBounds) {
+
+            //Some Boolean values that tell us whether the current map index is on
+            //the left or right border of the map, and whether any of the nodes
+            //surrounding that index extend beyond the left and right borders
+            var indexIsOnLeftBorder = index % mapWidthInTiles === 0;
+            var indexIsOnRightBorder = (index + 1) % mapWidthInTiles === 0;
+            var nodeIsBeyondLeftBorder = node.column % (mapWidthInTiles - 1) === 0 && node.column !== 0;
+            var nodeIsBeyondRightBorder = node.column % mapWidthInTiles === 0;
+
+            //Find out whether of not the node contains an obstacle by looping
+            //through the obstacle gids and and returning `true` if it
+            //finds any at this node's location
+            var nodeContainsAnObstacle = obstacleGids.some(function (obstacle) {
+              return mapArray[node.index] === obstacle;
+            });
+
+            //If the index is on the left border and any nodes surrounding it are beyond the
+            //left border, don't return that node
+            if (indexIsOnLeftBorder) {
+              //console.log("left border")
+              return !nodeIsBeyondLeftBorder;
+            }
+
+            //If the index is on the right border and any nodes surrounding it are beyond the
+            //right border, don't return that node
+            else if (indexIsOnRightBorder) {
+                //console.log("right border")
+                return !nodeIsBeyondRightBorder;
+              }
+
+              //Return `true` if the node doesn't contain any obstacles
+              else if (nodeContainsAnObstacle) {
+                  return false;
+                }
+
+                //The index must be inside the area defined by the left and right borders,
+                //so return the node
+                else {
+                    //console.log("map interior")
+                    return true;
+                  }
+          }
+        });
+
+        //console.log(validSurroundingNodes)
+        //Return the array of `validSurroundingNodes`
+        return validSurroundingNodes;
+      };
+
+      //Diagnostic
+      //console.log(nodeMap);
+      //console.log(centerNode);
+      //console.log(destinationNode);
+      //console.log(wallMapArray);
+      //console.log(surroundingNodes(86, mapArray, mapWidthInTiles));
+
+      //Heuristic methods
+      //1. Manhattan
+      var manhattan = function manhattan(testNode, destinationNode) {
+        var h = Math.abs(testNode.row - destinationNode.row) * straightCost + Math.abs(testNode.column - destinationNode.column) * straightCost;
+        return h;
+      };
+
+      //2. Euclidean
+      var euclidean = function euclidean(testNode, destinationNode) {
+        var vx = destinationNode.column - testNode.column,
+            vy = destinationNode.row - testNode.row,
+            h = Math.floor(Math.sqrt(vx * vx + vy * vy) * straightCost);
+        return h;
+      };
+
+      //3. Diagonal
+      var diagonal = function diagonal(testNode, destinationNode) {
+        var vx = Math.abs(destinationNode.column - testNode.column),
+            vy = Math.abs(destinationNode.row - testNode.row),
+            h = 0;
+
+        if (vx > vy) {
+          h = Math.floor(diagonalCost * vy + straightCost * (vx - vy));
+        } else {
+          h = Math.floor(diagonalCost * vx + straightCost * (vy - vx));
+        }
+        return h;
+      };
+
+      //Loop through all the nodes until the current `centerNode` matches the
+      //`destinationNode`. When they they're the same we know we've reached the
+      //end of the path
+      while (centerNode !== destinationNode) {
+
+        //Find all the nodes surrounding the current `centerNode`
+        var surroundingTestNodes = surroundingNodes(centerNode.index, mapArray, mapWidthInTiles, useDiagonalNodes);
+
+        //Loop through all the `surroundingTestNodes` using a classic `for` loop
+        //(A `for` loop gives us a marginal performance boost)
+
+        var _loop = function _loop(i) {
+
+          //Get a reference to the current test node
+          var testNode = surroundingTestNodes[i];
+
+          //Find out whether the node is on a straight axis or
+          //a diagonal axis, and assign the appropriate cost
+
+          //A. Declare the cost variable
+          var cost = 0;
+
+          //B. Do they occupy the same row or column?
+          if (centerNode.row === testNode.row || centerNode.column === testNode.column) {
+
+            //If they do, assign a cost of "10"
+            cost = straightCost;
+          } else {
+
+            //Otherwise, assign a cost of "14"
+            cost = diagonalCost;
+          }
+
+          //C. Calculate the costs (g, h and f)
+          //The node's current cost
+          var g = centerNode.g + cost;
+
+          //The cost of travelling from this node to the
+          //destination node (the heuristic)
+          var h = undefined;
+          switch (heuristic) {
+            case "manhattan":
+              h = manhattan(testNode, destinationNode);
+              break;
+
+            case "euclidean":
+              h = euclidean(testNode, destinationNode);
+              break;
+
+            case "diagonal":
+              h = diagonal(testNode, destinationNode);
+              break;
+
+            default:
+              throw new Error("Oops! It looks like you misspelled the name of the heuristic");
+          }
+
+          //The final cost
+          var f = g + h;
+
+          //Find out if the testNode is in either
+          //the openList or closedList array
+          var isOnOpenList = openList.some(function (node) {
+            return testNode === node;
+          });
+          var isOnClosedList = closedList.some(function (node) {
+            return testNode === node;
+          });
+
+          //If it's on either of these lists, we can check
+          //whether this route is a lower-cost alternative
+          //to the previous cost calculation. The new G cost
+          //will make the difference to the final F cost
+          if (isOnOpenList || isOnClosedList) {
+            if (testNode.f > f) {
+              testNode.f = f;
+              testNode.g = g;
+              testNode.h = h;
+
+              //Only change the parent if the new cost is lower
+              testNode.parent = centerNode;
+            }
+          }
+
+          //Otherwise, add the testNode to the open list
+          else {
+              testNode.f = f;
+              testNode.g = g;
+              testNode.h = h;
+              testNode.parent = centerNode;
+              openList.push(testNode);
+            }
+
+          //The `for` loop ends here
+        };
+
+        for (var i = 0; i < surroundingTestNodes.length; i++) {
+          _loop(i);
+        }
+
+        //Push the current centerNode into the closed list
+        closedList.push(centerNode);
+
+        //Quit the loop if there's nothing on the open list.
+        //This means that there is no path to the destination or the
+        //destination is invalid, like a wall tile
+        if (openList.length === 0) {
+
+          return theShortestPath;
+        }
+
+        //Sort the open list according to final cost
+        openList = openList.sort(function (a, b) {
+          return a.f - b.f;
+        });
+
+        //Set the node with the lowest final cost as the new centerNode
+        centerNode = openList.shift();
+
+        //The `while` loop ends here
+      }
+
+      //Now that we have all the candidates, let's find the shortest path!
+      if (openList.length !== 0) {
+
+        //Start with the destination node
+        var _testNode = destinationNode;
+        theShortestPath.push(_testNode);
+
+        //Work backwards through the node parents
+        //until the start node is found
+        while (_testNode !== startNode) {
+
+          //Step through the parents of each node,
+          //starting with the destination node and ending with the start node
+          _testNode = _testNode.parent;
+
+          //Add the node to the beginning of the array
+          theShortestPath.unshift(_testNode);
+
+          //...and then loop again to the next node's parent till you
+          //reach the end of the path
+        }
+      }
+
+      //Return an array of nodes that link together to form
+      //the shortest path
+      return theShortestPath;
+    }
   }]);
 
   return TileUtilities;
@@ -38309,6 +38650,12 @@ var Hexi = (function () {
         var global = arguments[4];
         var extra = arguments.length <= 5 || arguments[5] === undefined ? undefined : arguments[5];
         return _this3.bump.hit(a, b, react, bounce, global, extra);
+      };
+      this.shortestPath = function (startIndex, destinationIndex, mapArray, mapWidthInTiles) {
+        var obstacleGids = arguments.length <= 4 || arguments[4] === undefined ? [] : arguments[4];
+        var heuristic = arguments.length <= 5 || arguments[5] === undefined ? "manhattan" : arguments[5];
+        var useDiagonalNodes = arguments.length <= 6 || arguments[6] === undefined ? true : arguments[6];
+        return _this3.tileUtilities.shortestPath(startIndex, destinationIndex, mapArray, mapWidthInTiles, obstacleGids, heuristic, useDiagonalNodes);
       };
 
       //Intercept the Bump library's `contain` and `outsideBounds` methods to make sure that

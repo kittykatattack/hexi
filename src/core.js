@@ -781,6 +781,7 @@ class Hexi {
     this.circlePointCollision = (c1, point, bounce = false, global = false) => this.bump.circlePointCollision(c1, point, bounce, global);
     this.bounceOffSurface = (o, s) => this.bump.bounceOffSurface(o, s);
     this.hit = (a, b, react = false, bounce = false, global, extra = undefined) => this.bump.hit(a, b, react, bounce, global, extra);
+    this.shortestPath = (startIndex, destinationIndex, mapArray, mapWidthInTiles, obstacleGids = [], heuristic = "manhattan", useDiagonalNodes = true) => this.tileUtilities.shortestPath(startIndex, destinationIndex, mapArray, mapWidthInTiles, obstacleGids, heuristic, useDiagonalNodes)
 
     //Intercept the Bump library's `contain` and `outsideBounds` methods to make sure that
     //the stage `width` and `height` match the canvas width and height

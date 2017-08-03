@@ -971,6 +971,12 @@ var Hexi = (function () {
         var extra = arguments.length <= 5 || arguments[5] === undefined ? undefined : arguments[5];
         return _this3.bump.hit(a, b, react, bounce, global, extra);
       };
+      this.shortestPath = function (startIndex, destinationIndex, mapArray, mapWidthInTiles) {
+        var obstacleGids = arguments.length <= 4 || arguments[4] === undefined ? [] : arguments[4];
+        var heuristic = arguments.length <= 5 || arguments[5] === undefined ? "manhattan" : arguments[5];
+        var useDiagonalNodes = arguments.length <= 6 || arguments[6] === undefined ? true : arguments[6];
+        return _this3.tileUtilities.shortestPath(startIndex, destinationIndex, mapArray, mapWidthInTiles, obstacleGids, heuristic, useDiagonalNodes);
+      };
 
       //Intercept the Bump library's `contain` and `outsideBounds` methods to make sure that
       //the stage `width` and `height` match the canvas width and height
