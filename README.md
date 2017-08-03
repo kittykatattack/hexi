@@ -193,7 +193,7 @@ Here's Hexi's core feature list:
 - Seamless integration with HTML and CSS elements for creating rich
   user interfaces. Use Hexi also works with Angular, React and Elm!
 - A complete suite of tools for easily creating isometric game worlds, including: an isometric mouse/touch pointer, isometric tile collision using `hitTestIsoTile`, and full Tiled Editor isometric map support using `makeIsoTiledWorld`.
-- A `shortestPath` function for doing A-Star pathfinding through tile based environments like mazes.
+- A `shortestPath` function for doing A-Star pathfinding through tile based environments like mazes and a `tileBasedLineOfSight` function to tell you whether sprites in a maze game environment can see each other.
 - Yes, Hexi applications meet W3C accessibilty guidelines thanks to the [`accessible`](http://www.goodboydigital.com/pixi-becomes-accessible/) property provided by the Pixi renderer (yay Pixi!)
 
 <a id='features'></a>
