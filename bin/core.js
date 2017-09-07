@@ -1036,6 +1036,10 @@ var Hexi = (function () {
         var canvas = arguments.length <= 3 || arguments[3] === undefined ? _this3.canvas : arguments[3];
         return _this3.gameUtilities.worldCamera(world, worldWidth, worldHeight, canvas);
       };
+      this.lineOfSight = function (spriteOne, spriteTwo, obstacles) {
+        var segment = arguments.length <= 3 || arguments[3] === undefined ? 32 : arguments[3];
+        return _this3.gameUtilities.lineOfSight(spriteOne, spriteTwo, obstacles, segment);
+      };
 
       //Sound.js - Sound
       this.soundEffect = function (frequencyValue, attack, decay, type, volumeValue, panValue, wait, pitchBendAmount, reverse, randomValue, dissonance, echo, reverb) {

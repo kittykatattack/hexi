@@ -818,6 +818,7 @@ class Hexi {
     this.move = this.gameUtilities.move;
     this.wait = this.gameUtilities.wait;
     this.worldCamera = (world, worldWidth, worldHeight, canvas = this.canvas) => this.gameUtilities.worldCamera(world, worldWidth, worldHeight, canvas);
+    this.lineOfSight = (spriteOne, spriteTwo, obstacles, segment = 32) => this.gameUtilities.lineOfSight(spriteOne, spriteTwo, obstacles, segment);
 
     //Sound.js - Sound
     this.soundEffect = (

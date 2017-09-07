@@ -98,7 +98,7 @@ function play() {
   //Check whether the monster can see the alien by setting its 
   //`lineOfSight` property. `lineOfSight` will be `true` if there
   //are no boxes obscuring the view, and `false` if there are
-  monster.lineOfSight = lineOfSight(
+  monster.lineOfSight = g.lineOfSight(
     monster, //Sprite one
     alien, //Sprite two
     boxes, //An array of obstacle sprites

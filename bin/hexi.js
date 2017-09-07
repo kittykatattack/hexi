@@ -35213,7 +35213,7 @@ var GameUtilities = (function () {
     a. A sprite object.
     b. A sprite object.
     You can use it to make a sprite rotate towards another sprite like this:
-         box.rotation = angle(box, pointer);
+         box.rotation = gu.angle(box, pointer);
      */
 
   }, {
@@ -35336,7 +35336,7 @@ var GameUtilities = (function () {
      Lets you wait for a specific number of milliseconds before running the
     next function. 
      
-      wait(1000, runThisFunctionNext());
+      gu.wait(1000, runThisFunctionNext());
     
     */
 
@@ -35352,7 +35352,7 @@ var GameUtilities = (function () {
      Move a sprite by adding it's velocity to it's position. The sprite 
     must have `vx` and `vy` values for this to work. You can supply a
     single sprite, or a list of sprites, separated by commas.
-         move(sprite);
+         gu.move(sprite);
     */
 
   }, {
@@ -35504,6 +35504,121 @@ var GameUtilities = (function () {
 
       //Return the `camera` object
       return camera;
+    }
+  }, {
+    key: "lineOfSight",
+
+    /*
+    Line of sight
+    ------------
+     The `lineOfSight` method will return `true` if there’s clear line of sight 
+    between two sprites, and `false` if there isn’t. Here’s how to use it in your game code:
+         monster.lineOfSight = gu.lineOfSight(
+            monster, //Sprite one
+            alien,   //Sprite two
+            boxes,   //An array of obstacle sprites
+            16       //The distance between each collision point
+        );
+     The 4th argument determines the distance between collision points. 
+    For better performance, make this a large number, up to the maximum 
+    width of your smallest sprite (such as 64 or 32). For greater precision, 
+    use a smaller number. You can use the lineOfSight value to decide how 
+    to change certain things in your game. For example:
+         if (monster.lineOfSight) {
+          monster.show(monster.states.angry)
+        } else {
+          monster.show(monster.states.normal)
+        }
+     */
+
+    value: function lineOfSight(s1, //The first sprite, with `centerX` and `centerY` properties
+    s2, //The second sprite, with `centerX` and `centerY` properties
+    obstacles) //The distance between collision points
+    {
+      var segment = arguments.length <= 3 || arguments[3] === undefined ? 32 : arguments[3];
+
+      //Calculate the center points of each sprite
+      spriteOneCenterX = s1.x + this._getCenter(s1, s1.width, "x");
+      spriteOneCenterY = s1.y + this._getCenter(s1, s1.height, "y");
+      spriteTwoCenterX = s2.x + this._getCenter(s2, s2.width, "x");
+      spriteTwoCenterY = s2.y + this._getCenter(s2, s2.height, "y");
+
+      //Plot a vector between spriteTwo and spriteOne
+      var vx = spriteTwoCenterX - spriteOneCenterX,
+          vy = spriteTwoCenterY - spriteOneCenterY;
+
+      //Find the vector's magnitude (its length in pixels)
+      var magnitude = Math.sqrt(vx * vx + vy * vy);
+
+      //How many points will we need to test?
+      var numberOfPoints = magnitude / segment;
+
+      //Create an array of x/y points, separated by 64 pixels, that
+      //extends from `spriteOne` to `spriteTwo` 
+      var points = function points() {
+
+        //Initialize an array that is going to store all our points
+        //along the vector
+        var arrayOfPoints = [];
+
+        //Create a point object for each segment of the vector and
+        //store its x/y position as well as its index number on
+        //the map array
+        for (var i = 1; i <= numberOfPoints; i++) {
+
+          //Calculate the new magnitude for this iteration of the loop
+          var newMagnitude = segment * i;
+
+          //Find the unit vector. This is a small, scaled down version of
+          //the vector between the sprites that's less than one pixel long.
+          //It points in the same direction as the main vector, but because it's
+          //the smallest size that the vector can be, we can use it to create
+          //new vectors of varying length
+          var dx = vx / magnitude,
+              dy = vy / magnitude;
+
+          //Use the unit vector and newMagnitude to figure out the x/y
+          //position of the next point in this loop iteration
+          var x = spriteOneCenterX + dx * newMagnitude,
+              y = spriteOneCenterY + dy * newMagnitude;
+
+          //Push a point object with x and y properties into the `arrayOfPoints`
+          arrayOfPoints.push({
+            x: x, y: y
+          });
+        }
+
+        //Return the array of point objects
+        return arrayOfPoints;
+      };
+
+      //Test for a collision between a point and a sprite
+      var hitTestPoint = function hitTestPoint(point, sprite) {
+
+        //Find out if the point's position is inside the area defined
+        //by the sprite's left, right, top and bottom sides
+        var left = point.x > sprite.x,
+            right = point.x < sprite.x + sprite.width,
+            top = point.y > sprite.y,
+            bottom = point.y < sprite.y + sprite.height;
+
+        //If all the collision conditions are met, you know the
+        //point is intersecting the sprite
+        return left && right && top && bottom;
+      };
+
+      //The `noObstacles` function will return `true` if all the tile
+      //index numbers along the vector are `0`, which means they contain
+      //no obstacles. If any of them aren't 0, then the function returns
+      //`false` which means there's an obstacle in the way
+      var noObstacles = points().every(function (point) {
+        return obstacles.every(function (obstacle) {
+          return !hitTestPoint(point, obstacle);
+        });
+      });
+
+      //Return the true/false value of the collision test
+      return noObstacles;
     }
   }]);
 
@@ -39034,6 +39149,10 @@ var Hexi = (function () {
       this.worldCamera = function (world, worldWidth, worldHeight) {
         var canvas = arguments.length <= 3 || arguments[3] === undefined ? _this3.canvas : arguments[3];
         return _this3.gameUtilities.worldCamera(world, worldWidth, worldHeight, canvas);
+      };
+      this.lineOfSight = function (spriteOne, spriteTwo, obstacles) {
+        var segment = arguments.length <= 3 || arguments[3] === undefined ? 32 : arguments[3];
+        return _this3.gameUtilities.lineOfSight(spriteOne, spriteTwo, obstacles, segment);
       };
 
       //Sound.js - Sound

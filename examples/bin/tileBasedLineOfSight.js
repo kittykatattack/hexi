@@ -157,7 +157,7 @@ function play() {
       alien, //The second sprite
       wallMapArray, //The tile map array
       world, //The `world` object
-      0, //The Gid that represents and empty tile
+      0, //The Gid that represents an empty tile
       16, //The distance between collision points
       [90, -90, 0, 180, -180] //The angles to limit the line-of-sight
       );

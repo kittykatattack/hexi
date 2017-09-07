@@ -190,6 +190,7 @@ Here's Hexi's core feature list:
   with moving sprites.
 - Create a `worldCamera` that follows sprites around a scrolling game
   world.
+- A `lineOfSight` function that tells you whether a sprite is visible to   another sprite.
 - Seamless integration with HTML and CSS elements for creating rich
   user interfaces. Use Hexi also works with Angular, React and Elm!
 - A complete suite of tools for easily creating isometric game worlds, including: an isometric mouse/touch pointer, isometric tile collision using `hitTestIsoTile`, and full Tiled Editor isometric map support using `makeIsoTiledWorld`.
