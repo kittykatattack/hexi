@@ -3831,7 +3831,10 @@ var Tink = (function () {
 
           //Call the `release` method if it's been assigned
           if (this.release) this.release();
-          event.preventDefault();
+
+          //`event.preventDefault();` needs to be disabled to prevent <input> range sliders
+          //from getting trapped in Firefox (and possibly Safari)
+          //event.preventDefault();
         },
 
         //The pointer's `touchendHandler`
@@ -3852,7 +3855,8 @@ var Tink = (function () {
 
           //Call the `release` method if it's been assigned
           if (this.release) this.release();
-          event.preventDefault();
+
+          //event.preventDefault();
         },
 
         //`hitTestSprite` figures out if the pointer is touching a sprite
