@@ -3,31 +3,19 @@
 Hexi
 ====
 
-**Hexi** is a fun and easy way to make HTML5 games or any other
-kind interactive media using pure JavaScript code. Take a look at 
-the feature list and the [examples](https://github.com/kittykatattack/hexi/tree/master/examples) folder to get started. Keep scrolling, 
-and you'll find a complete Quick Start Guide and beginner's tutorials ahead. If you've never made a game before, the tutorials are the best place to start.
+**Hexi** 是一种使用纯JavaScript代码制作HTML5游戏或任何其他类型交互式媒体的有趣和简单的方法. 查看功能列表和[示例](https://github.com/kittykatattack/hexi/tree/master/examples)文件夹作为你的第一步。继续滚动，你会发现一个完整的快速入门指南和新手教程。如果你以前从未做过游戏，那么教程是最好的开始。
 
-What's great about Hexi? You get all the power of WebGL rendering with
-a streamlined API that lets you write your code in a
-[minimalist](https://en.wikipedia.org/wiki/Haiku),
-[declarative](http://latentflip.com/imperative-vs-declarative/) way.
-It makes coding a game as easy and fun as writing poetry or drawing. Try it! If you
-need any help or have any questions, post something in this
-repository's [Issues](https://github.com/kittykatattack/hexi/issues).
-The Issues page is is Hexi's friendly chat room - don't be afraid to
-ask for help :) 
+那么有人问了，我为嘛要用Hexi？使用Hexi，你得到的WebGL通过流线型API渲染，这样可以让你用[简约](https://en.wikipedia.org/wiki/Haiku)、[声明](http://latentflip.com/imperative-vs-declarative/)的方式来编写你的代码。这使得制作一个游戏像写一首诗歌或者绘画一样尽可能的轻松和有趣。做过路过不要错过，尝试一下！如果你需要任何帮助或者有任何问题，就提交在这个仓库的[Issues](https://github.com/kittykatattack/hexi/issues)上。这个问题页面是Hexi的一个特别友好的聊天室，所以呢，尽情的在上面寻求帮助吧！^_^
 
-You only need one file from this repository to get started using Hexi:
-[`hexi.min.js`](https://github.com/kittykatattack/hexi/blob/master/bin/hexi.min.js). That's all! [Link it to your HTML document with a `<script>` tag](http://www.quackit.com/javascript/tutorial/external_javascript_file.cfm), and go for it! 
-Hexi has been written, from the ground up, in the latest version of
-JavaScript (ES6/7, 20015/6) but is compiled down to ES5 (using [Babel](https://babeljs.io)) so that it will run anywhere. What do you need to know before you start using Hexi? You should have a reasonable understanding of HTML and JavaScript. You don't have to be an expert, just an ambitious beginner with an eagerness to learn. If you don't know HTML and JavaScript, the best place to start learning it is this book:
+你只需要一个这个项目中的一个文件就能开始你的Hexi之路：[`hexi.min.js`](https://github.com/kittykatattack/hexi/blob/master/bin/hexi.min.js).没错就是它。[通过`<script>`标签的形式链接到你的HTML文档](http://www.quackit.com/javascript/tutorial/external_javascript_file.cfm)，然后就开始吧！Hexi 已经彻底的使用最新版本的JavaScript (ES6/7, 20015/6)重新编写，不过使用[Babel](https://babeljs.io)编译成了ES5，这样就可以让它在任何一个地方跑起来了。在开始使用Hexi之前你需要知道点啥呢？你需要对HTML和JavaScript有一定的了解，你不需要成为相关的专业人士，仅仅做一个渴望学习的雄心勃勃的初学者就好了。如果你不懂HTML和JavaScript，那么最好的入门方式就是这本书：
 
-[Foundation Game Design with HTML5 and JavaScript](http://www.apress.com/9781430247166)
+[基于HTML5和JavaScript的基础游戏设计](http://www.apress.com/9781430247166)
 
-I know for a fact that it's the best book, because I wrote it!
+为什么我那么信誓旦旦的说这事最好的书？ 因为这是我写的！（译者：哈哈哈哈哈）
 
+好的，了解的差不多了？知道什么是JavaScript变量、函数、数组、对象以及如何来使用它们吗？知道什么是[JSON数据文件](http://www.copterlabs.com/blog/json-what-it-is-how-it-works-how-to-use-it/)吗？用过[Canvas绘图API](https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API/Drawing_graphics_with_canvas)吗? 然后你可以开始使用Hexi了！
 Ok, got it? Do you know what JavaScript variables, functions, arrays and objects are and how to use them? Do you know what [JSON data files](http://www.copterlabs.com/blog/json-what-it-is-how-it-works-how-to-use-it/) are? Have you used the [Canvas Drawing API](https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API/Drawing_graphics_with_canvas)? Then you're ready to start using Hexi!  
+为什么我那么信誓旦旦的说这事最好的书？ 因为这是我写的！（译者：哈哈哈哈哈）
 
 Of course, Hexi is completely free to use: for-anything, for-ever! It was written in Canada (Toronto, Hamilton), India (Kullu Valley, Ladakh), Nepal (Kathmandu, Pokhara, Annapurna Base Camp), Thailand (Ko Phangan, Ko Tao) and South Africa (Cape Town), and is the result of 15 years' research into API usability for game design. The name, "Hexi" comes from ["Hex"](https://en.wiktionary.org/wiki/hex) + ["Pixi"](https://github.com/pixijs/pixi.js/) = "Hexi". [It has absolutely no other meaning](https://www.youtube.com/watch?v=XYGmNs6274A).
 
