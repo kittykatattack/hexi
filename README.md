@@ -1,3 +1,5 @@
+基于官方教程翻译；水平有限，如有错误欢迎提issue，转载请注明出处。翻译者：Debugger-D
+
 ![Hexi](/tutorials/screenshots/logoAndIllustration.png)
 
 Hexi
