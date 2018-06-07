@@ -16,8 +16,6 @@ Hexi
 为什么我那么信誓旦旦的说这事最好的书？ 因为这是我写的！（译者：哈哈哈哈哈）
 
 好的，了解的差不多了？知道什么是JavaScript变量、函数、数组、对象以及如何来使用它们吗？知道什么是[JSON数据文件](http://www.copterlabs.com/blog/json-what-it-is-how-it-works-how-to-use-it/)吗？用过[Canvas绘图API](https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API/Drawing_graphics_with_canvas)吗? 然后你可以开始使用Hexi了！
-Ok, got it? Do you know what JavaScript variables, functions, arrays and objects are and how to use them? Do you know what [JSON data files](http://www.copterlabs.com/blog/json-what-it-is-how-it-works-how-to-use-it/) are? Have you used the [Canvas Drawing API](https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API/Drawing_graphics_with_canvas)? Then you're ready to start using Hexi!  
-为什么我那么信誓旦旦的说这事最好的书？ 因为这是我写的！（译者：哈哈哈哈哈）
 
 Of course, Hexi is completely free to use: for-anything, for-ever! It was written in Canada (Toronto, Hamilton), India (Kullu Valley, Ladakh), Nepal (Kathmandu, Pokhara, Annapurna Base Camp), Thailand (Ko Phangan, Ko Tao) and South Africa (Cape Town), and is the result of 15 years' research into API usability for game design. The name, "Hexi" comes from ["Hex"](https://en.wiktionary.org/wiki/hex) + ["Pixi"](https://github.com/pixijs/pixi.js/) = "Hexi". [It has absolutely no other meaning](https://www.youtube.com/watch?v=XYGmNs6274A).
 
