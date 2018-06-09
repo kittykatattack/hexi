@@ -17,24 +17,24 @@ Hexi
 
 好的，了解的差不多了？知道什么是JavaScript变量、函数、数组、对象以及如何来使用它们吗？知道什么是[JSON数据文件](http://www.copterlabs.com/blog/json-what-it-is-how-it-works-how-to-use-it/)吗？用过[Canvas绘图API](https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API/Drawing_graphics_with_canvas)吗? 然后你可以开始使用Hexi了！
 
-Of course, Hexi is completely free to use: for-anything, for-ever! It was written in Canada (Toronto, Hamilton), India (Kullu Valley, Ladakh), Nepal (Kathmandu, Pokhara, Annapurna Base Camp), Thailand (Ko Phangan, Ko Tao) and South Africa (Cape Town), and is the result of 15 years' research into API usability for game design. The name, "Hexi" comes from ["Hex"](https://en.wiktionary.org/wiki/hex) + ["Pixi"](https://github.com/pixijs/pixi.js/) = "Hexi". [It has absolutely no other meaning](https://www.youtube.com/watch?v=XYGmNs6274A).
+当然，使用Hexi是完全免费的：所有的东西！永远！它是在加拿大（多伦多，汉密尔顿），印度（克卢谷，拉达克），尼泊尔（加德满都，博克拉，安纳普尔纳大本营），泰国（帕岸岛，高涛）和南非（开普敦）写成的，我们花费了15年的研究在游戏设计的可用性上面。Hexi这个名字来源于["Hex"](https://en.wiktionary.org/wiki/hex) + ["Pixi"](https://github.com/pixijs/pixi.js/) = "Hexi". [It has absolutely no other meaning](https://www.youtube.com/watch?v=XYGmNs6274A).[它绝对没有任何其它含义](https://www.youtube.com/watch?v=XYGmNs6274A)。
 
-### Table of contents:
-1. [Hexi's Features](#features)
-2. [Modules](#modules)
-3. [Quick start](#quickstart)
-  1. [The HTML container page](#thehtmlcontainer)
-  3. [Hexi's architecture](#hexisarchitecture)
-  2. [Setting up and starting Hexi](#settingupandstartinghexi)
-  4. [The load function](#theloadfunction)
-  5. [The setup function](#thesetupfunction)
-  6. [The play function](#thesplayfunction)
-  7. [Taking it further](#takingitfurther)
-4. [Tutorials](#tutorials)
-  1. [Treasure Hunter](#treasure)
-    1. [Setting up the HTML container page](#settingup)
-    2. [Initializing the Ga engine](#initializing)
-    3. [Define your "global" variables](#defineglobals)
+### 目录:
+1. [Hexi的特性](#features)
+2. [模块](#modules)
+3. [快速开始](#quickstart)
+4. [HTML容器页面](#thehtmlcontainer)
+5. [Hexi项目结构](#hexisarchitecture)
+6. [开始启动Hexi项目](#settingupandstartinghexi)
+7. [加载功能](#theloadfunction)
+8. [启动功能](#thesetupfunction)
+9. [播放功能](#thesplayfunction)
+10. [深入考虑](#takingitfurther)
+11. [教程](#tutorials)
+12. [宝藏猎人](#treasure)
+13. [设置HTML容器页面](#settingup)
+14. [Initializing the Ga engine](#initializing)
+15. [Define your "global" variables](#defineglobals)
     4. [Initialize your game with a setup function](#setupfunction)
       1. [Customizing the canvas](#customizing)
       2. [Creating the `chimes` sound object](#creatingsound)
