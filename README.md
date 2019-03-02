@@ -278,7 +278,7 @@ Here's an illustration of what you'll see:
 
 ![Quick start illustration](/tutorials/screenshots/31.png)
 
-Why cats? [Because](http://motherboard.vice.com/blog/toxo-terror-are-our-brains-controlled-by-cat-loving-parasites).
+Why cats? [Because](https://motherboard.vice.com/en_us/article/qkkk7m/toxo-terror-are-our-brains-controlled-by-cat-loving-parasites).
 
 If you know how this Quick Start application was made, you'll be well on your
 way to being productive with Hexi fast - so let's find out!
