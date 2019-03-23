@@ -15,13 +15,13 @@ a streamlined API that lets you write your code in a
 It makes coding a game as easy and fun as writing poetry or drawing. Try it! If you
 need any help or have any questions, post something in this
 repository's [Issues](https://github.com/kittykatattack/hexi/issues).
-The Issues page is is Hexi's friendly chat room - don't be afraid to
+The Issues page is Hexi's friendly chat room - don't be afraid to
 ask for help :) 
 
 You only need one file from this repository to get started using Hexi:
 [`hexi.min.js`](https://github.com/kittykatattack/hexi/blob/master/bin/hexi.min.js). That's all! [Link it to your HTML document with a `<script>` tag](http://www.quackit.com/javascript/tutorial/external_javascript_file.cfm), and go for it! 
 Hexi has been written, from the ground up, in the latest version of
-JavaScript (ES6/7, 20015/6) but is compiled down to ES5 (using [Babel](https://babeljs.io)) so that it will run anywhere. What do you need to know before you start using Hexi? You should have a reasonable understanding of HTML and JavaScript. You don't have to be an expert, just an ambitious beginner with an eagerness to learn. If you don't know HTML and JavaScript, the best place to start learning it is this book:
+JavaScript (ES6/7, 20015/6) but is compiled down to ES5 (using [Babel](https://babeljs.io)) so that it will run anywhere. What do you need to know before you start using Hexi? You should have a reasonable understanding of HTML and JavaScript. You don't have to be an expert, just an ambitious beginner with an eagerness to learn. If you don't know HTML and JavaScript, the best place to start learning is with this book:
 
 [Foundation Game Design with HTML5 and JavaScript](http://www.apress.com/9781430247166)
 
@@ -103,7 +103,7 @@ Features
 Here's Hexi's core feature list:
 
 - All the most important sprites you need: rectangles, circles, lines,
-  text, image sprites and animated "MovieClip" style sprites. You can make any of these sprites with one only line of code. You can also create your own custom sprite types.
+  text, image sprites and animated "MovieClip" style sprites. You can make any of these sprites with only one line of code. You can also create your own custom sprite types.
 - A complete scene graph with nested child-parent hierarchies (including
   a `stage`, and `addChild`/`removeChild` methods), local and global
   coordinates, depth layers, and rotation pivots.
